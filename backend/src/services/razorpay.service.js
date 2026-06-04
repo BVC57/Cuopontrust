@@ -41,6 +41,19 @@ const verifySignature = ({ orderId, paymentId, signature }) => {
   return expectedSignature === signature;
 };
 
+const verifyWebhookSignature = ({ payload, signature }) => {
+  if (useMockGateway()) {
+    return true;
+  }
+
+  const expectedSignature = crypto
+    .createHmac("sha256", process.env.RAZORPAY_WEBHOOK_SECRET || process.env.RAZORPAY_KEY_SECRET)
+    .update(payload)
+    .digest("hex");
+
+  return expectedSignature === signature;
+};
+
 const capturePayment = async ({ paymentId, amount, currency }) => {
   const client = getRazorpay();
 
@@ -78,6 +91,7 @@ const refundPayment = async ({ paymentId, amount, notes }) => {
 module.exports = {
   createOrder,
   verifySignature,
+  verifyWebhookSignature,
   capturePayment,
   refundPayment
 };

@@ -6,9 +6,10 @@ import Footer from "./Footer";
 
 export default function RouteChrome({ children }) {
   const pathname = usePathname();
-  const isAuthPage = pathname === "/login";
+  const isAuthPage = pathname === "/login" || pathname === "/register";
+  const isAdminPage = pathname?.startsWith("/admin");
 
-  if (isAuthPage) {
+  if (isAuthPage || isAdminPage) {
     return <main>{children}</main>;
   }
 

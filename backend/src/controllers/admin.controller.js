@@ -72,6 +72,29 @@ const getUsers = asyncHandler(async (req, res) => {
   return sendResponse(res, 200, "Users fetched", { users });
 });
 
+const createUser = asyncHandler(async (req, res) => {
+  const email = String(req.body.email || "").trim().toLowerCase();
+  if (!email) {
+    return sendResponse(res, 400, "Email is required");
+  }
+
+  const existingUser = await User.findOne({ email });
+  if (existingUser) {
+    return sendResponse(res, 400, "User already exists");
+  }
+
+  const user = await User.create({
+    name: String(req.body.name || "").trim() || email.split("@")[0],
+    email,
+    role: req.body.role === "super_admin" ? "super_admin" : "user",
+    country: req.body.country || "India",
+    currency: req.body.currency || "INR",
+    isEmailVerified: true
+  });
+
+  return sendResponse(res, 201, "User created", { user });
+});
+
 const banUser = asyncHandler(async (req, res) => {
   const user = await User.findByIdAndUpdate(
     req.params.id,
@@ -86,9 +109,45 @@ const unbanUser = asyncHandler(async (req, res) => {
   return sendResponse(res, 200, "User unbanned", { user });
 });
 
+const deleteUser = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.params.id);
+  if (!user) {
+    return sendResponse(res, 404, "User not found");
+  }
+
+  await Promise.all([
+    Coupon.updateMany(
+      { $or: [{ sellerId: user._id }, { buyerId: user._id }] },
+      { $set: { status: "removed" } }
+    ),
+    Transaction.deleteMany({ $or: [{ buyerId: user._id }, { sellerId: user._id }] }),
+    Revenue.deleteMany({ $or: [{ buyerId: user._id }, { sellerId: user._id }] }),
+    Dispute.deleteMany({ $or: [{ buyerId: user._id }, { sellerId: user._id }] }),
+    Withdrawal.deleteMany({ userId: user._id }),
+    FraudReport.deleteMany({ userId: user._id }),
+    TrustHistory.deleteMany({ userId: user._id }),
+    User.findByIdAndDelete(user._id)
+  ]);
+
+  return sendResponse(res, 200, "User deleted");
+});
+
 const getCoupons = asyncHandler(async (req, res) => {
   const coupons = await Coupon.find().populate("sellerId buyerId", "name email trustScore").sort({ createdAt: -1 });
   return sendResponse(res, 200, "Coupons fetched", { coupons });
+});
+
+const deleteCoupon = asyncHandler(async (req, res) => {
+  const coupon = await Coupon.findById(req.params.id);
+  if (!coupon) {
+    return sendResponse(res, 404, "Coupon not found");
+  }
+
+  coupon.status = "removed";
+  await coupon.save();
+  await Revenue.deleteMany({ couponId: coupon._id });
+  await Transaction.deleteMany({ couponId: coupon._id, paymentStatus: "created" });
+  return sendResponse(res, 200, "Coupon removed", { coupon });
 });
 
 const getFailedCoupons = asyncHandler(async (req, res) => {
@@ -104,8 +163,21 @@ const getTransactions = asyncHandler(async (req, res) => {
 });
 
 const getPayments = asyncHandler(async (req, res) => {
-  const transactions = await Transaction.find().sort({ createdAt: -1 });
+  const transactions = await Transaction.find()
+    .populate("buyerId sellerId couponId", "name email title platformName")
+    .sort({ createdAt: -1 });
   return sendResponse(res, 200, "Payments fetched", { payments: transactions });
+});
+
+const deletePayment = asyncHandler(async (req, res) => {
+  const payment = await Transaction.findByIdAndDelete(req.params.id);
+  if (!payment) {
+    return sendResponse(res, 404, "Payment not found");
+  }
+
+  await Revenue.deleteMany({ transactionId: payment._id });
+
+  return sendResponse(res, 200, "Payment deleted");
 });
 
 const getDisputes = asyncHandler(async (req, res) => {
@@ -212,6 +284,14 @@ const rejectWithdrawal = asyncHandler(async (req, res) => {
   return sendResponse(res, 200, "Withdrawal rejected", { withdrawal });
 });
 
+const deleteWithdrawal = asyncHandler(async (req, res) => {
+  const withdrawal = await Withdrawal.findByIdAndDelete(req.params.id);
+  if (!withdrawal) {
+    return sendResponse(res, 404, "Withdrawal not found");
+  }
+  return sendResponse(res, 200, "Withdrawal deleted");
+});
+
 const getTrustHistory = asyncHandler(async (req, res) => {
   const history = await TrustHistory.find().populate("userId", "name email").sort({ createdAt: -1 });
   return sendResponse(res, 200, "Trust history fetched", { history });
@@ -241,17 +321,22 @@ const updateSettings = asyncHandler(async (req, res) => {
 module.exports = {
   getDashboard,
   getUsers,
+  createUser,
   banUser,
   unbanUser,
+  deleteUser,
   getCoupons,
+  deleteCoupon,
   getFailedCoupons,
   getTransactions,
   getPayments,
+  deletePayment,
   getDisputes,
   resolveDispute,
   getWithdrawals,
   approveWithdrawal,
   rejectWithdrawal,
+  deleteWithdrawal,
   getTrustHistory,
   getFraudReports,
   getRevenue,

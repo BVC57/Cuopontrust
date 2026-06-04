@@ -30,3 +30,370 @@ body {
     linear-gradient(90deg, rgba(99, 102, 241, 0.06) 1px, transparent 1px);
   background-size: 22px 22px;
 }
+
+.lux-card {
+  transition:
+    transform 220ms ease,
+    box-shadow 220ms ease,
+    border-color 220ms ease,
+    background-color 220ms ease;
+}
+
+.lux-card:hover {
+  transform: translateY(-6px) scale(1.01);
+  box-shadow: 0 26px 60px rgba(15, 23, 42, 0.1);
+}
+
+.hero-phone {
+  transition: box-shadow 280ms ease;
+}
+
+.hero-phone:hover {
+  box-shadow: 0 40px 90px rgba(15, 23, 42, 0.28);
+}
+
+.floating-coupon {
+  transition: transform 260ms ease, box-shadow 260ms ease;
+  animation: floatCard 5.8s ease-in-out infinite;
+  will-change: transform;
+}
+
+.floating-coupon:hover {
+  transform: scale(1.08) rotate(0deg) !important;
+  box-shadow: 0 30px 70px rgba(15, 23, 42, 0.16);
+}
+
+.floating-coupon:nth-child(2n) {
+  animation-duration: 6.6s;
+}
+
+.floating-coupon:nth-child(3n) {
+  animation-duration: 7.2s;
+}
+
+.shine-surface {
+  position: relative;
+  overflow: hidden;
+}
+
+.shine-surface::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 20%, rgba(255, 255, 255, 0.35) 50%, transparent 80%);
+  transform: translateX(-120%);
+  transition: transform 480ms ease;
+  pointer-events: none;
+}
+
+.shine-surface:hover::after {
+  transform: translateX(120%);
+}
+
+@keyframes floatCard {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.admin-shell {
+  height: 100vh;
+  min-height: 100vh;
+  overflow: hidden;
+  background-attachment: scroll;
+  position: relative;
+}
+
+.admin-shell-frame {
+  height: 100vh;
+  display: grid;
+  grid-template-columns: 270px minmax(0, 1fr);
+  gap: 24px;
+  max-width: 1500px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.admin-theme-dark {
+  --admin-bg: #08101f;
+  --admin-bg-soft: #0d1527;
+  --admin-panel: rgba(18, 26, 46, 0.92);
+  --admin-panel-alt: rgba(13, 21, 39, 0.96);
+  --admin-border: rgba(148, 163, 184, 0.12);
+  --admin-text: #e5eefc;
+  --admin-text-soft: #93a4c4;
+  --admin-accent: #6f4cff;
+  --admin-accent-2: #3b82f6;
+  background:
+    radial-gradient(circle at top left, rgba(111, 76, 255, 0.2), transparent 28%),
+    radial-gradient(circle at top right, rgba(59, 130, 246, 0.16), transparent 24%),
+    linear-gradient(180deg, #07101e 0%, #0a1222 100%);
+}
+
+.admin-theme-light {
+  --admin-bg: #f4f7ff;
+  --admin-bg-soft: #eef3ff;
+  --admin-panel: rgba(255, 255, 255, 0.95);
+  --admin-panel-alt: rgba(248, 250, 255, 0.98);
+  --admin-border: rgba(99, 102, 241, 0.12);
+  --admin-text: #0f172a;
+  --admin-text-soft: #64748b;
+  --admin-accent: #5b3df5;
+  --admin-accent-2: #2563eb;
+  background:
+    radial-gradient(circle at top left, rgba(111, 76, 255, 0.12), transparent 25%),
+    radial-gradient(circle at top right, rgba(59, 130, 246, 0.1), transparent 20%),
+    linear-gradient(180deg, #f7f9ff 0%, #eef3ff 100%);
+}
+
+.admin-panel {
+  background: var(--admin-panel);
+  border: 1px solid var(--admin-border);
+  box-shadow: 0 24px 70px rgba(2, 6, 23, 0.18);
+  border-radius: 28px;
+  backdrop-filter: blur(14px);
+  position: static !important;
+}
+
+.admin-sidebar {
+  height: calc(100vh - 48px);
+  overflow: auto;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02)),
+    var(--admin-panel);
+  box-shadow:
+    0 30px 80px rgba(2, 6, 23, 0.24),
+    inset 0 1px 0 rgba(255,255,255,0.04);
+  scrollbar-width: thin;
+  scrollbar-color: #5b3df5 transparent;
+}
+
+.admin-sidebar::-webkit-scrollbar {
+  width: 10px;
+}
+
+.admin-sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-sidebar::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #6f4cff, #5b3df5);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.admin-sidebar-column {
+  height: 100%;
+  min-height: 0;
+}
+
+.admin-main-column {
+  min-height: 0;
+  height: calc(100vh - 48px);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 24px;
+}
+
+.admin-content-scroll {
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(111, 76, 255, 0.55) transparent;
+}
+
+.admin-content-scroll::-webkit-scrollbar {
+  width: 10px;
+}
+
+.admin-content-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-content-scroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(111, 76, 255, 0.9), rgba(59, 130, 246, 0.8));
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.admin-header-card {
+  overflow: hidden;
+  box-shadow:
+    0 28px 80px rgba(2, 6, 23, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  background:
+    linear-gradient(135deg, rgba(111, 76, 255, 0.08), transparent 30%),
+    linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02)),
+    var(--admin-panel);
+  flex-shrink: 0;
+}
+
+.admin-header-glow {
+  position: absolute;
+  inset: -40% auto auto 35%;
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(111, 76, 255, 0.22), transparent 65%);
+  pointer-events: none;
+  filter: blur(12px);
+}
+
+.admin-theme-light .admin-header-glow {
+  background: radial-gradient(circle, rgba(91, 61, 245, 0.16), transparent 65%);
+}
+
+.admin-heading {
+  color: var(--admin-text);
+}
+
+.admin-body {
+  color: var(--admin-text);
+}
+
+.admin-muted {
+  color: var(--admin-text-soft);
+}
+
+.admin-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  color: var(--admin-text-soft);
+  font-size: 0.92rem;
+  font-weight: 700;
+  transition: background-color 180ms ease, color 180ms ease, transform 180ms ease;
+  border: 1px solid transparent;
+}
+
+.admin-nav-link:hover {
+  background: rgba(111, 76, 255, 0.12);
+  border-color: rgba(111, 76, 255, 0.14);
+  color: var(--admin-text);
+  transform: translateX(2px);
+}
+
+.admin-nav-link-active {
+  background: linear-gradient(90deg, var(--admin-accent), #7c3aed);
+  color: white;
+  box-shadow: 0 16px 34px rgba(111, 76, 255, 0.32);
+}
+
+.admin-theme-toggle,
+.admin-action-button,
+.admin-danger-button,
+.admin-secondary-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 14px;
+  padding: 10px 14px;
+  font-size: 0.9rem;
+  font-weight: 800;
+  transition: transform 180ms ease, opacity 180ms ease, background-color 180ms ease;
+}
+
+.admin-theme-toggle {
+  color: var(--admin-text);
+  background: linear-gradient(180deg, rgba(111, 76, 255, 0.16), rgba(111, 76, 255, 0.08));
+  border: 1px solid rgba(111, 76, 255, 0.2);
+}
+
+.admin-action-button {
+  color: white;
+  background: linear-gradient(90deg, var(--admin-accent), #7c3aed);
+}
+
+.admin-secondary-button {
+  color: var(--admin-text);
+  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+  border: 1px solid var(--admin-border);
+}
+
+.admin-danger-button {
+  color: white;
+  background: linear-gradient(90deg, #ef4444, #f97316);
+}
+
+.admin-theme-toggle:hover,
+.admin-action-button:hover,
+.admin-danger-button:hover,
+.admin-secondary-button:hover {
+  transform: translateY(-1px);
+}
+
+.admin-table-head {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.admin-theme-light .admin-table-head {
+  background: rgba(99, 102, 241, 0.04);
+}
+
+.admin-table-row {
+  border-top: 1px solid var(--admin-border);
+}
+
+.admin-table-row:hover {
+  background: rgba(111, 76, 255, 0.06);
+}
+
+.admin-metric-card {
+  background: var(--admin-panel);
+  border: 1px solid var(--admin-border);
+  border-radius: 24px;
+  padding: 20px;
+  box-shadow: 0 20px 60px rgba(2, 6, 23, 0.16);
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(12px);
+}
+
+.admin-metric-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--admin-accent), transparent);
+  opacity: 0.9;
+}
+
+@media (max-width: 1279px) {
+  .admin-shell {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+
+  .admin-shell-frame {
+    height: auto;
+    grid-template-columns: 1fr;
+  }
+
+  .admin-sidebar,
+  .admin-main-column {
+    height: auto;
+  }
+
+  .admin-content-scroll {
+    overflow: visible;
+    padding-right: 0;
+  }
+}
+
+.admin-metric-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--admin-accent), transparent);
+  opacity: 0.9;
+}

@@ -34,7 +34,11 @@ const requestWithdrawal = asyncHandler(async (req, res) => {
 const getWalletHistory = asyncHandler(async (req, res) => {
   const transactions = await Transaction.find({
     $or: [{ buyerId: req.user._id }, { sellerId: req.user._id }]
-  }).sort({ createdAt: -1 });
+  })
+    .populate("couponId", "title platformName categories")
+    .populate("buyerId", "name email")
+    .populate("sellerId", "name email")
+    .sort({ createdAt: -1 });
   const withdrawals = await Withdrawal.find({ userId: req.user._id }).sort({ createdAt: -1 });
   return sendResponse(res, 200, "Wallet history fetched", { transactions, withdrawals });
 });

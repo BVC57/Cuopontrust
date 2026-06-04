@@ -4,12 +4,39 @@ const Revenue = require("../models/Revenue");
 const User = require("../models/User");
 const asyncHandler = require("../utils/asyncHandler");
 const { sendResponse } = require("../utils/apiResponse");
-const { createOrder, verifySignature, capturePayment } = require("../services/razorpay.service");
+const { createOrder, verifySignature, verifyWebhookSignature, capturePayment } = require("../services/razorpay.service");
 const { creditPending, releasePendingToAvailable } = require("../services/wallet.service");
 const { createNotification } = require("../services/notification.service");
 const { revealCouponCodeForTransaction } = require("./coupon.controller");
+const { sendEmail } = require("../services/email.service");
 
 const getCommissionPercent = 10;
+
+const sendCouponDeliveryEmail = async ({ email, coupon, transaction }) => {
+  if (!email || !coupon) {
+    return;
+  }
+
+  const categoryLine = (coupon.categories || []).length ? `<p><strong>Categories:</strong> ${coupon.categories.join(", ")}</p>` : "";
+  await sendEmail({
+    to: email,
+    subject: `Your CouponX coupon is ready: ${coupon.platformName}`,
+    text: `Your payment is confirmed.\n\nTitle: ${coupon.title}\nPlatform: ${coupon.platformName}\nRedeem code: ${coupon.couponCode}\nExpiry: ${new Date(coupon.expiryDate).toLocaleDateString("en-IN")}\nTerms: ${coupon.terms || "No terms provided"}\nTransaction: ${transaction._id}`,
+    html: `
+      <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
+        <h2>Your CouponX purchase is confirmed</h2>
+        <p>Your coupon is now ready to use.</p>
+        <p><strong>Title:</strong> ${coupon.title}</p>
+        <p><strong>Platform:</strong> ${coupon.platformName}</p>
+        ${categoryLine}
+        <p><strong>Redeem code:</strong> ${coupon.couponCode}</p>
+        <p><strong>Expiry:</strong> ${new Date(coupon.expiryDate).toLocaleDateString("en-IN")}</p>
+        <p><strong>Terms:</strong> ${coupon.terms || "No terms provided"}</p>
+        <p><strong>Transaction ID:</strong> ${transaction._id}</p>
+      </div>
+    `
+  });
+};
 
 const createOrderController = asyncHandler(async (req, res) => {
   const coupon = await Coupon.findById(req.body.couponId).populate("sellerId");
@@ -60,6 +87,10 @@ const verifyAuthorized = asyncHandler(async (req, res) => {
     return sendResponse(res, 404, "Transaction not found");
   }
 
+  if (["authorized", "captured"].includes(transaction.paymentStatus)) {
+    return sendResponse(res, 200, "Payment already verified", { transaction });
+  }
+
   const { razorpayOrderId, razorpayPaymentId, razorpaySignature } = req.body;
   if (!razorpayOrderId || !razorpayPaymentId || !razorpaySignature) {
     return sendResponse(res, 400, "Razorpay verification payload is required");
@@ -86,7 +117,9 @@ const verifyAuthorized = asyncHandler(async (req, res) => {
   transaction.gatewaySignature = razorpaySignature;
   await transaction.save();
 
-  await creditPending(transaction.sellerId, transaction.sellerAmount, transaction.currency);
+  if (transaction.escrowStatus === "holding") {
+    await creditPending(transaction.sellerId, transaction.sellerAmount, transaction.currency);
+  }
 
   return sendResponse(res, 200, "Payment authorized", { transaction });
 });
@@ -97,8 +130,13 @@ const revealCoupon = asyncHandler(async (req, res) => {
     return sendResponse(res, 404, "Transaction not found");
   }
 
-  if (transaction.paymentStatus !== "authorized") {
-    return sendResponse(res, 400, "Payment not authorized");
+  if (transaction.paymentStatus !== "captured") {
+    return sendResponse(res, 400, "Payment must be captured before coupon reveal");
+  }
+
+  if (transaction.couponRevealedAt) {
+    const revealedCoupon = await revealCouponCodeForTransaction(transaction.couponId._id);
+    return sendResponse(res, 200, "Coupon already revealed", { transaction, revealedCoupon });
   }
 
   transaction.transactionStatus = "coupon_revealed";
@@ -110,6 +148,13 @@ const revealCoupon = asyncHandler(async (req, res) => {
   await coupon.save();
 
   const revealedCoupon = await revealCouponCodeForTransaction(coupon._id);
+  const buyer = await User.findById(req.user._id);
+  await sendCouponDeliveryEmail({
+    email: buyer?.email,
+    coupon: revealedCoupon,
+    transaction
+  });
+
   return sendResponse(res, 200, "Coupon revealed", { transaction, revealedCoupon });
 });
 
@@ -119,45 +164,59 @@ const confirmWorked = asyncHandler(async (req, res) => {
     return sendResponse(res, 404, "Transaction not found");
   }
 
-  await capturePayment({
-    paymentId: transaction.gatewayPaymentId,
-    amount: transaction.amount,
-    currency: transaction.currency
-  });
+  if (transaction.paymentStatus === "captured" && transaction.transactionStatus === "completed") {
+    return sendResponse(res, 200, "Payment already captured and completed", { transaction });
+  }
+
+  if (transaction.paymentStatus !== "captured") {
+    await capturePayment({
+      paymentId: transaction.gatewayPaymentId,
+      amount: transaction.amount,
+      currency: transaction.currency
+    });
+  }
 
   transaction.paymentStatus = "captured";
-  transaction.escrowStatus = "released";
-  transaction.transactionStatus = "completed";
-  transaction.releasedAt = new Date();
-  await transaction.save();
+  if (transaction.transactionStatus !== "completed") {
+    transaction.escrowStatus = "released";
+    transaction.transactionStatus = "completed";
+    transaction.releasedAt = new Date();
+    await transaction.save();
 
-  const coupon = await Coupon.findById(transaction.couponId._id);
-  coupon.status = "sold";
-  await coupon.save();
+    const coupon = await Coupon.findById(transaction.couponId._id);
+    coupon.status = "sold";
+    coupon.buyerId = req.user._id;
+    await coupon.save();
 
-  await releasePendingToAvailable(transaction.sellerId, transaction.sellerAmount, transaction.currency);
+    await releasePendingToAvailable(transaction.sellerId, transaction.sellerAmount, transaction.currency);
 
-  await Revenue.create({
-    transactionId: transaction._id,
-    couponId: transaction.couponId._id,
-    buyerId: transaction.buyerId,
-    sellerId: transaction.sellerId,
-    grossAmount: transaction.amount,
-    platformFee: transaction.platformFee,
-    sellerAmount: transaction.sellerAmount,
-    currency: transaction.currency
-  });
+    const revenueExists = await Revenue.findOne({ transactionId: transaction._id });
+    if (!revenueExists) {
+      await Revenue.create({
+        transactionId: transaction._id,
+        couponId: transaction.couponId._id,
+        buyerId: transaction.buyerId,
+        sellerId: transaction.sellerId,
+        grossAmount: transaction.amount,
+        platformFee: transaction.platformFee,
+        sellerAmount: transaction.sellerAmount,
+        currency: transaction.currency
+      });
+    }
 
-  await createNotification({
-    userId: transaction.sellerId,
-    type: "payment_released",
-    title: "Coupon sale completed",
-    message: `Payment of ${transaction.sellerAmount} ${transaction.currency} has been released to your wallet.`
-  });
+    await createNotification({
+      userId: transaction.sellerId,
+      type: "payment_released",
+      title: "Coupon sale completed",
+      message: `Payment of ${transaction.sellerAmount} ${transaction.currency} has been released to your wallet.`
+    });
 
-  await User.findByIdAndUpdate(transaction.buyerId, {
-    $inc: { totalPurchases: transaction.amount }
-  });
+    await User.findByIdAndUpdate(transaction.buyerId, {
+      $inc: { totalPurchases: transaction.amount }
+    });
+  } else {
+    await transaction.save();
+  }
 
   return sendResponse(res, 200, "Payment captured and sale completed", { transaction });
 });
@@ -175,7 +234,46 @@ const reportNotWorking = asyncHandler(async (req, res) => {
   return sendResponse(res, 200, "Transaction marked as disputed", { transaction });
 });
 
-const webhookHandler = asyncHandler(async (req, res) => sendResponse(res, 200, "Webhook received"));
+const webhookHandler = asyncHandler(async (req, res) => {
+  const signature = req.headers["x-razorpay-signature"];
+  const rawBody = req.rawBody || JSON.stringify(req.body || {});
+
+  if (!verifyWebhookSignature({ payload: rawBody, signature })) {
+    return sendResponse(res, 400, "Invalid webhook signature");
+  }
+
+  const event = req.body?.event;
+  const paymentEntity = req.body?.payload?.payment?.entity;
+  const orderEntity = req.body?.payload?.order?.entity;
+  const orderId = paymentEntity?.order_id || orderEntity?.id;
+  const paymentId = paymentEntity?.id;
+
+  if (!orderId) {
+    return sendResponse(res, 200, "Webhook ignored");
+  }
+
+  const transaction = await Transaction.findOne({ gatewayOrderId: orderId });
+  if (!transaction) {
+    return sendResponse(res, 200, "Transaction not found for webhook");
+  }
+
+  if (paymentId) {
+    transaction.gatewayPaymentId = paymentId;
+  }
+
+  if (event === "payment.authorized") {
+    transaction.paymentStatus = transaction.paymentStatus === "captured" ? "captured" : "authorized";
+  } else if (event === "payment.captured") {
+    transaction.paymentStatus = "captured";
+  } else if (event === "payment.failed") {
+    transaction.paymentStatus = "failed";
+    transaction.transactionStatus = "cancelled";
+  }
+
+  await transaction.save();
+
+  return sendResponse(res, 200, "Webhook received", { ok: true });
+});
 
 module.exports = {
   createOrderController,

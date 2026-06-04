@@ -1,7 +1,7 @@
 {
-  "/sell/page": "app/sell/page.js",
-  "/admin/dashboard/page": "app/admin/dashboard/page.js",
   "/page": "app/page.js",
-  "/marketplace/page": "app/marketplace/page.js",
-  "/login/page": "app/login/page.js"
+  "/withdraw/page": "app/withdraw/page.js",
+  "/settings/page": "app/settings/page.js",
+  "/admin/dashboard/page": "app/admin/dashboard/page.js",
+  "/admin/users/page": "app/admin/users/page.js"
 }

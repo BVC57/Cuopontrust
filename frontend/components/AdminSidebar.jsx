@@ -2,39 +2,56 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import {
+  AlertTriangle,
+  BadgeDollarSign,
+  BarChart3,
+  CreditCard,
+  FileWarning,
+  Gauge,
+  ReceiptText,
+  Settings,
+  ShieldAlert,
+  Ticket,
+  Users,
+  Wallet
+} from "lucide-react";
 
 const links = [
-  ["Dashboard", "/admin/dashboard"],
-  ["Users", "/admin/users"],
-  ["Coupons", "/admin/coupons"],
-  ["AI Failed", "/admin/ai-failed"],
-  ["Transactions", "/admin/transactions"],
-  ["Payments", "/admin/payments"],
-  ["Disputes", "/admin/disputes"],
-  ["Withdrawals", "/admin/withdrawals"],
-  ["Fraud Reports", "/admin/fraud-reports"],
-  ["Revenue", "/admin/revenue"],
-  ["Settings", "/admin/settings"]
+  { label: "Dashboard", href: "/admin/dashboard", icon: Gauge },
+  { label: "Users", href: "/admin/users", icon: Users },
+  { label: "Coupons", href: "/admin/coupons", icon: Ticket },
+  { label: "AI Failed", href: "/admin/ai-failed", icon: AlertTriangle },
+  { label: "Transactions", href: "/admin/transactions", icon: ReceiptText },
+  { label: "Payments", href: "/admin/payments", icon: CreditCard },
+  { label: "Disputes", href: "/admin/disputes", icon: ShieldAlert },
+  { label: "Withdrawals", href: "/admin/withdrawals", icon: Wallet },
+  { label: "Fraud Reports", href: "/admin/fraud-reports", icon: FileWarning },
+  { label: "Revenue", href: "/admin/revenue", icon: BarChart3 },
+  { label: "Settings", href: "/admin/settings", icon: Settings }
 ];
 
 export default function AdminSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="rounded-[28px] border border-white/60 bg-white p-4 shadow-soft">
-      <p className="px-3 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Super Admin</p>
-      <div className="mt-3 space-y-1">
-        {links.map(([label, href]) => {
+    <aside className="admin-panel admin-sidebar p-4">
+      <div className="px-3 py-2">
+        <p className="text-xs font-black uppercase tracking-[0.28em] admin-muted">CouponX</p>
+        <h2 className="mt-2 font-display text-base font-black uppercase tracking-[0.2em] admin-heading">Admin Dashboard</h2>
+      </div>
+
+      <div className="mt-5 space-y-1.5">
+        {links.map(({ label, href, icon: Icon }) => {
           const active = pathname === href;
           return (
             <Link
               key={href}
               href={href}
-              className={`block rounded-2xl px-4 py-3 text-sm font-medium transition ${
-                active ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-50"
-              }`}
+              className={`admin-nav-link ${active ? "admin-nav-link-active" : ""}`}
             >
-              {label}
+              <Icon className="h-4 w-4" />
+              <span>{label}</span>
             </Link>
           );
         })}

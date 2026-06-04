@@ -20,10 +20,10 @@ export const loadRazorpayScript = () =>
     document.body.appendChild(script);
   });
 
-export const openRazorpayCheckout = async ({ order, user, onSuccess }) => {
+export const openRazorpayCheckout = async ({ order, user, onSuccess, key }) => {
   const Razorpay = await loadRazorpayScript();
   const instance = new Razorpay({
-    key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "",
+    key: key || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "",
     amount: order.amount,
     currency: order.currency,
     name: "CouponTrust",

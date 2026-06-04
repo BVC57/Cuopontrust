@@ -1,27 +1,35 @@
-export default function DataTable({ columns, rows }) {
+export default function DataTable({ columns, rows, emptyText = "No records found." }) {
   return (
-    <div className="overflow-hidden rounded-[28px] border border-white/60 bg-white shadow-soft">
+    <div className="admin-panel overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-slate-100">
-          <thead className="bg-slate-50">
+        <table className="min-w-full">
+          <thead className="admin-table-head">
             <tr>
               {columns.map((column) => (
-                <th key={column.key} className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                <th key={column.key} className="px-4 py-4 text-left text-xs font-black uppercase tracking-[0.18em] admin-muted">
                   {column.label}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
-            {rows.map((row, index) => (
-              <tr key={row._id || index}>
-                {columns.map((column) => (
-                  <td key={column.key} className="px-4 py-4 text-sm text-slate-700">
-                    {column.render ? column.render(row) : row[column.key]}
-                  </td>
-                ))}
+          <tbody>
+            {rows.length ? (
+              rows.map((row, index) => (
+                <tr key={row._id || index} className="admin-table-row">
+                  {columns.map((column) => (
+                    <td key={column.key} className="px-4 py-4 text-sm admin-body">
+                      {column.render ? column.render(row) : row[column.key]}
+                    </td>
+                  ))}
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={columns.length} className="px-4 py-10 text-center text-sm admin-muted">
+                  {emptyText}
+                </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>

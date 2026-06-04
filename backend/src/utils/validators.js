@@ -19,7 +19,9 @@ const sellCouponValidator = [
   body("currency").trim().notEmpty().withMessage("Currency is required"),
   body("country").trim().notEmpty().withMessage("Country is required"),
   body("expiryDate").isISO8601().withMessage("Expiry date must be valid"),
-  body("terms").optional().isString()
+  body("terms").optional().isString(),
+  body("categories").optional(),
+  body("customCategory").optional().isString()
 ];
 
 const disputeValidator = [

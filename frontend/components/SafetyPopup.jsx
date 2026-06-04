@@ -1,37 +1,107 @@
 "use client";
 
+import { useState } from "react";
+import { ShieldCheck, Check, ArrowRight, ShieldAlert } from "lucide-react";
+
 export default function SafetyPopup({ open, onContinue }) {
+  const [agreed, setAgreed] = useState(false);
+
   if (!open) {
     return null;
   }
 
   const rules = [
-    "Upload only original and valid coupons.",
-    "Screenshot proof is compulsory.",
-    "Coupon code, expiry date and amount must match the screenshot.",
-    "Fake coupons reduce your trust score.",
-    "Trust score below 60 will ban your account.",
-    "Duplicate, expired, and edited screenshots are not allowed."
+    { text: "Upload only original and valid coupons.", type: "info" },
+    { text: "Screenshot proof is compulsory.", type: "info" },
+    { text: "Coupon code, expiry date and amount must match the screenshot.", type: "critical" },
+    { text: "Fake coupons reduce your trust score.", type: "warning" },
+    { text: "Trust score below 60 will ban your account.", type: "critical" },
+    { text: "Duplicate, expired, and edited screenshots are not allowed.", type: "critical" }
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 px-4">
-      <div className="w-full max-w-xl rounded-[28px] bg-white p-8 shadow-soft">
-        <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-secondary">Coupon Safety Rules</p>
-        <h3 className="mt-3 text-2xl font-semibold text-slate-900">Review before you list a coupon</h3>
-        <div className="mt-6 space-y-3 text-sm text-slate-600">
-          {rules.map((rule) => (
-            <p key={rule} className="rounded-2xl bg-slate-50 px-4 py-3">
-              {rule}
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4 backdrop-blur-sm">
+      <div className="w-full max-w-xl rounded-[32px] bg-white p-6 sm:p-10 shadow-[0_20px_60px_rgba(0,0,0,0.15)] border border-slate-100 flex flex-col transition-all duration-300">
+        
+        {/* Header Icon & Title */}
+        <div className="flex items-center gap-3.5 border-b border-slate-100 pb-5">
+          <div className="h-12 w-12 bg-emerald-50 rounded-2xl flex items-center justify-center text-[#16a34a] flex-shrink-0">
+            <ShieldCheck className="h-6 w-6" />
+          </div>
+          <div>
+            <p className="text-xs font-extrabold uppercase tracking-widest text-[#16a34a]">
+              Coupon Safety Rules
             </p>
-          ))}
+            <h3 className="mt-1 text-2xl font-black text-slate-900 leading-tight">
+              Review before you list a coupon
+            </h3>
+          </div>
         </div>
+
+        {/* Rules List */}
+        <div className="mt-6 space-y-3">
+          {rules.map((rule, index) => {
+            const isCritical = rule.type === "critical";
+            const isWarning = rule.type === "warning";
+            return (
+              <div 
+                key={index} 
+                className={`flex items-start gap-3 rounded-2xl p-4 border transition-all duration-300 hover:scale-[1.01] ${
+                  isCritical 
+                    ? "bg-[#fffafb] border-[#fcecee] text-slate-800" 
+                    : isWarning 
+                      ? "bg-[#fffefa] border-[#fbf2e2] text-slate-800" 
+                      : "bg-[#fcfdfc] border-[#ecf5f0] text-slate-800"
+                }`}
+              >
+                <div className={`h-6 w-6 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold ${
+                  isCritical 
+                    ? "bg-red-100 text-red-600" 
+                    : isWarning 
+                      ? "bg-amber-100 text-amber-600" 
+                      : "bg-emerald-100 text-emerald-600"
+                }`}>
+                  {isCritical ? (
+                    <ShieldAlert className="h-3.5 w-3.5" />
+                  ) : (
+                    <Check className="h-3.5 w-3.5" />
+                  )}
+                </div>
+                <p className="text-xs font-bold leading-relaxed">
+                  {rule.text}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Checkbox agreement */}
+        <label className="mt-6 flex items-start gap-3 cursor-pointer group select-none">
+          <input
+            type="checkbox"
+            checked={agreed}
+            onChange={(e) => setAgreed(e.target.checked)}
+            className="mt-0.5 h-4.5 w-4.5 rounded border-slate-300 text-[#16a34a] focus:ring-emerald-500/20 focus:ring-offset-0 accent-[#16a34a] transition-all cursor-pointer flex-shrink-0"
+          />
+          <span className="text-xs font-semibold text-slate-500 group-hover:text-slate-700 leading-normal transition-all">
+            I have read and agree to all the safety rules. I understand that listing invalid, expired, or manipulated coupons will decrease my trust score and can result in account suspension.
+          </span>
+        </label>
+
+        {/* Submit Action Button */}
         <button
           onClick={onContinue}
-          className="mt-8 w-full rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white"
+          disabled={!agreed}
+          className={`mt-6 w-full rounded-[16px] py-4 font-bold text-base transition-all flex items-center justify-center gap-2 ${
+            agreed 
+              ? "bg-[#16a34a] hover:bg-[#15803d] text-white shadow-[0_8px_20px_rgba(22,163,74,0.18)] active:scale-[0.99] cursor-pointer" 
+              : "bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200"
+          }`}
         >
           I Understand & Continue
+          <ArrowRight className="h-4.5 w-4.5" />
         </button>
+
       </div>
     </div>
   );

@@ -10,6 +10,44 @@ const { applyTrustPenalty } = require("../services/trustScore.service");
 const { createFraudReport } = require("../services/fraud.service");
 const { createNotification } = require("../services/notification.service");
 
+const normalizeCategory = (value) =>
+  String(value || "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLowerCase()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+
+const parseCategories = (input, customCategory) => {
+  let parsed = [];
+
+  if (Array.isArray(input)) {
+    parsed = input;
+  } else if (typeof input === "string" && input.trim()) {
+    try {
+      const jsonParsed = JSON.parse(input);
+      parsed = Array.isArray(jsonParsed) ? jsonParsed : [input];
+    } catch {
+      parsed = input.split(",");
+    }
+  }
+
+  if (customCategory) {
+    parsed.push(customCategory);
+  }
+
+  return [...new Set(parsed.map(normalizeCategory).filter(Boolean))];
+};
+
+const calculateDiscountPercent = (coupon) => {
+  const couponAmount = Number(coupon.couponAmount || 0);
+  const sellingPrice = Number(coupon.sellingPrice || 0);
+  if (!couponAmount || !sellingPrice) {
+    return 0;
+  }
+
+  return Math.max(0, Math.min(100, Math.round(((couponAmount - sellingPrice) / couponAmount) * 100)));
+};
+
 const listCoupons = asyncHandler(async (req, res) => {
   const filters = { status: "available", aiVerificationStatus: "matched" };
   if (req.query.country) {
@@ -18,9 +56,44 @@ const listCoupons = asyncHandler(async (req, res) => {
   if (req.query.platformName) {
     filters.platformName = new RegExp(req.query.platformName, "i");
   }
-  const coupons = await Coupon.find(filters)
+
+  if (req.query.search) {
+    const searchRegex = new RegExp(req.query.search, "i");
+    filters.$or = [
+      { platformName: searchRegex },
+      { title: searchRegex },
+      { categories: searchRegex }
+    ];
+  }
+
+  if (req.query.category && req.query.category !== "All Categories") {
+    filters.categories = normalizeCategory(req.query.category);
+  }
+
+  let query = Coupon.find(filters)
     .populate("sellerId", "name trustScore country")
     .sort({ createdAt: -1 });
+
+  const sort = req.query.sort || "latest";
+  if (sort === "popular") {
+    query = query.sort({ views: -1, createdAt: -1 });
+  } else if (sort === "ending_soon") {
+    query = query.sort({ expiryDate: 1, createdAt: -1 });
+  }
+
+  let coupons = await query;
+
+  const minPrice = Number(req.query.minPrice || 0);
+  const maxPrice = Number(req.query.maxPrice || 0);
+  const minDiscount = Number(req.query.minDiscount || 0);
+
+  coupons = coupons.filter((coupon) => {
+    const withinMinPrice = !minPrice || Number(coupon.sellingPrice) >= minPrice;
+    const withinMaxPrice = !maxPrice || Number(coupon.sellingPrice) <= maxPrice;
+    const discountPass = !minDiscount || calculateDiscountPercent(coupon) >= minDiscount;
+    return withinMinPrice && withinMaxPrice && discountPass;
+  });
+
   return sendResponse(res, 200, "Coupons fetched", { coupons });
 });
 
@@ -90,6 +163,7 @@ const sellCoupon = asyncHandler(async (req, res) => {
     sellerId: req.user._id,
     platformName: req.body.platformName,
     title: req.body.title,
+    categories: parseCategories(req.body.categories, req.body.customCategory),
     couponCodeEncrypted: encryptCouponCode(req.body.couponCode),
     couponCodeHash,
     couponAmount: Number(req.body.couponAmount),
@@ -197,8 +271,10 @@ const revealCouponCodeForTransaction = async (couponId) => {
   }
   return {
     couponId: coupon._id,
+    title: coupon.title,
     couponCode: decryptCouponCode(coupon.couponCodeEncrypted),
     platformName: coupon.platformName,
+    categories: coupon.categories || [],
     expiryDate: coupon.expiryDate,
     terms: coupon.terms
   };
