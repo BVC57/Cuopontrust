@@ -1,0 +1,641 @@
+Create a full MERN stack project named CouponTrust.
+
+PROJECT OVERVIEW:
+CouponTrust is a global coupon buy and sell marketplace where one normal user can both buy coupons and sell coupons, similar to Instagram where a user can view reels and also create reels.
+
+Users can:
+1. Register/login using mobile OTP with Twilio.
+2. Browse verified coupons.
+3. Buy coupons using Stripe.
+4. Sell unused coupons.
+5. Upload coupon screenshot proof.
+6. Get AI verification before coupon submission.
+7. Track bought coupons, sold coupons, wallet, disputes, trust score.
+8. Receive mobile SMS notifications.
+
+Admin can:
+1. Manage all users.
+2. Review all coupons.
+3. View AI verification results.
+4. Approve/reject coupons.
+5. Handle payments.
+6. Handle escrow transactions.
+7. Resolve disputes.
+8. Refund buyers.
+9. Release seller payments.
+10. Ban users when trust score is below 60.
+
+TECH STACK:
+Frontend:
+- React.js + Vite
+- Tailwind CSS
+- Redux Toolkit
+- React Router
+- Axios
+- React Toastify
+- Stripe React SDK
+
+Backend:
+- Node.js
+- Express.js
+- MongoDB
+- Mongoose
+- JWT
+- Multer local storage for screenshot upload
+- Stripe PaymentIntent manual capture
+- Twilio Verify API for OTP login
+- Twilio SMS notification
+- AI/OCR coupon screenshot verification
+
+Storage:
+- Use local backend storage only.
+- Store uploaded coupon screenshots inside:
+  backend/uploads/coupons
+- Save file path in MongoDB.
+
+Payment:
+- Use Stripe only.
+- Create PaymentIntent.
+- Use manual capture for escrow-style flow.
+- Capture payment only after buyer confirms coupon worked or admin resolves dispute in seller favor.
+
+Authentication:
+- Mobile number OTP login using Twilio Verify.
+- Flow:
+  POST /api/auth/send-otp
+  POST /api/auth/verify-otp
+- After successful OTP verification, create/find user and return JWT token.
+
+USER FLOW:
+1. User opens app.
+2. User enters mobile number.
+3. Backend sends OTP using Twilio.
+4. User verifies OTP.
+5. User enters dashboard.
+6. User can browse coupons.
+7. User can buy coupon.
+8. User can also sell coupon from Sell tab.
+
+SELL COUPON FLOW:
+1. User clicks Sell Coupon.
+2. Show safety popup:
+   - Upload only real coupon.
+   - Screenshot proof is compulsory.
+   - Fake coupon reduces trust score.
+   - Trust below 60 causes account ban.
+   - Duplicate/expired/edited coupons are not allowed.
+3. User accepts rules.
+4. User fills coupon form:
+   - Platform name
+   - Coupon title
+   - Coupon code
+   - Coupon value
+   - Selling price
+   - Expiry date
+   - Terms and conditions
+   - Coupon screenshot proof
+5. Backend stores screenshot locally using Multer.
+6. Backend sends screenshot to AI/OCR service.
+7. AI extracts:
+   - Platform
+   - Coupon code
+   - Value
+   - Expiry date
+   - Terms
+8. Backend compares user input with AI extracted data.
+9. If match score >= 85:
+   - Save coupon as pending_admin_review.
+10. If match score < 85:
+   - Do not create public coupon.
+   - Return error: Coupon details do not match screenshot.
+   - Add suspicious upload count.
+11. If user has 3 AI mismatches in 30 days:
+   - Deduct 10 trust score.
+12. If trust score below 60:
+   - accountStatus = banned.
+
+BUY COUPON FLOW:
+1. User opens coupon marketplace feed.
+2. User filters by platform, country, discount, price, expiry.
+3. User opens coupon details.
+4. User clicks Buy Now.
+5. Backend creates transaction.
+6. Backend creates Stripe PaymentIntent with capture_method manual.
+7. Frontend completes Stripe payment.
+8. Backend verifies payment authorization.
+9. Coupon code is revealed to buyer.
+10. Transaction status becomes coupon_revealed.
+11. Buyer clicks Coupon Worked.
+12. Backend captures Stripe payment.
+13. Platform commission deducted.
+14. Seller wallet credited.
+15. Transaction completed.
+
+DISPUTE FLOW:
+1. Buyer clicks Coupon Not Working.
+2. Buyer adds reason and proof.
+3. Transaction status becomes disputed.
+4. Admin reviews:
+   - Buyer complaint
+   - Seller details
+   - Coupon screenshot
+   - AI extracted data
+   - Payment data
+5. Admin decision:
+   A. Refund buyer:
+      - Cancel/refund payment
+      - Deduct seller trust score
+      - Mark coupon fake if confirmed
+   B. Release payment to seller:
+      - Capture Stripe payment
+      - Credit seller wallet
+6. Fake coupon confirmed:
+   - Deduct 20 trust score.
+   - Increase fakeCouponCount.
+   - If trustScore < 60, ban account.
+
+TRUST SCORE RULES:
+Every user starts with:
+trustScore = 100
+accountStatus = active
+
+Rules:
+- AI mismatch once: warning only
+- 3 AI mismatches in 30 days: -10
+- Fake coupon confirmed: -20
+- Duplicate coupon: -15
+- Expired coupon uploaded: -10
+- Buyer refund due to seller fault: -20
+- Trust score 100-80 = Excellent
+- Trust score 79-60 = Warning
+- Trust score below 60 = Banned
+
+Banned users cannot:
+- Sell coupons
+- Buy coupons
+- Withdraw wallet balance
+- Create disputes except support ticket
+
+REVENUE MODEL:
+1. Platform commission per sale:
+   - 10% default commission.
+   Example:
+   Coupon selling price = ₹100
+   Platform commission = ₹10
+   Seller earning = ₹90
+
+2. Featured coupon listing:
+   Sellers can pay to promote coupons.
+
+3. Seller subscription:
+   Free plan: 10 active listings/month
+   Pro plan: unlimited listings + featured boost
+
+4. Withdrawal fee:
+   Small fee on seller wallet withdrawal.
+
+5. Brand partnership:
+   Brands can list official coupon campaigns.
+
+DATABASE MODELS:
+
+User:
+- name
+- mobile
+- email optional
+- role: user/admin
+- avatar
+- country
+- currency
+- trustScore
+- accountStatus: active/warning/banned
+- suspiciousUploadCount
+- fakeCouponCount
+- disputeCount
+- walletBalance
+- pendingBalance
+- totalSales
+- totalPurchases
+- isMobileVerified
+- createdAt
+- updatedAt
+
+Coupon:
+- sellerId
+- buyerId
+- platform
+- title
+- couponCodeEncrypted
+- originalValue
+- sellingPrice
+- discountPercent
+- currency
+- country
+- expiryDate
+- terms
+- proofImagePath
+- aiExtractedData
+- aiMatchScore
+- aiVerificationStatus: pending/matched/mismatch/manual_review
+- status: ai_checking/ai_failed/pending_admin_review/approved/available/sold/rejected/expired
+- adminNote
+- views
+- createdAt
+- updatedAt
+
+Transaction:
+- buyerId
+- sellerId
+- couponId
+- amount
+- platformFee
+- sellerAmount
+- currency
+- stripePaymentIntentId
+- stripeClientSecret
+- paymentStatus: created/authorized/captured/refunded/cancelled
+- escrowStatus: holding/released/refunded/disputed
+- transactionStatus: created/coupon_revealed/completed/disputed/refunded/cancelled
+- releasedAt
+- createdAt
+- updatedAt
+
+Dispute:
+- transactionId
+- buyerId
+- sellerId
+- couponId
+- reason
+- proofImagePath
+- status: open/under_review/resolved/rejected
+- resolution: refund_buyer/release_seller/partial_refund
+- adminNote
+- createdAt
+- updatedAt
+
+Notification:
+- userId
+- type
+- title
+- message
+- isRead
+- smsSent
+- createdAt
+
+AdminSetting:
+- commissionPercent
+- minimumTrustScore
+- aiMatchThreshold
+- maxFreeListings
+- withdrawalFee
+
+BACKEND FOLDER STRUCTURE:
+backend/
+  src/
+    config/
+      db.js
+      stripe.js
+      twilio.js
+      multer.js
+    models/
+      User.js
+      Coupon.js
+      Transaction.js
+      Dispute.js
+      Notification.js
+      AdminSetting.js
+    routes/
+      auth.routes.js
+      coupon.routes.js
+      payment.routes.js
+      dispute.routes.js
+      admin.routes.js
+      wallet.routes.js
+    controllers/
+      auth.controller.js
+      coupon.controller.js
+      payment.controller.js
+      dispute.controller.js
+      admin.controller.js
+      wallet.controller.js
+    middleware/
+      auth.middleware.js
+      admin.middleware.js
+      banned.middleware.js
+      error.middleware.js
+      upload.middleware.js
+    services/
+      twilio.service.js
+      stripe.service.js
+      aiCoupon.service.js
+      trustScore.service.js
+      notification.service.js
+      encryption.service.js
+    utils/
+      apiResponse.js
+      asyncHandler.js
+      validators.js
+    server.js
+  uploads/
+    coupons/
+    disputes/
+  .env.example
+  package.json
+
+FRONTEND FOLDER STRUCTURE:
+frontend/
+  src/
+    components/
+      Navbar.jsx
+      BottomNav.jsx
+      CouponCard.jsx
+      SafetyPopup.jsx
+      TrustScoreCard.jsx
+      ProtectedRoute.jsx
+      AdminRoute.jsx
+      LoadingButton.jsx
+    pages/
+      Home.jsx
+      LoginOtp.jsx
+      Marketplace.jsx
+      CouponDetails.jsx
+      SellCoupon.jsx
+      Checkout.jsx
+      Dashboard.jsx
+      Wallet.jsx
+      Orders.jsx
+      Profile.jsx
+      DisputeCreate.jsx
+    pages/admin/
+      AdminDashboard.jsx
+      ManageUsers.jsx
+      ManageCoupons.jsx
+      CouponReview.jsx
+      Transactions.jsx
+      Disputes.jsx
+      Payments.jsx
+      TrustScores.jsx
+      Settings.jsx
+    redux/
+      store.js
+      authSlice.js
+      couponSlice.js
+      paymentSlice.js
+      adminSlice.js
+    services/
+      api.js
+      stripe.js
+    App.jsx
+    main.jsx
+  .env.example
+  package.json
+
+BACKEND API ROUTES:
+
+AUTH:
+POST /api/auth/send-otp
+POST /api/auth/verify-otp
+GET /api/auth/me
+POST /api/auth/logout
+
+COUPONS:
+POST /api/coupons/sell
+GET /api/coupons
+GET /api/coupons/:id
+GET /api/coupons/my/listings
+GET /api/coupons/my/purchases
+PUT /api/coupons/:id/update
+DELETE /api/coupons/:id
+
+PAYMENTS:
+POST /api/payments/create-intent
+POST /api/payments/verify-authorized
+POST /api/payments/reveal-coupon/:transactionId
+POST /api/payments/confirm-worked/:transactionId
+POST /api/payments/report-not-working/:transactionId
+
+DISPUTES:
+POST /api/disputes/create/:transactionId
+GET /api/disputes/my
+GET /api/disputes/:id
+
+WALLET:
+GET /api/wallet
+POST /api/wallet/withdraw-request
+GET /api/wallet/history
+
+ADMIN:
+GET /api/admin/dashboard
+GET /api/admin/users
+PUT /api/admin/users/:id/block
+PUT /api/admin/users/:id/unblock
+GET /api/admin/coupons/pending
+GET /api/admin/coupons/:id
+PUT /api/admin/coupons/:id/approve
+PUT /api/admin/coupons/:id/reject
+GET /api/admin/transactions
+GET /api/admin/disputes
+PUT /api/admin/disputes/:id/resolve
+GET /api/admin/trust-scores
+PUT /api/admin/settings
+GET /api/admin/payments
+GET /api/admin/payouts
+PUT /api/admin/payouts/:id/approve
+PUT /api/admin/payouts/:id/reject
+
+FRONTEND UI DESIGN:
+Use modern UI similar to Stripe, Airbnb, Instagram, Coinbase, and Razorpay.
+
+Theme:
+- Primary: Indigo #4F46E5
+- Secondary: Purple #7C3AED
+- Success: Green #10B981
+- Warning: Amber #F59E0B
+- Danger: Red #EF4444
+- Background: #F8FAFC
+- Dark: #0F172A
+
+User Web Pages:
+1. Landing page
+2. OTP login page
+3. Coupon marketplace feed
+4. Coupon details page
+5. Sell coupon page
+6. AI checking screen
+7. Checkout page
+8. User dashboard
+9. Wallet page
+10. Bought coupons page
+11. Sold coupons page
+12. Dispute page
+13. Profile page
+
+Admin Pages:
+1. Admin dashboard
+2. Users management
+3. Coupon approval page
+4. AI verification review page
+5. Transactions page
+6. Payments page
+7. Dispute management
+8. Trust score management
+9. Payout management
+10. Settings page
+
+SELL COUPON UI:
+- First show safety popup.
+- Then multi-step form:
+  Step 1: Coupon details
+  Step 2: Upload screenshot
+  Step 3: AI verification progress
+  Step 4: Success or mismatch error
+
+AI verification progress UI:
+Show:
+- Uploading screenshot
+- Extracting coupon details
+- Matching form data
+- Generating trust score result
+- Sending to admin review
+
+ADMIN COUPON REVIEW UI:
+Create 3-column layout:
+Column 1: User submitted data
+Column 2: Uploaded screenshot
+Column 3: AI extracted data and match score
+
+Buttons:
+- Approve coupon
+- Reject coupon
+- Deduct trust score
+- Ban user
+- Request more proof
+
+PAYMENT ESCROW LOGIC:
+Use Stripe PaymentIntent manual capture.
+When buyer buys coupon:
+1. Create PaymentIntent with capture_method manual.
+2. Confirm payment on frontend.
+3. Backend checks status.
+4. If authorized, reveal coupon.
+5. If buyer confirms coupon worked, capture PaymentIntent.
+6. Credit seller wallet after platform commission.
+7. If disputed, do not capture until admin decision.
+8. If admin refunds buyer, cancel/refund PaymentIntent.
+
+LOCAL FILE STORAGE:
+Use Multer diskStorage.
+Save coupon screenshots:
+uploads/coupons/{userId}-{timestamp}.jpg
+Save dispute screenshots:
+uploads/disputes/{userId}-{timestamp}.jpg
+Serve uploads folder statically:
+app.use('/uploads', express.static('uploads'))
+
+SECURITY REQUIREMENTS:
+- JWT auth
+- Rate limiting
+- Helmet
+- CORS config
+- Input validation
+- Password not required for OTP users
+- Encrypt coupon codes using AES
+- Never show coupon code before payment authorization
+- Banned user middleware
+- Admin role middleware
+- File type validation for images only
+- Max upload size 5MB
+- Sanitize all inputs
+
+AI COUPON CHECK SERVICE:
+Create service aiCoupon.service.js.
+For now implement mock AI function that can later be replaced with OpenAI Vision / Google Vision / AWS Textract.
+
+Function:
+verifyCouponWithAI({ imagePath, userInput })
+
+Return:
+{
+  extractedData: {
+    platform,
+    couponCode,
+    originalValue,
+    expiryDate,
+    terms
+  },
+  matchScore,
+  status
+}
+
+Comparison:
+- Platform match: 20 points
+- Coupon code match: 35 points
+- Value match: 20 points
+- Expiry date match: 20 points
+- Terms partial match: 5 points
+Total: 100
+Pass if >= 85
+
+TWILIO:
+Create:
+sendOtp(mobile)
+verifyOtp(mobile, code)
+sendSmsNotification(mobile, message)
+
+Use Twilio Verify for OTP login.
+Use Twilio SMS for notification:
+- Coupon submitted
+- Coupon approved
+- Coupon rejected
+- Coupon sold
+- Payment released
+- Dispute created
+- Account warning
+- Account banned
+
+ENV FILE:
+Backend .env.example:
+PORT=5000
+MONGO_URI=
+JWT_SECRET=
+CLIENT_URL=http://localhost:5173
+
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+
+TWILIO_ACCOUNT_SID=
+TWILIO_AUTH_TOKEN=
+TWILIO_VERIFY_SERVICE_SID=
+TWILIO_PHONE_NUMBER=
+
+COUPON_ENCRYPTION_SECRET=32_character_secret_key
+AI_PROVIDER=mock
+
+Frontend .env.example:
+VITE_API_URL=http://localhost:5000/api
+VITE_UPLOAD_URL=http://localhost:5000/uploads
+VITE_STRIPE_PUBLIC_KEY=
+
+README:
+Create complete README with:
+1. Project overview
+2. Features
+3. Setup backend
+4. Setup frontend
+5. Environment variables
+6. Run project
+7. API documentation
+8. User flow
+9. Admin flow
+10. Payment escrow flow
+11. Trust score rules
+12. Deployment steps
+
+IMPORTANT:
+Generate complete runnable code.
+Do not skip files.
+Use clean architecture.
+Add comments in important logic.
+Create seed admin user script.
+Use responsive Tailwind design.
+Make UI attractive and modern.

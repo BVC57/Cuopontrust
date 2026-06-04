@@ -1,0 +1,26 @@
+import { Manrope, Space_Grotesk } from "next/font/google";
+import "./../styles/globals.css";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
+import Providers from "./providers";
+import RouteChrome from "../components/RouteChrome";
+
+const manrope = Manrope({ subsets: ["latin"], variable: "--font-manrope" });
+const spaceGrotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-space-grotesk" });
+
+export const metadata = {
+  title: "CouponTrust",
+  description: "AI-powered coupon marketplace with trust scoring and escrow payments"
+};
+
+export default function RootLayout({ children }) {
+  return (
+    <html lang="en" className={`${manrope.variable} ${spaceGrotesk.variable}`}>
+      <body>
+        <Providers>
+          <RouteChrome>{children}</RouteChrome>
+        </Providers>
+      </body>
+    </html>
+  );
+}

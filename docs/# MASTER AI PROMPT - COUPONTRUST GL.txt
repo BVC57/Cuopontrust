@@ -1,0 +1,882 @@
+# MASTER AI PROMPT - COUPONTRUST GLOBAL COUPON MARKETPLACE
+
+Create a complete production-ready MERN Stack application called **CouponTrust**.
+
+## PROJECT VISION
+
+CouponTrust is a global AI-powered coupon marketplace where users can buy and sell unused coupons.
+
+Unlike traditional coupon marketplaces:
+
+* No manual coupon approval.
+* AI verification is the approval system.
+* AI verifies coupon screenshots and compares them with user-entered data.
+* If AI verification passes, the coupon is instantly listed.
+* If AI verification fails, the coupon is rejected automatically.
+* Trust score system protects buyers from fraud.
+* Stripe escrow-style payment system protects buyers and sellers.
+
+The system should support millions of users globally.
+
+---
+
+# CORE BUSINESS MODEL
+
+Every user can:
+
+* Buy coupons
+* Sell coupons
+* Earn money from unused coupons
+* Receive payments
+* Build trust score
+
+No separate seller role.
+
+Single user account = buyer + seller.
+
+Instagram Example:
+
+Instagram:
+
+* View reels
+* Create reels
+
+CouponTrust:
+
+* Buy coupons
+* Sell coupons
+
+---
+
+# TECHNOLOGY STACK
+
+Frontend:
+
+* React.js
+* Vite
+* Tailwind CSS
+* Redux Toolkit
+* React Router
+* Axios
+* React Query
+* Stripe React SDK
+
+Backend:
+
+* Node.js
+* Express.js
+* MongoDB
+* Mongoose
+* JWT Authentication
+* Multer Local Storage
+* Stripe PaymentIntent API
+* Twilio Verify API
+* Twilio SMS Notifications
+
+AI Layer:
+
+* OCR Extraction Service
+* AI Coupon Verification Service
+* AI Fraud Detection Service
+
+Storage:
+
+* Local storage only
+
+uploads/
+├── coupons/
+├── disputes/
+├── profile/
+└── reports/
+
+---
+
+# AUTHENTICATION SYSTEM
+
+Use Twilio OTP login only.
+
+Flow:
+
+User enters mobile number
+↓
+Twilio sends OTP
+↓
+User enters OTP
+↓
+Backend verifies OTP
+↓
+User account created automatically
+↓
+JWT generated
+↓
+Login success
+
+APIs:
+
+POST /api/auth/send-otp
+
+POST /api/auth/verify-otp
+
+GET /api/auth/me
+
+POST /api/auth/logout
+
+---
+
+# USER TRUST SCORE SYSTEM
+
+Every user starts with:
+
+trustScore = 100
+
+status = active
+
+Trust Levels:
+
+100-80 = Excellent
+
+79-60 = Warning
+
+Below 60 = Banned
+
+Rules:
+
+AI mismatch 3 times:
+-10
+
+Duplicate coupon:
+-15
+
+Expired coupon:
+-10
+
+Fake coupon confirmed:
+-20
+
+Refund caused by seller:
+-20
+
+Trust score below 60:
+Auto Ban
+
+Banned users cannot:
+
+Sell coupons
+
+Buy coupons
+
+Withdraw money
+
+Create new listings
+
+---
+
+# SELL COUPON FLOW
+
+Step 1
+
+Show mandatory popup:
+
+⚠ Coupon Safety Rules
+
+Only upload real coupons.
+
+Screenshot proof is compulsory.
+
+Fake coupons reduce trust score.
+
+Trust score below 60 causes account ban.
+
+Duplicate and expired coupons are prohibited.
+
+User must click:
+
+"I Understand & Continue"
+
+---
+
+Step 2
+
+Coupon Form
+
+Fields:
+
+Platform Name
+
+Coupon Title
+
+Coupon Code
+
+Coupon Value
+
+Selling Price
+
+Expiry Date
+
+Terms & Conditions
+
+Country
+
+Currency
+
+Screenshot Upload
+
+---
+
+Step 3
+
+AI Verification
+
+System stores screenshot locally.
+
+AI extracts:
+
+Platform
+
+Coupon Code
+
+Coupon Value
+
+Expiry Date
+
+Terms
+
+AI compares extracted data with form data.
+
+Scoring:
+
+Platform Match = 20
+
+Coupon Match = 35
+
+Value Match = 20
+
+Expiry Match = 20
+
+Terms Match = 5
+
+Total = 100
+
+Pass if:
+
+Match Score >= 85
+
+---
+
+If Pass:
+
+Coupon status = available
+
+Coupon instantly listed
+
+Visible on marketplace
+
+Visible on user profile
+
+No admin approval required
+
+---
+
+If Fail:
+
+Coupon status = ai_failed
+
+Coupon not listed
+
+Show:
+
+Coupon details do not match screenshot
+
+Increase suspicious count
+
+---
+
+# AI FRAUD DETECTION
+
+AI automatically checks:
+
+Duplicate coupon uploads
+
+Repeated coupon uploads
+
+Manipulated screenshots
+
+Expired coupons
+
+Suspicious coupon values
+
+Repeated mismatches
+
+High-risk users
+
+Generate risk score:
+
+Low
+
+Medium
+
+High
+
+Critical
+
+Critical users automatically flagged.
+
+---
+
+# COUPON MARKETPLACE
+
+Create Instagram-style feed.
+
+Features:
+
+Infinite scroll
+
+Real-time updates
+
+Search
+
+Filters
+
+Country filter
+
+Platform filter
+
+Discount filter
+
+Expiry filter
+
+Price filter
+
+Trending coupons
+
+Recommended coupons
+
+Top sellers
+
+Coupon Card Design:
+
+Brand Logo
+
+Discount Badge
+
+Original Price
+
+Selling Price
+
+Seller Trust Score
+
+Country Flag
+
+Expiry Countdown
+
+Buy Button
+
+Save Button
+
+Share Button
+
+Report Button
+
+---
+
+# BUY COUPON FLOW
+
+User clicks Buy
+
+↓
+
+System creates transaction
+
+↓
+
+Stripe PaymentIntent created
+
+↓
+
+capture_method = manual
+
+↓
+
+User pays
+
+↓
+
+Payment authorized
+
+↓
+
+Coupon code revealed
+
+↓
+
+Transaction status = coupon_revealed
+
+↓
+
+Buyer uses coupon
+
+↓
+
+Buyer clicks:
+
+Coupon Worked
+
+OR
+
+Coupon Not Working
+
+---
+
+# PAYMENT ESCROW FLOW
+
+Coupon Worked:
+
+↓
+
+Stripe captures payment
+
+↓
+
+Platform commission deducted
+
+↓
+
+Seller wallet credited
+
+↓
+
+Transaction completed
+
+---
+
+Coupon Not Working:
+
+↓
+
+Dispute created
+
+↓
+
+Payment held
+
+↓
+
+Admin reviews
+
+↓
+
+Decision
+
+Refund Buyer
+
+OR
+
+Release Seller Payment
+
+---
+
+# WALLET SYSTEM
+
+User Wallet:
+
+Available Balance
+
+Pending Balance
+
+Withdrawable Balance
+
+Total Earnings
+
+Total Purchases
+
+Withdrawal Requests
+
+Transaction History
+
+---
+
+# DISPUTE SYSTEM
+
+Buyer can submit:
+
+Reason
+
+Screenshot Proof
+
+Comment
+
+Status:
+
+Open
+
+Under Review
+
+Resolved
+
+Rejected
+
+Admin Actions:
+
+Refund Buyer
+
+Release Seller Payment
+
+Partial Refund
+
+Ban Seller
+
+Deduct Trust Score
+
+---
+
+# NOTIFICATION SYSTEM
+
+Use Twilio SMS.
+
+Send notifications:
+
+OTP Sent
+
+Coupon Listed
+
+Coupon Sold
+
+Payment Released
+
+Withdrawal Approved
+
+Dispute Created
+
+Trust Warning
+
+Account Banned
+
+---
+
+# ADMIN PANEL
+
+Admin does NOT approve coupons.
+
+Admin manages:
+
+Users
+
+Transactions
+
+Disputes
+
+Trust Scores
+
+Wallet Withdrawals
+
+Revenue
+
+Reports
+
+Fraud Analytics
+
+Settings
+
+---
+
+# ADMIN DASHBOARD
+
+KPI Cards:
+
+Total Users
+
+Total Coupons
+
+Active Coupons
+
+Total Transactions
+
+Revenue
+
+Pending Escrow
+
+Disputes
+
+Banned Users
+
+Charts:
+
+Revenue Growth
+
+Coupon Sales
+
+Country Analytics
+
+Fraud Analytics
+
+Trust Score Analytics
+
+---
+
+# DATABASE MODELS
+
+User
+
+Coupon
+
+Transaction
+
+Dispute
+
+Wallet
+
+Notification
+
+AdminSetting
+
+FraudReport
+
+TrustHistory
+
+All schemas must be production ready.
+
+Use indexes.
+
+Use timestamps.
+
+Use validation.
+
+---
+
+# LOCAL STORAGE
+
+Use Multer.
+
+Coupon Upload:
+
+uploads/coupons
+
+Dispute Upload:
+
+uploads/disputes
+
+Profile Images:
+
+uploads/profile
+
+Serve static files:
+
+/uploads
+
+---
+
+# SECURITY
+
+JWT Authentication
+
+Helmet
+
+Rate Limiting
+
+Input Validation
+
+AES Coupon Encryption
+
+CORS
+
+File Validation
+
+Max Upload 5MB
+
+Role Middleware
+
+Ban Middleware
+
+Prevent Coupon Access Before Payment
+
+Secure Stripe Webhooks
+
+---
+
+# FRONTEND PAGES
+
+Landing Page
+
+OTP Login
+
+Marketplace Feed
+
+Coupon Details
+
+Sell Coupon
+
+Wallet
+
+Orders
+
+Profile
+
+Notifications
+
+Trust Score
+
+Disputes
+
+Settings
+
+---
+
+# ADMIN PAGES
+
+Dashboard
+
+Users
+
+Transactions
+
+Disputes
+
+Revenue
+
+Wallet Withdrawals
+
+Trust Scores
+
+Fraud Analytics
+
+Reports
+
+Settings
+
+---
+
+# UI DESIGN STYLE
+
+Use inspiration from:
+
+Stripe
+
+Airbnb
+
+Coinbase
+
+Instagram
+
+Revolut
+
+Notion
+
+Linear
+
+Razorpay
+
+Modern SaaS
+
+Modern Fintech
+
+Use:
+
+Glassmorphism
+
+Soft Shadows
+
+Smooth Animations
+
+Dark Mode
+
+Light Mode
+
+Mobile First
+
+Responsive Design
+
+Premium Experience
+
+---
+
+# REVENUE MODEL
+
+1. Platform Commission
+
+Default 10%
+
+Example:
+
+Coupon sold = ₹100
+
+Platform = ₹10
+
+Seller = ₹90
+
+2. Featured Listings
+
+3. Seller Subscription
+
+Free Plan
+
+Pro Plan
+
+Unlimited Plan
+
+4. Withdrawal Fees
+
+5. Brand Partnerships
+
+6. Sponsored Coupons
+
+7. Premium Visibility Packages
+
+---
+
+# PROJECT OUTPUT
+
+Generate:
+
+Complete Backend
+
+Complete Frontend
+
+Database Models
+
+Controllers
+
+Routes
+
+Services
+
+Middleware
+
+Redux
+
+Stripe Integration
+
+Twilio Integration
+
+AI Verification Service
+
+Fraud Detection Service
+
+Wallet System
+
+Trust Score System
+
+Dispute System
+
+Admin Dashboard
+
+Responsive UI
+
+README
+
+Environment Files
+
+Seed Scripts
+
+API Documentation
+
+Deployment Guide
+
+Testing Setup
+
+Production Ready Architecture
+
+Generate ALL code files.
+
+Do not skip any file.
+
+Return complete runnable project.
