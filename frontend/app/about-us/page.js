@@ -53,7 +53,7 @@ export default function AboutUsPage() {
             {values.map(([title, text]) => (
               <div key={title} className="rounded-[22px] bg-[#f8fff9] p-5">
                 <p className="text-lg font-black text-slate-900">{title}</p>
-                <p className="mt-2 text-sm leading-7 text-slate-500">{text}</p>
+                <p className="mt-2 text-sm leading-7 text-slate-500">{text} Chauhan bhadresh</p>
               </div>
             ))}
           </div>
