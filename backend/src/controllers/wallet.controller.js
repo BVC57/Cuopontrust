@@ -4,6 +4,7 @@ const Transaction = require("../models/Transaction");
 const asyncHandler = require("../utils/asyncHandler");
 const { sendResponse } = require("../utils/apiResponse");
 const { ensureWallet, debitAvailable } = require("../services/wallet.service");
+const { createNotification, createAdminNotification } = require("../services/notification.service");
 
 const getWallet = asyncHandler(async (req, res) => {
   const wallet = await ensureWallet(req.user._id, req.user.currency);
@@ -26,6 +27,23 @@ const requestWithdrawal = asyncHandler(async (req, res) => {
     currency: req.user.currency,
     bankDetails: req.body.bankDetails,
     upiId: req.body.upiId
+  });
+
+  await createNotification({
+    userId: req.user._id,
+    type: "withdrawal_requested",
+    title: "Withdrawal requested",
+    message: `Your withdrawal request for ${amount} ${req.user.currency} is pending review.`,
+    link: "/withdraw",
+    metadata: { withdrawalId: withdrawal._id }
+  });
+
+  await createAdminNotification({
+    type: "withdrawal_requested",
+    title: "New withdrawal request",
+    message: `${req.user.email} requested ${amount} ${req.user.currency} withdrawal.`,
+    link: "/admin/withdrawals",
+    metadata: { withdrawalId: withdrawal._id, userId: req.user._id }
   });
 
   return sendResponse(res, 201, "Withdrawal request created", { withdrawal, wallet });

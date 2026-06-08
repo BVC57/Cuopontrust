@@ -1,6 +1,7 @@
 const { validationResult } = require("express-validator");
 const Coupon = require("../models/Coupon");
 const FraudReport = require("../models/FraudReport");
+const Transaction = require("../models/Transaction");
 const User = require("../models/User");
 const asyncHandler = require("../utils/asyncHandler");
 const { sendResponse } = require("../utils/apiResponse");
@@ -8,7 +9,8 @@ const { verifyCouponWithAI } = require("../services/aiCoupon.service");
 const { encryptCouponCode, hashCouponCode, decryptCouponCode } = require("../services/encryption.service");
 const { applyTrustPenalty } = require("../services/trustScore.service");
 const { createFraudReport } = require("../services/fraud.service");
-const { createNotification } = require("../services/notification.service");
+const { createNotification, createAdminNotification } = require("../services/notification.service");
+const { resolveBrand } = require("../constants/brandCatalog");
 
 const normalizeCategory = (value) =>
   String(value || "")
@@ -162,6 +164,8 @@ const sellCoupon = asyncHandler(async (req, res) => {
   const coupon = await Coupon.create({
     sellerId: req.user._id,
     platformName: req.body.platformName,
+    platformBrandKey: resolveBrand(req.body.platformName)?.key || "",
+    platformLogoPath: resolveBrand(req.body.platformName)?.logoPath || "",
     title: req.body.title,
     categories: parseCategories(req.body.categories, req.body.customCategory),
     couponCodeEncrypted: encryptCouponCode(req.body.couponCode),
@@ -235,7 +239,17 @@ const sellCoupon = asyncHandler(async (req, res) => {
     type: "coupon_verified",
     title: "Coupon listed successfully",
     message: "Your coupon has been successfully verified and listed.",
-    email: req.user.email
+    email: req.user.email,
+    link: "/listed-coupons",
+    metadata: { couponId: coupon._id }
+  });
+
+  await createAdminNotification({
+    type: "coupon_listed",
+    title: "New coupon listed",
+    message: `${req.user.email} listed ${coupon.title} on ${coupon.platformName}.`,
+    link: "/admin/coupons",
+    metadata: { couponId: coupon._id, sellerId: req.user._id }
   });
 
   return sendResponse(res, 201, "Coupon verified and listed", { coupon, aiResult });
@@ -247,7 +261,34 @@ const getMyListedCoupons = asyncHandler(async (req, res) => {
 });
 
 const getMyPurchasedCoupons = asyncHandler(async (req, res) => {
-  const coupons = await Coupon.find({ buyerId: req.user._id }).sort({ createdAt: -1 });
+  const purchasedTransactions = await Transaction.find({
+    buyerId: req.user._id,
+    paymentStatus: "captured",
+    transactionStatus: { $in: ["completed", "coupon_revealed"] }
+  })
+    .populate("couponId")
+    .sort({ createdAt: -1 });
+
+  const coupons = purchasedTransactions
+    .map((transaction) => {
+      if (!transaction.couponId) {
+        return null;
+      }
+
+      const coupon = transaction.couponId.toObject ? transaction.couponId.toObject() : transaction.couponId;
+      return {
+        ...coupon,
+        purchaseStatus: transaction.paymentStatus,
+        transactionStatus: transaction.transactionStatus,
+        purchasedAt: transaction.createdAt,
+        revealedCouponCode:
+          transaction.couponRevealedAt || transaction.transactionStatus === "coupon_revealed"
+            ? decryptCouponCode(coupon.couponCodeEncrypted)
+            : undefined
+      };
+    })
+    .filter(Boolean);
+
   return sendResponse(res, 200, "Purchased coupons fetched", { coupons });
 });
 

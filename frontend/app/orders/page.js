@@ -29,15 +29,29 @@ export default function OrdersPage() {
           <div className="space-y-8">
             <section className="rounded-[30px] border border-emerald-100 bg-white p-6 shadow-[0_14px_34px_rgba(15,23,42,0.05)]">
               <h2 className="text-2xl font-black text-slate-900">Purchased coupons</h2>
-              <div className="mt-6 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-                {purchased.map((coupon) => <CouponCard key={coupon._id} coupon={coupon} />)}
-              </div>
+              {purchased.length ? (
+                <div className="mt-6 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                  {purchased.map((coupon) => <CouponCard key={coupon._id} coupon={coupon} />)}
+                </div>
+              ) : (
+                <div className="mt-6 rounded-3xl border border-dashed border-emerald-200 px-6 py-10 text-center">
+                  <p className="text-xl font-black text-slate-900">No purchased coupons</p>
+                  <p className="mt-2 text-sm text-slate-500">Only coupons purchased by this account will be shown here.</p>
+                </div>
+              )}
             </section>
             <section className="rounded-[30px] border border-emerald-100 bg-white p-6 shadow-[0_14px_34px_rgba(15,23,42,0.05)]">
               <h2 className="text-2xl font-black text-slate-900">Recently listed coupons</h2>
-              <div className="mt-6 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-                {listed.map((coupon) => <CouponCard key={coupon._id} coupon={coupon} />)}
-              </div>
+              {listed.length ? (
+                <div className="mt-6 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                  {listed.map((coupon) => <CouponCard key={coupon._id} coupon={coupon} />)}
+                </div>
+              ) : (
+                <div className="mt-6 rounded-3xl border border-dashed border-emerald-200 px-6 py-10 text-center">
+                  <p className="text-xl font-black text-slate-900">No listed coupons</p>
+                  <p className="mt-2 text-sm text-slate-500">Only coupons listed by this account will be shown here.</p>
+                </div>
+              )}
             </section>
           </div>
         )}

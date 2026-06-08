@@ -17,6 +17,8 @@ const {
   getDisputes,
   resolveDispute,
   getWithdrawals,
+  getAdminNotifications,
+  markAdminNotificationRead,
   approveWithdrawal,
   rejectWithdrawal,
   deleteWithdrawal,
@@ -25,6 +27,7 @@ const {
   getRevenue,
   updateSettings
 } = require("../controllers/admin.controller");
+const { listBlogs, createBlog, updateBlog, deleteBlog } = require("../controllers/blog.controller");
 
 const router = express.Router();
 
@@ -43,6 +46,8 @@ router.get("/payments", getPayments);
 router.delete("/payments/:id", deletePayment);
 router.get("/disputes", getDisputes);
 router.put("/disputes/:id/resolve", resolveDispute);
+router.get("/notifications", getAdminNotifications);
+router.put("/notifications/:id/read", markAdminNotificationRead);
 router.get("/withdrawals", getWithdrawals);
 router.put("/withdrawals/:id/approve", approveWithdrawal);
 router.put("/withdrawals/:id/reject", rejectWithdrawal);
@@ -51,5 +56,9 @@ router.get("/trust-history", getTrustHistory);
 router.get("/fraud-reports", getFraudReports);
 router.get("/revenue", getRevenue);
 router.put("/settings", updateSettings);
+router.get("/blogs", listBlogs);
+router.post("/blogs", createBlog);
+router.put("/blogs/:id", updateBlog);
+router.delete("/blogs/:id", deleteBlog);
 
 module.exports = router;

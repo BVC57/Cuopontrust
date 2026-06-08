@@ -21,32 +21,32 @@ export default function SafetyPopup({ open, onContinue }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4 backdrop-blur-sm">
-      <div className="w-full max-w-xl rounded-[32px] bg-white p-6 sm:p-10 shadow-[0_20px_60px_rgba(0,0,0,0.15)] border border-slate-100 flex flex-col transition-all duration-300">
+      <div className="w-full max-w-xl origin-center scale-[0.92] rounded-[28px] border border-slate-100 bg-white p-5 shadow-[0_20px_60px_rgba(0,0,0,0.15)] transition-all duration-300 sm:p-8">
         
         {/* Header Icon & Title */}
-        <div className="flex items-center gap-3.5 border-b border-slate-100 pb-5">
-          <div className="h-12 w-12 bg-emerald-50 rounded-2xl flex items-center justify-center text-[#16a34a] flex-shrink-0">
-            <ShieldCheck className="h-6 w-6" />
+        <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+          <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-[#16a34a]">
+            <ShieldCheck className="h-5 w-5" />
           </div>
           <div>
             <p className="text-xs font-extrabold uppercase tracking-widest text-[#16a34a]">
               Coupon Safety Rules
             </p>
-            <h3 className="mt-1 text-2xl font-black text-slate-900 leading-tight">
+            <h3 className="mt-1 text-[2rem] font-black leading-tight text-slate-900">
               Review before you list a coupon
             </h3>
           </div>
         </div>
 
         {/* Rules List */}
-        <div className="mt-6 space-y-3">
+        <div className="mt-5 space-y-2.5">
           {rules.map((rule, index) => {
             const isCritical = rule.type === "critical";
             const isWarning = rule.type === "warning";
             return (
               <div 
                 key={index} 
-                className={`flex items-start gap-3 rounded-2xl p-4 border transition-all duration-300 hover:scale-[1.01] ${
+                className={`flex items-start gap-3 rounded-2xl border px-4 py-3 transition-all duration-300 ${
                   isCritical 
                     ? "bg-[#fffafb] border-[#fcecee] text-slate-800" 
                     : isWarning 
@@ -54,7 +54,7 @@ export default function SafetyPopup({ open, onContinue }) {
                       : "bg-[#fcfdfc] border-[#ecf5f0] text-slate-800"
                 }`}
               >
-                <div className={`h-6 w-6 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold ${
+                <div className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold ${
                   isCritical 
                     ? "bg-red-100 text-red-600" 
                     : isWarning 
@@ -67,7 +67,7 @@ export default function SafetyPopup({ open, onContinue }) {
                     <Check className="h-3.5 w-3.5" />
                   )}
                 </div>
-                <p className="text-xs font-bold leading-relaxed">
+                <p className="text-xs font-bold leading-6">
                   {rule.text}
                 </p>
               </div>
@@ -76,14 +76,14 @@ export default function SafetyPopup({ open, onContinue }) {
         </div>
 
         {/* Checkbox agreement */}
-        <label className="mt-6 flex items-start gap-3 cursor-pointer group select-none">
+        <label className="mt-5 flex cursor-pointer items-start gap-3 select-none group">
           <input
             type="checkbox"
             checked={agreed}
             onChange={(e) => setAgreed(e.target.checked)}
             className="mt-0.5 h-4.5 w-4.5 rounded border-slate-300 text-[#16a34a] focus:ring-emerald-500/20 focus:ring-offset-0 accent-[#16a34a] transition-all cursor-pointer flex-shrink-0"
           />
-          <span className="text-xs font-semibold text-slate-500 group-hover:text-slate-700 leading-normal transition-all">
+          <span className="text-xs font-semibold leading-6 text-slate-500 transition-all group-hover:text-slate-700">
             I have read and agree to all the safety rules. I understand that listing invalid, expired, or manipulated coupons will decrease my trust score and can result in account suspension.
           </span>
         </label>
@@ -92,7 +92,7 @@ export default function SafetyPopup({ open, onContinue }) {
         <button
           onClick={onContinue}
           disabled={!agreed}
-          className={`mt-6 w-full rounded-[16px] py-4 font-bold text-base transition-all flex items-center justify-center gap-2 ${
+          className={`mt-5 flex w-full items-center justify-center gap-2 rounded-[16px] py-3.5 text-base font-bold transition-all ${
             agreed 
               ? "bg-[#16a34a] hover:bg-[#15803d] text-white shadow-[0_8px_20px_rgba(22,163,74,0.18)] active:scale-[0.99] cursor-pointer" 
               : "bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200"

@@ -78,6 +78,19 @@ export default function ContactUsPage() {
           </div>
         ))}
       </section>
+
+      <section className="grid gap-6 lg:grid-cols-3">
+        {[
+          ["Response time", "Most support requests are reviewed within the same business day when order context and screenshots are included."],
+          ["What to include", "Add your registered email, order ID, payment reference, coupon title, and a short description of the issue."],
+          ["Escalation path", "Complex coupon disputes, payout holds, and policy questions can be escalated to admin review when needed."]
+        ].map(([title, text]) => (
+          <div key={title} className="rounded-[24px] border border-emerald-100 bg-white p-6 shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
+            <h2 className="text-xl font-black text-slate-950">{title}</h2>
+            <p className="mt-4 text-sm leading-7 text-slate-500">{text}</p>
+          </div>
+        ))}
+      </section>
     </InfoPageShell>
   );
 }

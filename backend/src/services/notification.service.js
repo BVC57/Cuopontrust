@@ -1,12 +1,24 @@
 const Notification = require("../models/Notification");
 const { sendEmail } = require("./email.service");
 
-const createNotification = async ({ userId, type, title, message, email }) => {
+const createNotification = async ({
+  userId = null,
+  audience = userId ? "user" : "admin",
+  type,
+  title,
+  message,
+  email,
+  link = "",
+  metadata = {}
+}) => {
   const notification = await Notification.create({
     userId,
+    audience,
     type,
     title,
     message,
+    link,
+    metadata,
     emailSent: Boolean(email)
   });
 
@@ -22,4 +34,14 @@ const createNotification = async ({ userId, type, title, message, email }) => {
   return notification;
 };
 
-module.exports = { createNotification };
+const createAdminNotification = async ({ type, title, message, link = "", metadata = {} }) =>
+  createNotification({
+    audience: "admin",
+    type,
+    title,
+    message,
+    link,
+    metadata
+  });
+
+module.exports = { createNotification, createAdminNotification };

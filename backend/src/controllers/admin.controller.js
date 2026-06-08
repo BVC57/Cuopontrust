@@ -7,11 +7,13 @@ const FraudReport = require("../models/FraudReport");
 const TrustHistory = require("../models/TrustHistory");
 const Revenue = require("../models/Revenue");
 const AdminSetting = require("../models/AdminSetting");
+const Notification = require("../models/Notification");
 const asyncHandler = require("../utils/asyncHandler");
 const { sendResponse } = require("../utils/apiResponse");
 const { capturePayment, refundPayment } = require("../services/razorpay.service");
 const { applyTrustPenalty } = require("../services/trustScore.service");
 const { releasePendingToAvailable, reversePending } = require("../services/wallet.service");
+const { createNotification } = require("../services/notification.service");
 
 const getSettings = async () =>
   (await AdminSetting.findOne()) ||
@@ -266,12 +268,40 @@ const getWithdrawals = asyncHandler(async (req, res) => {
   return sendResponse(res, 200, "Withdrawals fetched", { withdrawals });
 });
 
+const getAdminNotifications = asyncHandler(async (req, res) => {
+  const notifications = await Notification.find({ audience: "admin" }).sort({ createdAt: -1 }).limit(50);
+  const unreadCount = notifications.filter((item) => !item.isRead).length;
+  return sendResponse(res, 200, "Admin notifications fetched", { notifications, unreadCount });
+});
+
+const markAdminNotificationRead = asyncHandler(async (req, res) => {
+  const notification = await Notification.findOneAndUpdate(
+    { _id: req.params.id, audience: "admin" },
+    { isRead: true },
+    { new: true }
+  );
+  if (!notification) {
+    return sendResponse(res, 404, "Notification not found");
+  }
+  return sendResponse(res, 200, "Notification marked as read", { notification });
+});
+
 const approveWithdrawal = asyncHandler(async (req, res) => {
   const withdrawal = await Withdrawal.findByIdAndUpdate(
     req.params.id,
     { status: "approved", adminNote: req.body.adminNote },
     { new: true }
   );
+  if (withdrawal) {
+    await createNotification({
+      userId: withdrawal.userId,
+      type: "withdrawal_approved",
+      title: "Withdrawal approved",
+      message: `Your withdrawal request for ${withdrawal.amount} ${withdrawal.currency} was approved.`,
+      link: "/withdraw",
+      metadata: { withdrawalId: withdrawal._id }
+    });
+  }
   return sendResponse(res, 200, "Withdrawal approved", { withdrawal });
 });
 
@@ -281,6 +311,16 @@ const rejectWithdrawal = asyncHandler(async (req, res) => {
     { status: "rejected", adminNote: req.body.adminNote },
     { new: true }
   );
+  if (withdrawal) {
+    await createNotification({
+      userId: withdrawal.userId,
+      type: "withdrawal_rejected",
+      title: "Withdrawal rejected",
+      message: `Your withdrawal request for ${withdrawal.amount} ${withdrawal.currency} was rejected.`,
+      link: "/withdraw",
+      metadata: { withdrawalId: withdrawal._id }
+    });
+  }
   return sendResponse(res, 200, "Withdrawal rejected", { withdrawal });
 });
 
@@ -334,6 +374,8 @@ module.exports = {
   getDisputes,
   resolveDispute,
   getWithdrawals,
+  getAdminNotifications,
+  markAdminNotificationRead,
   approveWithdrawal,
   rejectWithdrawal,
   deleteWithdrawal,

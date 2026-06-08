@@ -25,6 +25,7 @@ import ProtectedRoute from "../../components/ProtectedRoute";
 import SafetyPopup from "../../components/SafetyPopup";
 import UploadBox from "../../components/UploadBox";
 import api, { extractError } from "../../lib/api";
+import { brandCatalog } from "../../lib/brandCatalog";
 
 const defaultCategories = [
   "Electronics",
@@ -265,15 +266,20 @@ export default function SellPage() {
                   <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">Platform Name</span>
                   <div className="flex items-center gap-3 bg-[#fafcfa] border border-slate-200 rounded-[16px] px-4 py-3.5 focus-within:border-[#16a34a] focus-within:ring-2 focus-within:ring-emerald-500/20 transition-all">
                     <Tag className="h-5 w-5 text-slate-400 flex-shrink-0" />
-                    <input
-                      type="text"
+                    <select
                       value={platformName}
                       onChange={(e) => setPlatformName(e.target.value)}
-                      placeholder="e.g. Swiggy, Amazon"
-                      className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-slate-800 placeholder-slate-400 outline-none"
+                      className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-slate-800 outline-none"
                       required
                       disabled={checking}
-                    />
+                    >
+                      <option value="">Select company</option>
+                      {brandCatalog.map((brand) => (
+                        <option key={brand.key} value={brand.label}>
+                          {brand.label}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </label>
 

@@ -1,34 +1,23 @@
 ﻿"use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import {
   Award,
   BadgeCheck,
   Bolt,
-  ChevronDown,
   Coins,
   FilePlus2,
   Headphones,
   IndianRupee,
   Lock,
-  Search,
   ShieldCheck,
   Star,
   Tag
 } from "lucide-react";
 import { getStoredUser } from "../lib/auth";
-
-const brands = [
-  { name: "Amazon", mark: "a", tone: "text-slate-950 bg-white" },
-  { name: "Flipkart", mark: "f", tone: "text-[#2563eb] bg-[#eef4ff]" },
-  { name: "Myntra", mark: "M", tone: "text-[#ec4899] bg-[#fff0f8]" },
-  { name: "Zomato", mark: "Z", tone: "text-[#ef4444] bg-[#fff1f2]" },
-  { name: "Swiggy", mark: "S", tone: "text-[#f97316] bg-[#fff7ed]" },
-  { name: "Netflix", mark: "N", tone: "text-[#dc2626] bg-[#fff1f2]" },
-  { name: "Spotify", mark: "S", tone: "text-[#16a34a] bg-[#effdf3]" },
-  { name: "PlayStation", mark: "PS", tone: "text-[#2563eb] bg-[#eef4ff]" }
-];
+import { brandCatalog } from "../lib/brandCatalog";
 
 const featuredBrands = ["amazon", "Flipkart", "zomato", "swiggy"];
 
@@ -178,8 +167,7 @@ export default function HomePage() {
   }, []);
 
   const earnings = useMemo(() => monthlySold * 125, [monthlySold]);
-  const gatedSellHref = user ? "/sell" : "/register";
-  const gatedBuyHref = user ? "/marketplace" : "/login";
+  const gatedBuyHref = "/marketplace";
 
   return (
     <div className="bg-[radial-gradient(circle_at_top_left,rgba(34,197,94,0.07),transparent_20%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.05),transparent_18%),linear-gradient(180deg,#ffffff_0%,#fbfffc_40%,#ffffff_100%)]">
@@ -201,35 +189,9 @@ export default function HomePage() {
               Join millions of smart buyers and sellers on India&apos;s most trusted platform to save and earn money every day.
             </p>
 
-            <div className="mt-8 rounded-[22px] border border-slate-100 bg-white p-3 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
-              <div className="flex flex-col gap-3 md:flex-row">
-                <div className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl bg-slate-50 px-4 py-3">
-                  <Search className="h-4 w-4 text-slate-400" />
-                  <input
-                    suppressHydrationWarning
-                    placeholder="Search for Amazon, Flipkart, Swiggy..."
-                    className="min-w-0 flex-1 bg-transparent text-sm outline-none"
-                  />
-                </div>
-                <button className="inline-flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-500">
-                  All Categories
-                  <ChevronDown className="ml-2 h-4 w-4" />
-                </button>
-                <Link
-                  href={gatedBuyHref}
-                  className="inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-[#16a34a] to-[#22c55e] px-6 py-3 text-sm font-bold text-white shadow-[0_10px_22px_rgba(34,197,94,0.18)]"
-                >
-                  Search
-                </Link>
-              </div>
-            </div>
-
-            <div className="mt-5 flex flex-wrap gap-3">
-              <Link href={gatedBuyHref} className="rounded-xl bg-gradient-to-r from-[#16a34a] to-[#22c55e] px-5 py-3 text-sm font-bold text-white shadow-[0_12px_24px_rgba(34,197,94,0.18)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_34px_rgba(34,197,94,0.26)]">
-                Buy Coupons
-              </Link>
-              <Link href={gatedSellHref} className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_rgba(15,23,42,0.08)]">
-                Sell Coupons
+            <div className="mt-8">
+              <Link href={gatedBuyHref} className="inline-flex rounded-xl bg-gradient-to-r from-[#16a34a] to-[#22c55e] px-6 py-3.5 text-sm font-bold text-white shadow-[0_12px_24px_rgba(34,197,94,0.18)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_34px_rgba(34,197,94,0.26)]">
+                Explore All Coupons
               </Link>
             </div>
           </div>
@@ -301,17 +263,17 @@ export default function HomePage() {
             <section className="mx-auto max-w-7xl px-4 py-7 sm:px-6">
         <div className="flex items-center justify-between">
           <p className="text-sm font-bold text-slate-900">Popular Brands</p>
-          <Link href={user ? "/marketplace" : "/login"} className="text-sm font-bold text-[#16a34a]">
+          <Link href="/marketplace" className="text-sm font-bold text-[#16a34a]">
             View All
           </Link>
         </div>
         <div className="mt-5 grid grid-cols-4 gap-3 rounded-[28px] border border-emerald-50 bg-white p-4 shadow-[0_12px_30px_rgba(15,23,42,0.04)] sm:grid-cols-8">
-          {brands.map((brand) => (
-            <div key={brand.name} className="lux-card rounded-[22px] py-3 text-center">
-              <div className={`mx-auto flex h-12 w-12 items-center justify-center rounded-full text-xs font-black shadow-[0_10px_22px_rgba(15,23,42,0.08)] ${brand.tone}`}>
-                {brand.mark}
+          {brandCatalog.map((brand) => (
+            <div key={brand.key} className="lux-card rounded-[22px] py-3 text-center">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-[0_10px_22px_rgba(15,23,42,0.08)]">
+                <Image src={brand.logoPath} alt={brand.label} width={42} height={42} className="h-9 w-9 object-contain" />
               </div>
-              <p className="mt-3 text-xs font-semibold text-slate-600">{brand.name}</p>
+              <p className="mt-3 text-xs font-semibold text-slate-600">{brand.label}</p>
             </div>
           ))}
         </div>

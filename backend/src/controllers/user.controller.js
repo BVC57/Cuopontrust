@@ -32,8 +32,23 @@ const getTrustScore = asyncHandler(async (req, res) => {
 });
 
 const getNotifications = asyncHandler(async (req, res) => {
-  const notifications = await Notification.find({ userId: req.user._id }).sort({ createdAt: -1 }).limit(50);
-  return sendResponse(res, 200, "Notifications fetched", { notifications });
+  const notifications = await Notification.find({ userId: req.user._id, audience: "user" }).sort({ createdAt: -1 }).limit(50);
+  const unreadCount = notifications.filter((item) => !item.isRead).length;
+  return sendResponse(res, 200, "Notifications fetched", { notifications, unreadCount });
+});
+
+const markNotificationRead = asyncHandler(async (req, res) => {
+  const notification = await Notification.findOneAndUpdate(
+    { _id: req.params.id, userId: req.user._id, audience: "user" },
+    { isRead: true },
+    { new: true }
+  );
+
+  if (!notification) {
+    return sendResponse(res, 404, "Notification not found");
+  }
+
+  return sendResponse(res, 200, "Notification marked as read", { notification });
 });
 
 const getWalletSnapshot = asyncHandler(async (req, res) => {
@@ -46,5 +61,6 @@ module.exports = {
   updateProfile,
   getTrustScore,
   getNotifications,
+  markNotificationRead,
   getWalletSnapshot
 };

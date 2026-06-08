@@ -119,28 +119,35 @@ export default function WithdrawPage() {
 
             <section className="rounded-[30px] border border-emerald-100 bg-white p-6 shadow-[0_14px_34px_rgba(15,23,42,0.05)]">
               <h2 className="text-2xl font-black text-slate-900">Withdrawal history</h2>
-              <div className="mt-6 overflow-x-auto">
-                <table className="min-w-full text-sm">
-                  <thead className="text-left text-slate-400">
-                    <tr>
-                      <th className="pb-3 font-semibold">Amount</th>
-                      <th className="pb-3 font-semibold">UPI / Bank</th>
-                      <th className="pb-3 font-semibold">Status</th>
-                      <th className="pb-3 font-semibold">Date</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {(history.withdrawals || []).map((item) => (
-                      <tr key={item._id}>
-                        <td className="py-4 text-slate-900">{formatMoney(item.amount, item.currency || "INR")}</td>
-                        <td className="py-4 text-slate-700">{item.upiId || item.bankDetails || "-"}</td>
-                        <td className="py-4 capitalize text-slate-500">{item.status}</td>
-                        <td className="py-4 text-slate-500">{formatDate(item.createdAt)}</td>
+              {(history.withdrawals || []).length ? (
+                <div className="mt-6 overflow-x-auto">
+                  <table className="min-w-full text-sm">
+                    <thead className="text-left text-slate-400">
+                      <tr>
+                        <th className="pb-3 font-semibold">Amount</th>
+                        <th className="pb-3 font-semibold">UPI / Bank</th>
+                        <th className="pb-3 font-semibold">Status</th>
+                        <th className="pb-3 font-semibold">Date</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {(history.withdrawals || []).map((item) => (
+                        <tr key={item._id}>
+                          <td className="py-4 text-slate-900">{formatMoney(item.amount, item.currency || "INR")}</td>
+                          <td className="py-4 text-slate-700">{item.upiId || item.bankDetails || "-"}</td>
+                          <td className="py-4 capitalize text-slate-500">{item.status}</td>
+                          <td className="py-4 text-slate-500">{formatDate(item.createdAt)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="mt-6 rounded-3xl border border-dashed border-emerald-200 px-6 py-10 text-center">
+                  <p className="text-xl font-black text-slate-900">No withdrawal requests yet</p>
+                  <p className="mt-2 text-sm text-slate-500">Withdrawal requests created by this user will appear here.</p>
+                </div>
+              )}
             </section>
           </div>
         )}

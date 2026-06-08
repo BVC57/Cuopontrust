@@ -5,6 +5,7 @@ const OTP = require("../models/OTP");
 const asyncHandler = require("../utils/asyncHandler");
 const { sendResponse } = require("../utils/apiResponse");
 const { sendOtp, verifyOtp } = require("../services/otp.service");
+const { createAdminNotification } = require("../services/notification.service");
 
 const signToken = (user) =>
   jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "7d" });
@@ -15,8 +16,13 @@ const sendOtpController = asyncHandler(async (req, res) => {
     return sendResponse(res, 422, "Validation failed", { errors: errors.array() });
   }
 
-  await sendOtp(req.body.email.toLowerCase());
-  return sendResponse(res, 200, "OTP sent successfully");
+  const email = req.body.email.toLowerCase();
+  const existingUser = await User.findOne({ email });
+  const result = await sendOtp(email, { isNewUser: !existingUser });
+  return sendResponse(res, 200, result.emailSent ? "OTP sent successfully" : "OTP generated. Email delivery failed, but you can continue.", {
+    emailSent: result.emailSent,
+    devOtp: process.env.NODE_ENV === "production" ? undefined : result.otp
+  });
 });
 
 const verifyOtpController = asyncHandler(async (req, res) => {
@@ -33,6 +39,7 @@ const verifyOtpController = asyncHandler(async (req, res) => {
   }
 
   let user = await User.findOne({ email });
+  const isNewUser = !user;
   if (!user) {
     user = await User.create({
       email,
@@ -44,6 +51,16 @@ const verifyOtpController = asyncHandler(async (req, res) => {
     user.isEmailVerified = true;
     user.lastLogin = new Date();
     await user.save();
+  }
+
+  if (isNewUser) {
+    await createAdminNotification({
+      type: "new_user_joined",
+      title: "New user joined",
+      message: `${user.email} created a new account.`,
+      link: "/admin/users",
+      metadata: { userId: user._id, email: user.email }
+    });
   }
 
   return sendResponse(res, 200, "OTP verified successfully", {

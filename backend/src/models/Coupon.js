@@ -5,6 +5,8 @@ const couponSchema = new mongoose.Schema(
     sellerId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
     buyerId: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null, index: true },
     platformName: { type: String, required: true, index: true },
+    platformBrandKey: { type: String, default: "", index: true },
+    platformLogoPath: { type: String, default: "" },
     title: { type: String, required: true },
     categories: { type: [String], default: [], index: true },
     couponCodeEncrypted: { type: String, required: true },

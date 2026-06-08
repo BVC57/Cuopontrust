@@ -1,39 +1,123 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { CircleUserRound, CreditCard, HandCoins, ListChecks, LogOut, Menu, Package, Settings, UserCircle2, X } from "lucide-react";
-import { clearSession, getStoredUser, isAuthenticated } from "../lib/auth";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { Bell, CircleUserRound, CreditCard, HandCoins, ListChecks, LogOut, Menu, Package, Settings, UserCircle2, X } from "lucide-react";
+import api from "../lib/api";
+import { AUTH_EVENT, clearSession, getStoredUser, isAuthenticated } from "../lib/auth";
 
 const navLinks = [
   { href: "/", label: "Home" },
-  { href: "/marketplace", label: "Categories" },
-  { href: "/#how-it-works", label: "How It Works" },
+  { href: "/marketplace", label: "Marketplace" },
+  { href: "/how-it-works", label: "How It Works" },
   { href: "/about-us", label: "About Us" },
   { href: "/blog", label: "Blog" }
 ];
 
+const isActiveLink = (pathname, href) => {
+  if (href === "/") {
+    return pathname === "/";
+  }
+  return pathname === href || pathname.startsWith(`${href}/`);
+};
+
 export default function Navbar() {
+  const pathname = usePathname();
+  const router = useRouter();
   const [user, setUser] = useState(null);
   const [open, setOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [notificationOpen, setNotificationOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const profileMenuRef = useRef(null);
+  const notificationMenuRef = useRef(null);
 
   useEffect(() => {
-    if (isAuthenticated()) {
-      setUser(getStoredUser());
-    } else {
-      setUser(null);
-    }
+    const syncUser = () => {
+      if (isAuthenticated()) {
+        setUser(getStoredUser());
+      } else {
+        setUser(null);
+      }
+    };
+
+    syncUser();
+    window.addEventListener(AUTH_EVENT, syncUser);
+    window.addEventListener("storage", syncUser);
+    return () => {
+      window.removeEventListener(AUTH_EVENT, syncUser);
+      window.removeEventListener("storage", syncUser);
+    };
+  }, [pathname]);
+
+  useEffect(() => {
+    const handleOutsideClick = (event) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
+        setProfileOpen(false);
+      }
+      if (notificationMenuRef.current && !notificationMenuRef.current.contains(event.target)) {
+        setNotificationOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, []);
+
+  useEffect(() => {
+    if (!user) {
+      setNotifications([]);
+      setUnreadCount(0);
+      return undefined;
+    }
+
+    let pollId;
+    const loadNotifications = async () => {
+      try {
+        const { data } = await api.get("/users/notifications");
+        setNotifications(data.notifications || []);
+        setUnreadCount(data.unreadCount || 0);
+      } catch {
+        setNotifications([]);
+        setUnreadCount(0);
+      }
+    };
+
+    loadNotifications();
+    pollId = window.setInterval(loadNotifications, 15000);
+    return () => window.clearInterval(pollId);
+  }, [user]);
 
   const profileLinks = [
     { href: user?.role === "super_admin" ? "/admin/dashboard" : "/profile", label: "My Profile", icon: UserCircle2 },
     { href: "/orders", label: "My Orders", icon: Package },
     { href: "/listed-coupons", label: "Listed Coupons", icon: ListChecks },
     { href: "/payments", label: "Payments", icon: CreditCard },
+    { href: "/notifications", label: "Notifications", icon: Bell },
     { href: "/withdraw", label: "Withdraw", icon: HandCoins },
     { href: "/settings", label: "Settings", icon: Settings }
   ];
+
+  const markNotificationRead = async (notification) => {
+    try {
+      if (!notification?.isRead) {
+        await api.put(`/users/notifications/${notification._id}/read`);
+      }
+      setNotifications((current) => current.map((item) => (item._id === notification._id ? { ...item, isRead: true } : item)));
+      setUnreadCount((current) => Math.max(0, current - (notification?.isRead ? 0 : 1)));
+      if (notification?.link) {
+        router.push(notification.link);
+      }
+    } catch {
+      if (notification?.link) {
+        router.push(notification.link);
+      }
+    } finally {
+      setNotificationOpen(false);
+    }
+  };
 
   return (
     <header className="sticky top-0 z-40 border-b border-emerald-100/80 bg-white/90 backdrop-blur-xl">
@@ -44,17 +128,18 @@ export default function Navbar() {
           </Link>
 
           <nav className="hidden items-center justify-center gap-7 lg:flex">
-            {navLinks.map((link, index) => (
-              <Link
-                key={link.label}
-                href={link.href}
-                className={`text-sm font-semibold transition ${
-                  index === 0 ? "text-[#16a34a]" : "text-slate-500 hover:text-slate-900"
-                }`}
-              >
-                {link.label}
-              </Link>
-            ))}
+            {navLinks.map((link) => {
+              const active = isActiveLink(pathname, link.href);
+              return (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  className={`text-sm font-semibold transition ${active ? "text-[#16a34a]" : "text-slate-500 hover:text-slate-900"}`}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
           </nav>
 
           <div className="hidden items-center justify-end gap-3 lg:flex">
@@ -68,51 +153,86 @@ export default function Navbar() {
                 </Link>
               </>
             ) : null}
+
             <Link href={user ? "/sell" : "/register"} className="rounded-2xl bg-gradient-to-r from-[#16a34a] to-[#22c55e] px-7 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(34,197,94,0.22)]">
               Sell Coupon
             </Link>
+
             {user ? (
-              <div className="relative">
-                <button
-                  onClick={() => setProfileOpen((current) => !current)}
-                  className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-emerald-100 bg-emerald-50 text-[#16a34a]"
-                >
-                  <CircleUserRound className="h-5 w-5" />
-                </button>
-                {profileOpen ? (
-                  <div className="absolute right-0 top-14 w-72 overflow-hidden rounded-[26px] border border-emerald-100 bg-white shadow-[0_22px_50px_rgba(15,23,42,0.12)]">
-                    <div className="bg-[linear-gradient(135deg,#f7fff8_0%,#ffffff_100%)] px-4 py-4">
-                      <p className="text-sm font-black text-slate-900">{user.name || "CouponX User"}</p>
-                      <p className="mt-1 text-xs text-slate-500">{user.email}</p>
+              <>
+                <div ref={notificationMenuRef} className="relative">
+                  <button
+                    onClick={() => setNotificationOpen((current) => !current)}
+                    className="relative inline-flex h-12 w-12 items-center justify-center rounded-full border border-emerald-100 bg-emerald-50 text-[#16a34a]"
+                  >
+                    <Bell className="h-5 w-5" />
+                    {unreadCount ? <span className="absolute right-0 top-0 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">{unreadCount}</span> : null}
+                  </button>
+                  {notificationOpen ? (
+                    <div className="absolute right-0 top-14 w-80 overflow-hidden rounded-[26px] border border-emerald-100 bg-white shadow-[0_22px_50px_rgba(15,23,42,0.12)]">
+                      <div className="border-b border-emerald-100 px-4 py-4">
+                        <p className="text-sm font-black text-slate-900">Notifications</p>
+                      </div>
+                      <div className="max-h-[360px] space-y-2 overflow-y-auto p-3">
+                        {notifications.length ? notifications.map((item) => (
+                          <button
+                            key={item._id}
+                            type="button"
+                            onClick={() => markNotificationRead(item)}
+                            className={`block w-full rounded-2xl px-4 py-3 text-left ${item.isRead ? "bg-slate-50" : "bg-emerald-50/70"}`}
+                          >
+                            <p className="text-sm font-semibold text-slate-900">{item.title}</p>
+                            <p className="mt-1 text-xs leading-6 text-slate-500">{item.message}</p>
+                            <p className="mt-1 text-[11px] font-semibold text-slate-400">{new Date(item.createdAt).toLocaleString("en-IN")}</p>
+                          </button>
+                        )) : <p className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-500">No notifications yet.</p>}
+                      </div>
                     </div>
-                    <div className="p-3">
-                      {profileLinks.map(({ href, label, icon: Icon }) => (
-                        <Link
-                          key={href}
-                          href={href}
-                          onClick={() => setProfileOpen(false)}
-                          className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium text-slate-700 hover:bg-emerald-50"
+                  ) : null}
+                </div>
+
+                <div ref={profileMenuRef} className="relative">
+                  <button
+                    onClick={() => setProfileOpen((current) => !current)}
+                    className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-emerald-100 bg-emerald-50 text-[#16a34a]"
+                  >
+                    <CircleUserRound className="h-5 w-5" />
+                  </button>
+                  {profileOpen ? (
+                    <div className="absolute right-0 top-14 w-72 overflow-hidden rounded-[26px] border border-emerald-100 bg-white shadow-[0_22px_50px_rgba(15,23,42,0.12)]">
+                      <div className="bg-[linear-gradient(135deg,#f7fff8_0%,#ffffff_100%)] px-4 py-4">
+                        <p className="text-sm font-black text-slate-900">{user.name || "CouponX User"}</p>
+                        <p className="mt-1 text-xs text-slate-500">{user.email}</p>
+                      </div>
+                      <div className="p-3">
+                        {profileLinks.map(({ href, label, icon: Icon }) => (
+                          <Link
+                            key={href}
+                            href={href}
+                            onClick={() => setProfileOpen(false)}
+                            className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium text-slate-700 hover:bg-emerald-50"
+                          >
+                            <Icon className="h-4 w-4 text-[#16a34a]" />
+                            {label}
+                          </Link>
+                        ))}
+                      </div>
+                      <div className="border-t border-emerald-100 p-3">
+                        <button
+                          onClick={() => {
+                            clearSession();
+                            router.push("/login");
+                          }}
+                          className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-medium text-rose-600 hover:bg-rose-50"
                         >
-                          <Icon className="h-4 w-4 text-[#16a34a]" />
-                          {label}
-                        </Link>
-                      ))}
+                          <LogOut className="h-4 w-4" />
+                          Logout
+                        </button>
+                      </div>
                     </div>
-                    <div className="border-t border-emerald-100 p-3">
-                    <button
-                      onClick={() => {
-                        clearSession();
-                        window.location.href = "/login";
-                      }}
-                        className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-medium text-rose-600 hover:bg-rose-50"
-                    >
-                        <LogOut className="h-4 w-4" />
-                      Logout
-                    </button>
-                    </div>
-                  </div>
-                ) : null}
-              </div>
+                  ) : null}
+                </div>
+              </>
             ) : (
               <Link href="/register" className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-emerald-100 bg-emerald-50 text-[#16a34a]">
                 <CircleUserRound className="h-5 w-5" />
@@ -135,7 +255,7 @@ export default function Navbar() {
                 <Link
                   key={link.label}
                   href={link.href}
-                  className="rounded-2xl px-4 py-3 text-sm font-medium text-slate-700 hover:bg-emerald-50"
+                  className={`rounded-2xl px-4 py-3 text-sm font-medium hover:bg-emerald-50 ${isActiveLink(pathname, link.href) ? "text-[#16a34a]" : "text-slate-700"}`}
                   onClick={() => setOpen(false)}
                 >
                   {link.label}
@@ -150,11 +270,15 @@ export default function Navbar() {
                     Sign Up
                   </Link>
                 </>
-              ) : profileLinks.map(({ href, label }) => (
-                <Link key={href} href={href} className="rounded-2xl px-4 py-3 text-sm font-medium text-slate-700 hover:bg-emerald-50" onClick={() => setOpen(false)}>
-                  {label}
-                </Link>
-              ))}
+              ) : (
+                <>
+                  {profileLinks.map(({ href, label }) => (
+                    <Link key={href} href={href} className="rounded-2xl px-4 py-3 text-sm font-medium text-slate-700 hover:bg-emerald-50" onClick={() => setOpen(false)}>
+                      {label}
+                    </Link>
+                  ))}
+                </>
+              )}
               <Link href={user ? "/sell" : "/register"} className="rounded-2xl bg-[#16a34a] px-4 py-3 text-sm font-semibold text-white" onClick={() => setOpen(false)}>
                 Sell Coupon
               </Link>
@@ -162,7 +286,7 @@ export default function Navbar() {
                 <button
                   onClick={() => {
                     clearSession();
-                    window.location.href = "/login";
+                    router.push("/login");
                   }}
                   className="rounded-2xl px-4 py-3 text-left text-sm font-medium text-rose-600 hover:bg-rose-50"
                 >

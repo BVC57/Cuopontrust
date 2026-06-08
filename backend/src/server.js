@@ -9,6 +9,7 @@ const connectDb = require("./config/db");
 const authRoutes = require("./routes/auth.routes");
 const userRoutes = require("./routes/user.routes");
 const couponRoutes = require("./routes/coupon.routes");
+const blogRoutes = require("./routes/blog.routes");
 const paymentRoutes = require("./routes/payment.routes");
 const walletRoutes = require("./routes/wallet.routes");
 const disputeRoutes = require("./routes/dispute.routes");
@@ -17,7 +18,19 @@ const errorMiddleware = require("./middleware/error.middleware");
 
 const app = express();
 
-app.use(helmet());
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    permissionsPolicy: {
+      features: {
+        accelerometer: ["self", "https://checkout.razorpay.com"],
+        gyroscope: ["self", "https://checkout.razorpay.com"],
+        magnetometer: ["self", "https://checkout.razorpay.com"],
+        payment: ["self", "https://checkout.razorpay.com"]
+      }
+    }
+  })
+);
 app.use(
   cors({
     origin: process.env.CLIENT_URL || "http://localhost:3000",
@@ -60,6 +73,7 @@ app.use((req, res, next) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/coupons", couponRoutes);
+app.use("/api/blogs", blogRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/wallet", walletRoutes);
 app.use("/api/disputes", disputeRoutes);

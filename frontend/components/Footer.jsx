@@ -22,10 +22,10 @@ export default function Footer() {
         <div>
           <p className="text-sm font-bold text-slate-900">Quick Links</p>
           <div className="mt-4 space-y-3 text-sm text-slate-500">
-            <Link href="/#how-it-works" className="block">How It Works</Link>
+            <Link href="/how-it-works" className="block">How It Works</Link>
             <Link href="/marketplace" className="block">For Buyers</Link>
             <Link href="/sell" className="block">For Sellers</Link>
-            <Link href="/marketplace" className="block">Categories</Link>
+            <Link href="/marketplace" className="block">Marketplace</Link>
           </div>
         </div>
         <div>

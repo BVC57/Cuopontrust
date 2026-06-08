@@ -6,11 +6,21 @@ const asyncHandler = require("../utils/asyncHandler");
 const { sendResponse } = require("../utils/apiResponse");
 const { createOrder, verifySignature, verifyWebhookSignature, capturePayment } = require("../services/razorpay.service");
 const { creditPending, releasePendingToAvailable } = require("../services/wallet.service");
-const { createNotification } = require("../services/notification.service");
+const { createNotification, createAdminNotification } = require("../services/notification.service");
 const { revealCouponCodeForTransaction } = require("./coupon.controller");
 const { sendEmail } = require("../services/email.service");
 
 const getCommissionPercent = 10;
+const buildRazorpayReceipt = (couponId) => `cp_${String(couponId).slice(-8)}_${Date.now().toString().slice(-10)}`;
+const isBenignCaptureError = (error) => {
+  const description = String(error?.error?.description || error?.description || error?.message || "").toLowerCase();
+  return (
+    description.includes("already captured") ||
+    description.includes("already been captured") ||
+    description.includes("cannot be captured") ||
+    description.includes("status is captured")
+  );
+};
 
 const sendCouponDeliveryEmail = async ({ email, coupon, transaction }) => {
   if (!email || !coupon) {
@@ -54,7 +64,7 @@ const createOrderController = asyncHandler(async (req, res) => {
   const order = await createOrder({
     amount: coupon.sellingPrice,
     currency: coupon.currency,
-    receipt: `coupon_${coupon._id}_${Date.now()}`,
+    receipt: buildRazorpayReceipt(coupon._id),
     notes: {
       couponId: coupon._id.toString(),
       buyerId: req.user._id.toString(),
@@ -74,10 +84,18 @@ const createOrderController = asyncHandler(async (req, res) => {
     gatewayReference: order.receipt
   });
 
+  await createAdminNotification({
+    type: "coupon_purchase_started",
+    title: "New purchase started",
+    message: `${req.user.email} started checkout for ${coupon.title}.`,
+    link: "/admin/payments",
+    metadata: { transactionId: transaction._id, couponId: coupon._id }
+  });
+
   return sendResponse(res, 201, "Razorpay order created", {
     transaction,
     order,
-    razorpayKey: process.env.RAZORPAY_KEY_ID || ""
+    razorpayKey: process.env.RAZORPAY_KEY_ID || "rzp_test_coupontrust"
   });
 });
 
@@ -109,6 +127,21 @@ const verifyAuthorized = asyncHandler(async (req, res) => {
   if (!isValid) {
     transaction.paymentStatus = "failed";
     await transaction.save();
+    await createNotification({
+      userId: transaction.buyerId,
+      type: "payment_failed",
+      title: "Payment failed",
+      message: "Your payment verification failed. Please try again.",
+      link: `/coupons/${transaction.couponId}`,
+      metadata: { transactionId: transaction._id }
+    });
+    await createAdminNotification({
+      type: "payment_failed",
+      title: "Payment verification failed",
+      message: `Payment verification failed for order ${transaction.gatewayOrderId}.`,
+      link: "/admin/payments",
+      metadata: { transactionId: transaction._id }
+    });
     return sendResponse(res, 400, "Invalid Razorpay signature");
   }
 
@@ -120,6 +153,15 @@ const verifyAuthorized = asyncHandler(async (req, res) => {
   if (transaction.escrowStatus === "holding") {
     await creditPending(transaction.sellerId, transaction.sellerAmount, transaction.currency);
   }
+
+  await createNotification({
+    userId: transaction.sellerId,
+    type: "payment_pending",
+    title: "New payment in escrow",
+    message: `${transaction.sellerAmount} ${transaction.currency} is now pending in escrow for your coupon sale.`,
+    link: "/payments",
+    metadata: { transactionId: transaction._id, escrowStatus: "holding" }
+  });
 
   return sendResponse(res, 200, "Payment authorized", { transaction });
 });
@@ -149,6 +191,14 @@ const revealCoupon = asyncHandler(async (req, res) => {
 
   const revealedCoupon = await revealCouponCodeForTransaction(coupon._id);
   const buyer = await User.findById(req.user._id);
+  await createNotification({
+    userId: req.user._id,
+    type: "coupon_revealed",
+    title: "Coupon code revealed",
+    message: `Your ${coupon.platformName} coupon code is now available.`,
+    link: "/orders",
+    metadata: { couponId: coupon._id, transactionId: transaction._id }
+  });
   await sendCouponDeliveryEmail({
     email: buyer?.email,
     coupon: revealedCoupon,
@@ -169,11 +219,17 @@ const confirmWorked = asyncHandler(async (req, res) => {
   }
 
   if (transaction.paymentStatus !== "captured") {
-    await capturePayment({
-      paymentId: transaction.gatewayPaymentId,
-      amount: transaction.amount,
-      currency: transaction.currency
-    });
+    try {
+      await capturePayment({
+        paymentId: transaction.gatewayPaymentId,
+        amount: transaction.amount,
+        currency: transaction.currency
+      });
+    } catch (error) {
+      if (!isBenignCaptureError(error)) {
+        throw error;
+      }
+    }
   }
 
   transaction.paymentStatus = "captured";
@@ -208,7 +264,26 @@ const confirmWorked = asyncHandler(async (req, res) => {
       userId: transaction.sellerId,
       type: "payment_released",
       title: "Coupon sale completed",
-      message: `Payment of ${transaction.sellerAmount} ${transaction.currency} has been released to your wallet.`
+      message: `Payment of ${transaction.sellerAmount} ${transaction.currency} has been released to your wallet.`,
+      link: "/payments",
+      metadata: { transactionId: transaction._id }
+    });
+
+    await createNotification({
+      userId: transaction.buyerId,
+      type: "payment_success",
+      title: "Payment successful",
+      message: `Your payment for ${coupon.title} was completed successfully.`,
+      link: "/orders",
+      metadata: { transactionId: transaction._id, couponId: coupon._id }
+    });
+
+    await createAdminNotification({
+      type: "payment_success",
+      title: "Payment captured successfully",
+      message: `${coupon.title} purchase completed successfully.`,
+      link: "/admin/payments",
+      metadata: { transactionId: transaction._id, couponId: coupon._id }
     });
 
     await User.findByIdAndUpdate(transaction.buyerId, {
@@ -268,6 +343,21 @@ const webhookHandler = asyncHandler(async (req, res) => {
   } else if (event === "payment.failed") {
     transaction.paymentStatus = "failed";
     transaction.transactionStatus = "cancelled";
+    await createNotification({
+      userId: transaction.buyerId,
+      type: "payment_failed",
+      title: "Payment failed",
+      message: "Your coupon payment failed. You can retry the checkout.",
+      link: `/coupons/${transaction.couponId}`,
+      metadata: { transactionId: transaction._id }
+    });
+    await createAdminNotification({
+      type: "payment_failed",
+      title: "Payment failed",
+      message: `Payment failed for order ${transaction.gatewayOrderId}.`,
+      link: "/admin/payments",
+      metadata: { transactionId: transaction._id }
+    });
   }
 
   await transaction.save();

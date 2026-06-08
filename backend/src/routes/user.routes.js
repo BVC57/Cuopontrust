@@ -6,7 +6,8 @@ const {
   getProfile,
   updateProfile,
   getTrustScore,
-  getNotifications
+  getNotifications,
+  markNotificationRead
 } = require("../controllers/user.controller");
 
 const router = express.Router();
@@ -16,5 +17,6 @@ router.get("/profile", getProfile);
 router.put("/profile", bannedMiddleware, profileUpload, updateProfile);
 router.get("/trust-score", getTrustScore);
 router.get("/notifications", getNotifications);
+router.put("/notifications/:id/read", markNotificationRead);
 
 module.exports = router;

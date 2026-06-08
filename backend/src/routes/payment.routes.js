@@ -13,6 +13,7 @@ const {
 const router = express.Router();
 
 router.post("/webhook", webhookHandler);
+router.post("/razorpay-webhook", webhookHandler);
 router.use(authMiddleware, bannedMiddleware);
 router.post("/create-order", createOrderController);
 router.post("/create-intent", createOrderController);
