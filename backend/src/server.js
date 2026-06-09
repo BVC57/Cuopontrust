@@ -21,7 +21,7 @@ const app = express();
 
 const allowedOrigins = [
   "http://localhost:3000",
-  "https://coupontrustlive.vercel.app",
+  "https://couponx-sable.vercel.app",
   process.env.CLIENT_URL
 ].filter(Boolean);
 
