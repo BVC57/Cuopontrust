@@ -97,6 +97,7 @@ const sendOtp = async (email, options = {}) => {
     emailSent = true;
     provider = result.provider;
   } catch (error) {
+<<<<<<< HEAD
     console.error("OTP email send failed", error.message);
   }
 
@@ -112,6 +113,21 @@ const sendOtp = async (email, options = {}) => {
     provider,
     message: resolveDeliveryMessage({ emailSent, consoleFallback })
   };
+=======
+   console.error("OTP email send failed:", {
+    message: error.message,
+    code: error.code,
+    command: error.command,
+    response: error.response,
+    stack: error.stack
+  });
+
+  emailSent = false;
+  emailError = error.message;
+  }
+
+  return { otp, emailSent,error: emailError };
+>>>>>>> c239aebf70e2613d1a03d53bf8540cad84757aa5
 };
 
 const verifyOtp = async (email, otp) => {

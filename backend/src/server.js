@@ -4,7 +4,9 @@ const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
+const {verifyTransporter} = ("./config/mail");
 const { validationResult } = require("express-validator");
+
 const connectDb = require("./config/db");
 const authRoutes = require("./routes/auth.routes");
 const userRoutes = require("./routes/user.routes");
@@ -17,6 +19,14 @@ const adminRoutes = require("./routes/admin.routes");
 const errorMiddleware = require("./middleware/error.middleware");
 
 const app = express();
+
+app.set("trust proxy", 1);
+
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://couponx-sable.vercel.app",
+  process.env.CLIENT_URL
+].filter(Boolean);
 
 app.use(
   helmet({
@@ -31,18 +41,36 @@ app.use(
     }
   })
 );
+
+app.use((req, res, next) => {
+  console.log("Request Origin:", req.headers.origin);
+  next();
+});
+
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:3000",
-    credentials: true
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error(`CORS blocked for origin: ${origin}`));
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
   })
 );
+
+app.options("*", cors());
+
 app.use(
   rateLimit({
     windowMs: 15 * 60 * 1000,
     limit: 200
   })
 );
+
 app.use(
   express.json({
     verify: (req, res, buf) => {
@@ -52,21 +80,30 @@ app.use(
     }
   })
 );
+
 app.use(express.urlencoded({ extended: true }));
+
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 app.get("/health", (req, res) => {
-  res.json({ success: true, message: "CouponTrust API is healthy" });
+  res.json({
+    success: true,
+    message: "CouponTrust API is healthy",
+    allowedOrigins
+  });
 });
 
 app.use((req, res, next) => {
   const originalJson = res.json.bind(res);
+
   res.json = (payload) => {
     if (payload && payload.errors && !Array.isArray(payload.errors)) {
       payload.errors = [payload.errors];
     }
+
     return originalJson(payload);
   };
+
   next();
 });
 
@@ -81,23 +118,35 @@ app.use("/api/super-admin", adminRoutes);
 
 app.use((req, res, next) => {
   const errors = validationResult(req);
+
   if (!errors.isEmpty()) {
-    return res.status(422).json({ success: false, message: "Validation failed", errors: errors.array() });
+    return res.status(422).json({
+      success: false,
+      message: "Validation failed",
+      errors: errors.array()
+    });
   }
+
   next();
 });
 
 app.use(errorMiddleware);
 
-const port = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5000;
 
-connectDb()
-  .then(() => {
-    app.listen(port, () => {
-      console.log(`CouponTrust API running on port ${port}`);
+const startServer = async () => {
+  try {
+    await connectDb();
+
+    await verifyTransporter();
+
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`CouponTrust API running on port ${PORT}`);
     });
-  })
-  .catch((error) => {
+  } catch (error) {
     console.error("Failed to start server", error);
     process.exit(1);
-  });
+  }
+};
+
+startServer();
