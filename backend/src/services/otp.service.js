@@ -77,11 +77,19 @@ const sendOtp = async (email, options = {}) => {
         </div>`
     });
   } catch (error) {
-    emailSent = false;
-    console.error("OTP email send failed", error.message);
+   console.error("OTP email send failed:", {
+    message: error.message,
+    code: error.code,
+    command: error.command,
+    response: error.response,
+    stack: error.stack
+  });
+
+  emailSent = false;
+  emailError = error.message;
   }
 
-  return { otp, emailSent };
+  return { otp, emailSent,error: emailError };
 };
 
 const verifyOtp = async (email, otp) => {
