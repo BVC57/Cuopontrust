@@ -4,7 +4,7 @@ const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
-const {verifyTransporter} = ("./config/mail");
+const { verifyTransporter } = require("./config/mail");
 const { validationResult } = require("express-validator");
 
 const connectDb = require("./config/db");
@@ -41,11 +41,6 @@ app.use(
     }
   })
 );
-
-app.use((req, res, next) => {
-  console.log("Request Origin:", req.headers.origin);
-  next();
-});
 
 app.use(
   cors({

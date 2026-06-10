@@ -24,18 +24,12 @@ const sendOtpController = asyncHandler(async (req, res) => {
   console.log("Send OTP request:", email);
 
   const existingUser = await User.findOne({ email });
-<<<<<<< HEAD
   const result = await sendOtp(email, { isNewUser: !existingUser });
   return sendResponse(res, 200, result.message, {
     emailSent: result.emailSent,
     consoleFallback: result.consoleFallback,
     provider: result.provider,
     devOtp: process.env.NODE_ENV === "production" ? undefined : result.otp
-=======
-
-  const result = await sendOtp(email, {
-    isNewUser: !existingUser
->>>>>>> c239aebf70e2613d1a03d53bf8540cad84757aa5
   });
 
   console.log("Send OTP result:", {
