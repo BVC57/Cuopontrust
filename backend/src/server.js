@@ -4,6 +4,7 @@ const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
+const {verifyTransporter} = ("./config/mail");
 const { validationResult } = require("express-validator");
 
 const connectDb = require("./config/db");
@@ -135,6 +136,7 @@ const port = process.env.PORT || 5000;
 
 connectDb()
   .then(() => {
+    await verifyTransporter();
     app.listen(port, () => {
       console.log(`CouponTrust API running on port ${port}`);
       console.log("Allowed CORS origins:", allowedOrigins);
