@@ -19,6 +19,8 @@ const errorMiddleware = require("./middleware/error.middleware");
 
 const app = express();
 
+app.set("trust proxy", 1);
+
 const allowedOrigins = [
   "http://localhost:3000",
   "https://couponx-sable.vercel.app",
