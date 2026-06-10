@@ -19,8 +19,10 @@ const sendOtpController = asyncHandler(async (req, res) => {
   const email = req.body.email.toLowerCase();
   const existingUser = await User.findOne({ email });
   const result = await sendOtp(email, { isNewUser: !existingUser });
-  return sendResponse(res, 200, result.emailSent ? "OTP sent successfully" : "OTP generated. Email delivery failed, but you can continue.", {
+  return sendResponse(res, 200, result.message, {
     emailSent: result.emailSent,
+    consoleFallback: result.consoleFallback,
+    provider: result.provider,
     devOtp: process.env.NODE_ENV === "production" ? undefined : result.otp
   });
 });

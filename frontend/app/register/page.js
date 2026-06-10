@@ -25,6 +25,7 @@ const CouponXLogo = () => (
 );
 
 export default function RegisterPage() {
+  const [mounted, setMounted] = useState(false);
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [otpSent, setOtpSent] = useState(false);
@@ -32,6 +33,10 @@ export default function RegisterPage() {
   const [timer, setTimer] = useState(0);
   const [isSendingOtp, setIsSendingOtp] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     let interval = null;
@@ -138,6 +143,10 @@ export default function RegisterPage() {
     return `${min.toString().padStart(2, "0")}:${sec.toString().padStart(2, "0")}`;
   };
 
+  if (!mounted) {
+    return null;
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#edf0f9] p-4 sm:p-6">
       <div className="w-full max-w-[500px] rounded-[32px] border border-[#e2e7f3] bg-white p-6 shadow-[0_20px_50px_rgba(0,0,0,0.03)] sm:p-10">
@@ -167,6 +176,7 @@ export default function RegisterPage() {
               <div className="flex items-center gap-3 rounded-[16px] border border-slate-200 bg-white px-4 py-2.5 transition-all focus-within:border-[#16a34a] focus-within:ring-2 focus-within:ring-emerald-500/20">
                 <Mail className="h-5 w-5 flex-shrink-0 text-slate-400" />
                 <input
+                  suppressHydrationWarning
                   type="email"
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
@@ -191,6 +201,7 @@ export default function RegisterPage() {
               <div className="flex items-center gap-3 rounded-[16px] border border-slate-200 bg-white px-4 py-3.5 transition-all focus-within:border-[#16a34a] focus-within:ring-2 focus-within:ring-emerald-500/20">
                 <User className="h-5 w-5 flex-shrink-0 text-slate-400" />
                 <input
+                  suppressHydrationWarning
                   type="text"
                   value={username}
                   onChange={(event) => setUsername(event.target.value)}
@@ -210,6 +221,7 @@ export default function RegisterPage() {
                     <input
                       key={index}
                       id={`register-otp-${index}`}
+                      suppressHydrationWarning
                       type="text"
                       inputMode="numeric"
                       maxLength={1}
