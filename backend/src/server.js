@@ -132,17 +132,21 @@ app.use((req, res, next) => {
 
 app.use(errorMiddleware);
 
-const port = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5000;
 
-connectDb()
-  .then(() => {
+const startServer = async () => {
+  try {
+    await connectDb();
+
     await verifyTransporter();
-    app.listen(port, () => {
-      console.log(`CouponTrust API running on port ${port}`);
-      console.log("Allowed CORS origins:", allowedOrigins);
+
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`CouponTrust API running on port ${PORT}`);
     });
-  })
-  .catch((error) => {
+  } catch (error) {
     console.error("Failed to start server", error);
     process.exit(1);
-  });
+  }
+};
+
+startServer();
