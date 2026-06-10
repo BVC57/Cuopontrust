@@ -12,17 +12,40 @@ const signToken = (user) =>
 
 const sendOtpController = asyncHandler(async (req, res) => {
   const errors = validationResult(req);
+
   if (!errors.isEmpty()) {
-    return sendResponse(res, 422, "Validation failed", { errors: errors.array() });
+    return sendResponse(res, 422, "Validation failed", {
+      errors: errors.array()
+    });
   }
 
   const email = req.body.email.toLowerCase();
+
+  console.log("Send OTP request:", email);
+
   const existingUser = await User.findOne({ email });
-  const result = await sendOtp(email, { isNewUser: !existingUser });
-  return sendResponse(res, 200, result.emailSent ? "OTP sent successfully" : "OTP generated. Email delivery failed, but you can continue.", {
-    emailSent: result.emailSent,
-    devOtp: process.env.NODE_ENV === "production" ? undefined : result.otp
+
+  const result = await sendOtp(email, {
+    isNewUser: !existingUser
   });
+
+  console.log("Send OTP result:", {
+    email,
+    emailSent: result.emailSent,
+    error: result.error || null
+  });
+
+  return sendResponse(
+    res,
+    200,
+    result.emailSent
+      ? "OTP sent successfully"
+      : "OTP generated. Email delivery failed, but you can continue.",
+    {
+      emailSent: result.emailSent,
+      devOtp: process.env.NODE_ENV === "production" ? undefined : result.otp
+    }
+  );
 });
 
 const verifyOtpController = asyncHandler(async (req, res) => {
