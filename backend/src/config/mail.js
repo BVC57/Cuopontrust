@@ -7,32 +7,60 @@ const getTransporter = () => {
     return transporter;
   }
 
-  if (process.env.SMTP_HOST) {
+  const smtpHost = process.env.SMTP_HOST || "smtp.gmail.com";
+  const smtpPort = Number(process.env.SMTP_PORT || 465);
+  const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER;
+  const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS;
+
+  if (smtpUser && smtpPass) {
     transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT || 465),
-      secure: true,
-      auth: process.env.SMTP_USER
-        ? {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS
-          },
-         connectionTimeout: 30000,
-         greetingTimeout: 30000,
-         socketTimeout: 30000
-        : undefined
+      host: smtpHost,
+      port: smtpPort,
+      secure: smtpPort === 465,
+      auth: {
+        user: smtpUser,
+        pass: smtpPass
+      },
+      connectionTimeout: 30000,
+      greetingTimeout: 30000,
+      socketTimeout: 30000
     });
+
     return transporter;
   }
 
   transporter = {
     sendMail: async (payload) => {
-      console.log("Mock email sent", payload);
-      return { messageId: `mock-${Date.now()}` };
+      console.log("Mock email sent because SMTP credentials are missing", {
+        to: payload.to,
+        subject: payload.subject
+      });
+
+      return {
+        messageId: `mock-${Date.now()}`
+      };
     }
   };
 
   return transporter;
 };
 
-module.exports = { getTransporter };
+const verifyTransporter = async () => {
+  try {
+    const mailer = getTransporter();
+
+    if (typeof mailer.verify === "function") {
+      await mailer.verify();
+      console.log("SMTP transporter verified successfully");
+    } else {
+      console.log("Mock email transporter active");
+    }
+  } catch (error) {
+    console.error("SMTP transporter verification failed:", error.message);
+  }
+};
+
+module.exports = {
+  getTransporter,
+  verifyTransporter
+};
