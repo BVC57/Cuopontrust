@@ -61,7 +61,7 @@ export default function BlogDetailPage() {
             <span className="text-sm text-slate-400">{formatDate(blog.publishedAt || blog.createdAt)}</span>
             <span className="text-sm text-slate-400">By {blog.authorName || "CouponX Admin"}</span>
           </div>
-          <div className="mt-8 whitespace-pre-line text-base leading-8 text-slate-600">{blog.content}</div>
+          <div className="mt-8 whitespace-pre-line break-words text-base leading-8 text-slate-600">{blog.content}</div>
         </article>
       ) : (
         <section className="rounded-[30px] border border-emerald-100 bg-white p-10 text-center shadow-[0_18px_40px_rgba(15,23,42,0.05)]">

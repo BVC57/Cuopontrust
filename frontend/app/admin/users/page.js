@@ -10,13 +10,15 @@ import {
   AdminEmptyState,
   AdminGhostButton,
   AdminMetricCard,
+  AdminPagination,
   AdminStatusChip,
   AdminSurface,
   AdminToolbar,
   AdminUserIdentity,
   formatCompactNumber,
   formatCurrency,
-  formatDateTime
+  formatDateTime,
+  paginateItems
 } from "../../../components/admin/AdminUi";
 import api, { extractError } from "../../../lib/api";
 
@@ -27,6 +29,8 @@ export default function AdminUsersPage() {
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedUser, setSelectedUser] = useState(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const loadUsers = async () => {
     setLoading(true);
@@ -68,6 +72,11 @@ export default function AdminUsersPage() {
       { label: "Verified Users", value: formatCompactNumber(verified), change: "+20.1%", icon: ShieldCheck, tone: "amber" }
     ];
   }, [users]);
+  const paginatedUsers = useMemo(() => paginateItems(filteredUsers, page, pageSize), [filteredUsers, page, pageSize]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, roleFilter, statusFilter]);
 
   const toggleBan = async (user) => {
     try {
@@ -149,7 +158,7 @@ export default function AdminUsersPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredUsers.map((user, index) => {
+                      {paginatedUsers.map((user, index) => {
                         const roleLabel = user.totalSales > 0 ? "seller" : "buyer";
                         return (
                           <tr key={user._id} className={index ? "border-t border-slate-100" : ""}>
@@ -179,15 +188,16 @@ export default function AdminUsersPage() {
                     </tbody>
                   </table>
                 </div>
-                <div className="flex items-center justify-between text-sm text-slate-400">
-                  <p>Showing 1 to {filteredUsers.length} of {users.length} users</p>
-                  <div className="flex items-center gap-2">
-                    {[1, 2, 3].map((page) => (
-                      <button key={page} className={`h-10 w-10 rounded-xl border ${page === 1 ? "border-emerald-500 bg-emerald-500 text-white" : "border-slate-200 bg-white text-slate-600"}`}>{page}</button>
-                    ))}
-                    <button className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-slate-600">10 / page</button>
-                  </div>
-                </div>
+                <AdminPagination
+                  totalCount={filteredUsers.length}
+                  page={page}
+                  pageSize={pageSize}
+                  onPageChange={setPage}
+                  onPageSizeChange={(value) => {
+                    setPageSize(value);
+                    setPage(1);
+                  }}
+                />
               </>
             ) : (
               <AdminEmptyState title="No users found" description="No user records match the current filters. Try changing search, role, or status." />

@@ -25,8 +25,11 @@ const couponSchema = new mongoose.Schema(
       currency: String,
       expiryDate: String,
       terms: String,
-      confidenceScore: Number
+      confidenceScore: Number,
+      visibleTextSnippet: String
     },
+    aiChecks: { type: mongoose.Schema.Types.Mixed, default: {} },
+    aiFailureReasons: { type: [String], default: [] },
     aiMatchScore: { type: Number, default: 0 },
     aiVerificationStatus: {
       type: String,

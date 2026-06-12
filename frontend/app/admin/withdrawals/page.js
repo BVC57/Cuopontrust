@@ -6,7 +6,7 @@ import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import toast from "react-hot-toast";
 import AdminPageShell from "../../../components/AdminPageShell";
 import LoadingSpinner from "../../../components/LoadingSpinner";
-import { AdminDetailModal, AdminEmptyState, AdminGhostButton, AdminMetricCard, AdminStatusChip, AdminSurface, AdminToolbar, AdminUserIdentity, formatCompactNumber, formatCurrency, formatDateTime } from "../../../components/admin/AdminUi";
+import { AdminDetailModal, AdminEmptyState, AdminGhostButton, AdminMetricCard, AdminPagination, AdminStatusChip, AdminSurface, AdminToolbar, AdminUserIdentity, formatCompactNumber, formatCurrency, formatDateTime, paginateItems } from "../../../components/admin/AdminUi";
 import api, { extractError } from "../../../lib/api";
 
 const colors = ["#22c55e", "#f59e0b", "#ef4444", "#3b82f6", "#94a3b8"];
@@ -16,6 +16,8 @@ export default function AdminWithdrawalsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selectedWithdrawal, setSelectedWithdrawal] = useState(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const loadWithdrawals = async () => {
     setLoading(true);
@@ -34,6 +36,7 @@ export default function AdminWithdrawalsPage() {
   }, []);
 
   const filtered = useMemo(() => withdrawals.filter((row) => `${row.userId?.email || ""} ${row.upiId || ""}`.toLowerCase().includes(search.toLowerCase())), [withdrawals, search]);
+  const paginatedWithdrawals = useMemo(() => paginateItems(filtered, page, pageSize), [filtered, page, pageSize]);
 
   const metrics = useMemo(() => {
     const total = withdrawals.reduce((sum, row) => sum + Number(row.amount || 0), 0);
@@ -58,6 +61,10 @@ export default function AdminWithdrawalsPage() {
     }));
     return { entries, total };
   }, [withdrawals]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
 
   const byMethod = useMemo(() => {
     const grouped = withdrawals.reduce((acc, row) => {
@@ -121,7 +128,7 @@ export default function AdminWithdrawalsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((row, index) => (
+                  {paginatedWithdrawals.map((row, index) => (
                     <tr key={row._id} className={index ? "border-t border-slate-100" : ""}>
                       <td className="px-5 py-4"><AdminUserIdentity name={row.userId?.name || "User"} email={row.userId?.email} /></td>
                       <td className="px-5 py-4 text-sm font-bold text-slate-900">{formatCurrency(row.amount, row.currency)}</td>
@@ -144,6 +151,18 @@ export default function AdminWithdrawalsPage() {
           ) : (
             <AdminEmptyState title="No withdrawals found" description="No withdrawal requests are available for the selected filters." />
           )}
+          {filtered.length ? (
+            <AdminPagination
+              totalCount={filtered.length}
+              page={page}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              onPageSizeChange={(value) => {
+                setPageSize(value);
+                setPage(1);
+              }}
+            />
+          ) : null}
         </AdminSurface>
         <div className="space-y-5">
           <AdminSurface className="p-5">

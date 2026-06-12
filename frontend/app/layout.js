@@ -11,10 +11,23 @@ export const metadata = {
   description: "Buy verified coupons, sell unused deals, and manage payments with a trusted coupon marketplace."
 };
 
+const adminThemeBootstrap = `
+  (() => {
+    try {
+      const storedTheme = window.localStorage.getItem("couponx_admin_theme");
+      const nextTheme = storedTheme === "dark" || storedTheme === "light" ? storedTheme : "light";
+      document.documentElement.setAttribute("data-admin-theme", nextTheme);
+    } catch {
+      document.documentElement.setAttribute("data-admin-theme", "light");
+    }
+  })();
+`;
+
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={`${manrope.variable} ${spaceGrotesk.variable}`}>
+    <html lang="en" className={`${manrope.variable} ${spaceGrotesk.variable}`} data-admin-theme="light">
       <body>
+        <script dangerouslySetInnerHTML={{ __html: adminThemeBootstrap }} />
         <Providers>
           <RouteChrome>{children}</RouteChrome>
         </Providers>

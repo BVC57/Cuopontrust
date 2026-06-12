@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { ShieldCheck, Check, ArrowRight, ShieldAlert } from "lucide-react";
+import { ShieldCheck, Check, ArrowRight, ShieldAlert, X } from "lucide-react";
 
-export default function SafetyPopup({ open, onContinue }) {
+export default function SafetyPopup({ open, onContinue, onClose }) {
   const [agreed, setAgreed] = useState(false);
 
   if (!open) {
@@ -21,10 +21,18 @@ export default function SafetyPopup({ open, onContinue }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4 backdrop-blur-sm">
-      <div className="w-full max-w-xl origin-center scale-[0.92] rounded-[28px] border border-slate-100 bg-white p-5 shadow-[0_20px_60px_rgba(0,0,0,0.15)] transition-all duration-300 sm:p-8">
+      <div className="relative w-full max-w-xl origin-center scale-[0.92] rounded-[28px] border border-slate-100 bg-white p-5 shadow-[0_20px_60px_rgba(0,0,0,0.15)] transition-all duration-300 sm:p-8">
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close popup"
+          className="absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 hover:text-slate-800"
+        >
+          <X className="h-4.5 w-4.5" />
+        </button>
         
         {/* Header Icon & Title */}
-        <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+        <div className="flex items-center gap-3 border-b border-slate-100 pb-4 pr-14">
           <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-[#16a34a]">
             <ShieldCheck className="h-5 w-5" />
           </div>

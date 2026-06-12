@@ -5,7 +5,7 @@ import { Eye } from "lucide-react";
 import toast from "react-hot-toast";
 import AdminPageShell from "../../../components/AdminPageShell";
 import LoadingSpinner from "../../../components/LoadingSpinner";
-import { AdminDetailModal, AdminEmptyState, AdminGhostButton, AdminMetricCard, AdminPrimaryButton, AdminStatusChip, AdminSurface, AdminToolbar, AdminUserIdentity, formatCompactNumber, formatCurrency, formatDateTime } from "../../../components/admin/AdminUi";
+import { AdminDetailModal, AdminEmptyState, AdminGhostButton, AdminMetricCard, AdminPagination, AdminPrimaryButton, AdminStatusChip, AdminSurface, AdminToolbar, AdminUserIdentity, formatCompactNumber, formatCurrency, formatDateTime, paginateItems } from "../../../components/admin/AdminUi";
 import api, { extractError } from "../../../lib/api";
 
 export default function AdminDisputesPage() {
@@ -13,6 +13,8 @@ export default function AdminDisputesPage() {
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState("");
   const [adminNote, setAdminNote] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const loadDisputes = async () => {
     setLoading(true);
@@ -31,6 +33,7 @@ export default function AdminDisputesPage() {
   }, []);
 
   const selected = disputes.find((item) => item._id === selectedId) || null;
+  const paginatedDisputes = useMemo(() => paginateItems(disputes, page, pageSize), [disputes, page, pageSize]);
 
   const metrics = useMemo(() => [
     { label: "Total Disputes", value: formatCompactNumber(disputes.length), change: "+18.7%", tone: "blue" },
@@ -56,6 +59,10 @@ export default function AdminDisputesPage() {
       toast.error(extractError(error));
     }
   };
+
+  useEffect(() => {
+    setPage(1);
+  }, [disputes.length]);
 
   if (loading) {
     return (
@@ -97,7 +104,7 @@ export default function AdminDisputesPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {disputes.map((row, index) => (
+                  {paginatedDisputes.map((row, index) => (
                     <tr key={row._id} className={index ? "border-t border-slate-100" : ""}>
                       <td className="px-5 py-4 text-sm font-bold text-[#6f4cff]">{row._id.slice(-9).toUpperCase()}</td>
                       <td className="px-5 py-4"><AdminUserIdentity name={row.buyerId?.name || "Buyer"} email={row.buyerId?.email} /></td>
@@ -117,6 +124,20 @@ export default function AdminDisputesPage() {
           ) : (
             <AdminEmptyState title="No disputes found" description="There are no disputes to review right now." />
           )}
+          {disputes.length ? (
+            <div className="mt-4">
+              <AdminPagination
+                totalCount={disputes.length}
+                page={page}
+                pageSize={pageSize}
+                onPageChange={setPage}
+                onPageSizeChange={(value) => {
+                  setPageSize(value);
+                  setPage(1);
+                }}
+              />
+            </div>
+          ) : null}
       </AdminSurface>
       <AdminDetailModal open={Boolean(selected)} title="Dispute Details" onClose={() => setSelectedId("")}>
         {selected ? (

@@ -5,7 +5,7 @@ import { Download, Eye } from "lucide-react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip, LineChart, Line, XAxis, YAxis } from "recharts";
 import AdminPageShell from "../../../components/AdminPageShell";
 import LoadingSpinner from "../../../components/LoadingSpinner";
-import { AdminDetailModal, AdminEmptyState, AdminGhostButton, AdminMetricCard, AdminStatusChip, AdminSurface, AdminToolbar, AdminUserIdentity, formatCompactNumber, formatCurrency, formatDateTime } from "../../../components/admin/AdminUi";
+import { AdminDetailModal, AdminEmptyState, AdminGhostButton, AdminMetricCard, AdminPagination, AdminStatusChip, AdminSurface, AdminToolbar, AdminUserIdentity, formatCompactNumber, formatCurrency, formatDateTime, paginateItems } from "../../../components/admin/AdminUi";
 import api from "../../../lib/api";
 
 const colors = ["#ff2d55", "#f59e0b", "#8b5cf6", "#3b82f6", "#22c55e"];
@@ -14,6 +14,8 @@ export default function AdminFraudReportsPage() {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedReport, setSelectedReport] = useState(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => {
     setLoading(true);
@@ -44,6 +46,11 @@ export default function AdminFraudReportsPage() {
     }, {});
     return Object.entries(grouped).map(([name, value]) => ({ name, value }));
   }, [reports]);
+  const paginatedReports = useMemo(() => paginateItems(reports, page, pageSize), [reports, page, pageSize]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [reports.length]);
 
   if (loading) {
     return (
@@ -86,7 +93,7 @@ export default function AdminFraudReportsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {reports.map((row, index) => (
+                  {paginatedReports.map((row, index) => (
                     <tr key={row._id} className={index ? "border-t border-slate-100" : ""}>
                       <td className="px-5 py-4 text-sm font-bold text-[#6f4cff]">{row._id.slice(-9).toUpperCase()}</td>
                       <td className="px-5 py-4"><AdminUserIdentity name={row.userId?.name || "User"} email={row.userId?.email} /></td>
@@ -104,6 +111,18 @@ export default function AdminFraudReportsPage() {
           ) : (
             <AdminEmptyState title="No fraud reports found" description="There are no fraud records available in the selected period." />
           )}
+          {reports.length ? (
+            <AdminPagination
+              totalCount={reports.length}
+              page={page}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              onPageSizeChange={(value) => {
+                setPageSize(value);
+                setPage(1);
+              }}
+            />
+          ) : null}
         </AdminSurface>
         <div className="space-y-5">
           <AdminSurface className="p-5">

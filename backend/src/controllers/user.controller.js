@@ -15,6 +15,12 @@ const updateProfile = asyncHandler(async (req, res) => {
       req.user[field] = req.body[field];
     }
   });
+  if (req.body.notificationPreferences && typeof req.body.notificationPreferences === "object") {
+    req.user.notificationPreferences = {
+      ...(req.user.notificationPreferences || {}),
+      ...req.body.notificationPreferences
+    };
+  }
   if (req.file) {
     req.user.avatar = `/uploads/profile/${req.file.filename}`;
   }

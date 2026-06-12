@@ -74,12 +74,13 @@ export default function BlogPage() {
                   {post.status || "Published"}
                 </span>
                 <span className="text-xs font-medium text-slate-400">{formatDate(post.publishedAt)}</span>
+                <span className="text-xs font-medium text-slate-400">By {post.authorName || "CouponX Admin"}</span>
               </div>
               <h2 className="mt-5 text-3xl font-black leading-tight text-slate-950">{post.title}</h2>
-              <p className="mt-4 text-sm leading-7 text-slate-500">{post.excerpt}</p>
+              <p className="mt-4 line-clamp-4 text-sm leading-7 text-slate-500">{post.excerpt}</p>
               <div className="mt-6 flex items-center justify-between gap-4">
-                <div>
-                  <p className="text-sm font-semibold text-slate-900">{post.authorName || "CouponX Admin"}</p>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-slate-900">{post.authorName || "CouponX Admin"}</p>
                   <p className="text-xs text-slate-400">Marketplace editorial team</p>
                 </div>
                 <Link

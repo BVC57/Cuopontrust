@@ -1,54 +1,51 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ChevronRight, Filter, Search, ShieldCheck, ShoppingBag, Sparkles, Star, Truck, X } from "lucide-react";
+import {
+  ChevronDown,
+  Filter,
+  Home,
+  Search,
+  Shirt,
+  Smartphone,
+  UtensilsCrossed,
+  Plane,
+  Sparkles,
+  Ticket,
+  Tag,
+  X
+} from "lucide-react";
 import api from "../../lib/api";
 import CouponCard from "../../components/CouponCard";
 import LoadingSpinner from "../../components/LoadingSpinner";
 
-const quickFilters = ["All", "Top Rated", "Most Used", "Ending Soon"];
-const searchPills = ["Amazon Offers", "Myntra Coupons", "Zomato Deals", "Flipkart Offers", "Swiggy Offers", "Ajio Coupons", "Nykaa Offers", "FirstCry Offers"];
-const baseCategories = [
-  "All Coupons",
-  "Fashion",
-  "Electronics",
-  "Food & Dining",
-  "Travel",
-  "Beauty & Health",
-  "Home & Kitchen",
-  "Grocery",
-  "Sports & Fitness",
-  "Books & Education",
-  "Gaming",
-  "Entertainment",
-  "Automotive"
-];
-
+const topTabs = ["All", "Coupons", "Deals", "Exclusive"];
 const categoryIcons = {
-  "All Coupons": "🎟️",
-  Fashion: "👗",
-  Electronics: "📱",
-  "Food & Dining": "🍽️",
-  Travel: "✈️",
-  "Beauty & Health": "💄",
-  "Home & Kitchen": "🏠",
-  Grocery: "🛒",
-  "Sports & Fitness": "🏅",
-  "Books & Education": "📚",
-  Gaming: "🎮",
-  Entertainment: "🎬",
-  Automotive: "🚗"
+  Fashion: Shirt,
+  Electronics: Smartphone,
+  Food: UtensilsCrossed,
+  Travel: Plane
 };
 
 const normalizeCategory = (category) => {
-  if (category === "Food") return "Food & Dining";
-  return category;
+  const value = String(category || "").trim();
+  if (!value) return "";
+  if (value.toLowerCase() === "food & dining") return "Food";
+  return value;
 };
 
-const getSortValue = (filter) => {
-  if (filter === "Top Rated" || filter === "Most Used") return "popular";
-  if (filter === "Ending Soon") return "ending_soon";
+const getSortValue = (value) => {
+  if (value === "Popular") return "popular";
+  if (value === "Ending Soon") return "ending_soon";
   return "latest";
+};
+
+const countByTab = (tab, coupons) => {
+  if (tab === "All") return coupons.length;
+  if (tab === "Coupons") return coupons.filter((coupon) => !String(coupon.title || "").toLowerCase().includes("deal")).length;
+  if (tab === "Deals") return coupons.filter((coupon) => String(coupon.title || "").toLowerCase().includes("deal") || String(coupon.title || "").toLowerCase().includes("off")).length;
+  if (tab === "Exclusive") return coupons.filter((coupon) => Number(coupon.couponAmount) - Number(coupon.sellingPrice) >= 100).length;
+  return coupons.length;
 };
 
 export default function MarketplacePage() {
@@ -56,10 +53,11 @@ export default function MarketplacePage() {
   const [loading, setLoading] = useState(true);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All Coupons");
-  const [quickFilter, setQuickFilter] = useState("All");
-  const [minDiscount, setMinDiscount] = useState(10);
-  const [maxPrice, setMaxPrice] = useState(10000);
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedStore, setSelectedStore] = useState("");
+  const [activeTab, setActiveTab] = useState("All");
+  const [sortBy, setSortBy] = useState("Popular");
+  const [validity, setValidity] = useState("All Time");
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -67,10 +65,9 @@ export default function MarketplacePage() {
       api.get("/coupons", {
         params: {
           search: search || undefined,
-          category: selectedCategory !== "All Coupons" ? selectedCategory : undefined,
-          sort: getSortValue(quickFilter),
-          minDiscount,
-          maxPrice
+          category: selectedCategory !== "All" ? selectedCategory : undefined,
+          platformName: selectedStore || undefined,
+          sort: getSortValue(sortBy)
         }
       })
         .then(({ data }) => setCoupons(data.coupons || []))
@@ -79,83 +76,180 @@ export default function MarketplacePage() {
     }, 250);
 
     return () => clearTimeout(timer);
-  }, [search, selectedCategory, quickFilter, minDiscount, maxPrice]);
+  }, [search, selectedCategory, selectedStore, sortBy]);
 
   const categories = useMemo(() => {
     const mapped = coupons.flatMap((coupon) => (coupon.categories || []).map(normalizeCategory));
-    return [...new Set([...baseCategories, ...mapped])];
+    const base = ["Fashion", "Electronics", "Food", "Travel"];
+    return ["All", ...new Set([...base, ...mapped.filter(Boolean)])];
   }, [coupons]);
 
-  const categoryCounts = useMemo(() => {
-    const counts = {};
-    categories.forEach((category) => {
-      if (category === "All Coupons") {
-        counts[category] = coupons.length;
-      } else {
-        counts[category] = coupons.filter((coupon) =>
-          (coupon.categories || []).map(normalizeCategory).includes(category)
-        ).length;
-      }
-    });
-    return counts;
-  }, [categories, coupons]);
+  const stores = useMemo(() => {
+    return [...new Set(coupons.map((coupon) => coupon.platformName).filter(Boolean))].slice(0, 6);
+  }, [coupons]);
 
-  const featuredCoupons = coupons.slice(0, 5);
-  const bestDeals = coupons.slice(5, 10).length ? coupons.slice(5, 10) : coupons.slice(0, 5);
+  const filteredCoupons = useMemo(() => {
+    const now = new Date();
+    return coupons.filter((coupon) => {
+      if (activeTab === "Exclusive" && !(Number(coupon.couponAmount) - Number(coupon.sellingPrice) >= 100)) {
+        return false;
+      }
+      if (activeTab === "Deals" && !String(coupon.title || "").toLowerCase().match(/deal|off|discount|flat|buy/)) {
+        return false;
+      }
+      if (activeTab === "Coupons" && String(coupon.title || "").toLowerCase().includes("deal")) {
+        return false;
+      }
+
+      if (validity === "All Time" || !coupon.expiryDate) {
+        return true;
+      }
+
+      const expiry = new Date(coupon.expiryDate);
+      const dayDiff = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      if (validity === "Today") return dayDiff <= 1;
+      if (validity === "This Week") return dayDiff <= 7;
+      return dayDiff <= 31;
+    });
+  }, [coupons, activeTab, validity]);
+
+  const counts = useMemo(() => {
+    const categoryCounts = {};
+    categories.forEach((category) => {
+      categoryCounts[category] = category === "All"
+        ? coupons.length
+        : coupons.filter((coupon) => (coupon.categories || []).map(normalizeCategory).includes(category)).length;
+    });
+
+    const storeCounts = {};
+    stores.forEach((store) => {
+      storeCounts[store] = coupons.filter((coupon) => coupon.platformName === store).length;
+    });
+
+    return { categoryCounts, storeCounts };
+  }, [categories, stores, coupons]);
 
   const FiltersPanel = (
-    <div className="rounded-[30px] border border-emerald-100 bg-white p-5 shadow-[0_18px_50px_rgba(15,23,42,0.05)]">
-      <p className="text-lg font-black text-slate-900">Categories</p>
-      <div className="mt-4 space-y-2">
-        {categories.map((category) => {
-          const active = selectedCategory === category;
-          return (
-            <button
-              key={category}
-              onClick={() => {
-                setSelectedCategory(category);
-                setMobileFiltersOpen(false);
-              }}
-              className={`flex w-full items-center justify-between rounded-2xl px-4 py-3 text-left text-sm font-semibold transition ${
-                active ? "bg-emerald-50 text-[#16a34a]" : "text-slate-600 hover:bg-slate-50"
-              }`}
-            >
-              <span className="flex items-center gap-3">
-                <span>{categoryIcons[category] || "•"}</span>
-                {category}
-              </span>
-              <span className="text-xs">{categoryCounts[category] || 0}</span>
-            </button>
-          );
-        })}
+    <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-[0_18px_34px_rgba(15,23,42,0.04)]">
+      <div className="flex items-center justify-between">
+        <p className="text-2xl font-black text-slate-950">Filters</p>
+        <button
+          type="button"
+          onClick={() => {
+            setSelectedCategory("All");
+            setSelectedStore("");
+            setValidity("All Time");
+          }}
+          className="text-sm font-bold text-[#16a34a]"
+        >
+          Clear All
+        </button>
       </div>
 
-      <div className="mt-6 rounded-[26px] bg-[linear-gradient(180deg,#f6fff8_0%,#ffffff_100%)] p-5">
-        <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-[#16a34a]">
-          <ShoppingBag className="h-5 w-5" />
+      <div className="mt-6 border-t border-slate-100 pt-5">
+        <div className="flex items-center justify-between">
+          <p className="text-lg font-black text-slate-900">Categories</p>
+          <ChevronDown className="h-4 w-4 text-slate-400" />
         </div>
-        <p className="mt-4 text-lg font-black text-slate-900">Sell Unused Coupons</p>
-        <p className="mt-2 text-sm leading-6 text-slate-500">Turn your unused coupons into real cash</p>
-        <a href="/sell" className="mt-5 inline-flex w-full items-center justify-center rounded-2xl bg-[#16a34a] px-4 py-3 text-sm font-bold text-white">
-          Start Selling
-        </a>
+        <div className="mt-4 space-y-3">
+          {categories.slice(1, 6).map((category) => {
+            const Icon = categoryIcons[category] || Tag;
+            const active = selectedCategory === category;
+            return (
+              <button
+                key={category}
+                type="button"
+                onClick={() => setSelectedCategory(category)}
+                className={`flex w-full items-center justify-between rounded-2xl px-3 py-2.5 text-left text-sm font-semibold ${
+                  active ? "bg-emerald-50 text-emerald-700" : "text-slate-700 hover:bg-slate-50"
+                }`}
+              >
+                <span className="flex items-center gap-3">
+                  <Icon className="h-4 w-4" />
+                  {category}
+                </span>
+                <span className="text-slate-400">{counts.categoryCounts[category] || 0}</span>
+              </button>
+            );
+          })}
+          <button type="button" onClick={() => setSelectedCategory("All")} className="pt-2 text-sm font-bold text-[#16a34a]">
+            View All Categories
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-6 border-t border-slate-100 pt-5">
+        <div className="flex items-center justify-between">
+          <p className="text-lg font-black text-slate-900">Store</p>
+          <ChevronDown className="h-4 w-4 text-slate-400" />
+        </div>
+        <div className="mt-4 rounded-2xl border border-slate-200 px-3 py-3">
+          <div className="flex items-center gap-2 text-slate-400">
+            <Search className="h-4 w-4" />
+            <input
+              value={selectedStore}
+              onChange={(event) => setSelectedStore(event.target.value)}
+              placeholder="Search for store"
+              className="w-full bg-transparent text-sm outline-none"
+            />
+          </div>
+        </div>
+        <div className="mt-4 space-y-3">
+          {stores.map((store) => {
+            const active = selectedStore === store;
+            return (
+              <button
+                key={store}
+                type="button"
+                onClick={() => setSelectedStore(active ? "" : store)}
+                className={`flex w-full items-center justify-between rounded-2xl px-3 py-2.5 text-left text-sm font-semibold ${
+                  active ? "bg-emerald-50 text-emerald-700" : "text-slate-700 hover:bg-slate-50"
+                }`}
+              >
+                <span>{store}</span>
+                <span className="text-slate-400">{counts.storeCounts[store] || 0}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="mt-6 border-t border-slate-100 pt-5">
+        <div className="flex items-center justify-between">
+          <p className="text-lg font-black text-slate-900">Offer Validity</p>
+          <ChevronDown className="h-4 w-4 text-slate-400" />
+        </div>
+        <div className="mt-4 space-y-3">
+          {["All Time", "Today", "This Week", "This Month"].map((option) => (
+            <label key={option} className="flex cursor-pointer items-center justify-between rounded-2xl px-3 py-2.5 hover:bg-slate-50">
+              <span className="flex items-center gap-3 text-sm font-semibold text-slate-700">
+                <input
+                  type="radio"
+                  name="validity"
+                  checked={validity === option}
+                  onChange={() => setValidity(option)}
+                  className="h-4 w-4 accent-[#16a34a]"
+                />
+                {option}
+              </span>
+            </label>
+          ))}
+        </div>
       </div>
     </div>
   );
 
   return (
-    <div className="mx-auto max-w-[1500px] px-4 py-8 sm:px-6 lg:px-8">
-      <div className="grid gap-6 xl:grid-cols-[260px_minmax(0,1fr)]">
-        <aside className="hidden xl:block">
-          {FiltersPanel}
-        </aside>
+    <div className="mx-auto max-w-[1440px] px-4 py-8 sm:px-6 lg:px-8">
+      <div className="grid gap-6 xl:grid-cols-[270px_minmax(0,1fr)]">
+        <aside className="hidden xl:block">{FiltersPanel}</aside>
 
         {mobileFiltersOpen ? (
-          <div className="fixed inset-0 z-40 bg-slate-950/30 xl:hidden">
+          <div className="fixed inset-0 z-40 bg-slate-950/35 xl:hidden">
             <div className="absolute left-0 top-0 h-full w-full max-w-sm overflow-y-auto bg-white p-4">
               <div className="mb-4 flex items-center justify-between">
-                <p className="text-lg font-black text-slate-900">Filters</p>
-                <button onClick={() => setMobileFiltersOpen(false)} className="rounded-full border border-slate-200 p-2">
+                <p className="text-xl font-black text-slate-950">Filters</p>
+                <button type="button" onClick={() => setMobileFiltersOpen(false)} className="rounded-full border border-slate-200 p-2">
                   <X className="h-4 w-4" />
                 </button>
               </div>
@@ -164,168 +258,126 @@ export default function MarketplacePage() {
           </div>
         ) : null}
 
-        <section className="min-w-0 space-y-6">
-          <div className="rounded-[32px] border border-emerald-100 bg-white p-4 shadow-[0_18px_50px_rgba(15,23,42,0.05)]">
-            <div className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
-              <div className="rounded-[30px] bg-[radial-gradient(circle_at_top_left,rgba(34,197,94,0.14),transparent_26%),linear-gradient(135deg,#fbfffc_0%,#f4fff7_50%,#ffffff_100%)] p-6">
-                <p className="text-2xl font-black text-slate-900">India&apos;s Most Trusted</p>
-                <h1 className="mt-1 text-5xl font-black leading-[1.05] text-[#16a34a]">Coupon Marketplace</h1>
-                <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600">
-                  Buy verified coupons from trusted sellers and save up to 70% on 1000+ brands across every category.
-                </p>
-                <div className="mt-6 flex flex-wrap gap-5 text-sm font-semibold text-slate-600">
-                  <span className="inline-flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-[#16a34a]" />Verified Coupons</span>
-                  <span className="inline-flex items-center gap-2"><Star className="h-4 w-4 text-[#16a34a]" />Secure Payments</span>
-                  <span className="inline-flex items-center gap-2"><Truck className="h-4 w-4 text-[#16a34a]" />Instant Delivery</span>
-                  <span className="inline-flex items-center gap-2"><Sparkles className="h-4 w-4 text-[#16a34a]" />24/7 Support</span>
-                </div>
-              </div>
-
-              <div className="rounded-[30px] bg-[radial-gradient(circle_at_top_right,rgba(34,197,94,0.16),transparent_28%),linear-gradient(135deg,#f8fff9_0%,#ecfff1_100%)] p-6">
-                <div className="flex h-full items-center justify-center">
-                  <div className="relative h-[220px] w-full max-w-[420px]">
-                    <div className="absolute left-10 top-8 rounded-[24px] bg-[#ffe0eb] px-5 py-6 shadow-[0_20px_40px_rgba(15,23,42,0.08)]">
-                      <p className="text-sm font-black text-slate-900">50% OFF</p>
-                      <p className="mt-1 text-xl font-black text-[#ef476f]">Myntra</p>
-                    </div>
-                    <div className="absolute right-10 top-0 rounded-[24px] bg-[#fff7e8] px-5 py-6 shadow-[0_20px_40px_rgba(15,23,42,0.08)]">
-                      <p className="text-sm font-black text-slate-900">20% OFF</p>
-                      <p className="mt-1 text-xl font-black text-[#b45309]">amazon</p>
-                    </div>
-                    <div className="absolute left-1/2 top-10 flex h-[150px] w-[140px] -translate-x-1/2 items-center justify-center rounded-[30px] bg-[linear-gradient(180deg,#23c45e_0%,#149a46_100%)] shadow-[0_24px_50px_rgba(34,197,94,0.28)]">
-                      <ShoppingBag className="h-16 w-16 text-white" />
-                    </div>
-                    <div className="absolute right-14 bottom-10 rounded-[24px] bg-[#e8fff0] px-5 py-6 shadow-[0_20px_40px_rgba(15,23,42,0.08)]">
-                      <p className="text-sm font-black text-slate-900">40% OFF</p>
-                      <p className="mt-1 text-xl font-black text-[#16a34a]">zomato</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-5 flex flex-col gap-3 lg:flex-row lg:items-center">
-              <div className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3">
+        <section className="min-w-0">
+          <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-[0_18px_34px_rgba(15,23,42,0.04)]">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex min-w-0 items-center gap-3 rounded-2xl border border-slate-200 px-4 py-3">
                 <Search className="h-4 w-4 text-slate-400" />
                 <input
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Search coupons, brands or stores..."
+                  placeholder="Search for stores, categories or offers..."
                   className="min-w-0 flex-1 bg-transparent text-sm outline-none"
                 />
               </div>
-              <button onClick={() => setMobileFiltersOpen(true)} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 xl:hidden">
-                <Filter className="h-4 w-4" />
-                Filters
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setMobileFiltersOpen(true)}
+                  className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 xl:hidden"
+                >
+                  <Filter className="h-4 w-4" />
+                  Filters
+                </button>
+                <div className="rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700">
+                  Sort by:{" "}
+                  <select
+                    value={sortBy}
+                    onChange={(event) => setSortBy(event.target.value)}
+                    className="bg-transparent font-black outline-none"
+                  >
+                    <option>Popular</option>
+                    <option>Latest</option>
+                    <option>Ending Soon</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 flex flex-wrap items-center gap-2 text-sm text-slate-400">
+              <Home className="h-4 w-4" />
+              <span>Home</span>
+              <span>&gt;</span>
+              <span>All Coupons &amp; Offers</span>
+            </div>
+
+            <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <h1 className="text-5xl font-black tracking-tight text-slate-950">All Coupons &amp; Offers</h1>
+                <p className="mt-2 text-lg text-slate-500">Save more with 100% verified coupons &amp; exclusive deals</p>
+              </div>
+              <p className="text-sm font-semibold text-slate-500">
+                Showing 1-{filteredCoupons.length} of {coupons.length || filteredCoupons.length} offers
+              </p>
+            </div>
+
+            <div className="mt-5 flex flex-wrap gap-3">
+              {topTabs.map((tab) => (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setActiveTab(tab)}
+                  className={`inline-flex items-center gap-2 rounded-full border px-5 py-3 text-sm font-black ${
+                    activeTab === tab
+                      ? "border-emerald-600 bg-emerald-600 text-white"
+                      : "border-slate-200 bg-white text-slate-700"
+                  }`}
+                >
+                  {tab === "All" ? <GridIcon /> : tab === "Coupons" ? <Ticket className="h-4 w-4" /> : tab === "Deals" ? <Tag className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
+                  {tab} ({countByTab(tab, coupons)})
+                </button>
+              ))}
             </div>
           </div>
 
-          <section className="rounded-[30px] border border-emerald-100 bg-white p-5 shadow-[0_18px_50px_rgba(15,23,42,0.05)]">
-            <p className="text-sm font-black text-slate-900">Popular Searches</p>
-            <div className="mt-4 flex flex-wrap gap-3">
-              {searchPills.map((item) => (
-                <button key={item} onClick={() => setSearch(item.replace(/ Offers| Coupons| Deals/g, ""))} className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600">
-                  {item}
-                </button>
-              ))}
-              <button className="ml-auto hidden h-10 w-10 items-center justify-center rounded-full border border-slate-200 lg:inline-flex">
-                <ChevronRight className="h-4 w-4" />
-              </button>
-            </div>
-          </section>
-
-          <section className="rounded-[30px] border border-emerald-100 bg-white p-5 shadow-[0_18px_50px_rgba(15,23,42,0.05)]">
-            <div className="flex items-center justify-between">
-              <p className="text-2xl font-black text-slate-900">Top Categories</p>
-              <button className="text-sm font-bold text-[#16a34a]">View All</button>
-            </div>
-            <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
-              {categories.slice(1, 7).map((category) => (
-                <button
-                  key={category}
-                  onClick={() => setSelectedCategory(category)}
-                  className="flex items-center gap-3 rounded-[22px] border border-slate-200 bg-white px-4 py-4 text-left"
-                >
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-lg">
-                    {categoryIcons[category] || "•"}
-                  </div>
-                  <div>
-                    <p className="text-sm font-black text-slate-900">{category}</p>
-                    <p className="text-xs text-slate-400">{categoryCounts[category] || 0} Coupons</p>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </section>
-
-          <section className="rounded-[30px] border border-emerald-100 bg-white p-5 shadow-[0_18px_50px_rgba(15,23,42,0.05)]">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <p className="text-2xl font-black text-slate-900">Featured Coupons</p>
-                <p className="mt-1 text-sm text-slate-500">Showing secure, verified deals with hidden codes until payment.</p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {quickFilters.map((filter) => (
-                  <button
-                    key={filter}
-                    onClick={() => setQuickFilter(filter)}
-                    className={`rounded-full px-4 py-2 text-sm font-semibold ${
-                      quickFilter === filter ? "bg-[#16a34a] text-white" : "border border-slate-200 bg-white text-slate-600"
-                    }`}
-                  >
-                    {filter}
-                  </button>
+          <div className="mt-6">
+            {loading ? (
+              <LoadingSpinner label="Loading coupons..." />
+            ) : filteredCoupons.length ? (
+              <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                {filteredCoupons.map((coupon) => (
+                  <CouponCard key={coupon._id} coupon={coupon} />
                 ))}
               </div>
-            </div>
-
-            <div className="mt-6">
-              {loading ? (
-                <LoadingSpinner label="Loading featured coupons..." />
-              ) : featuredCoupons.length ? (
-                <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
-                  {featuredCoupons.map((coupon) => (
-                    <CouponCard key={coupon._id} coupon={coupon} />
-                  ))}
-                </div>
-              ) : (
-                <div className="rounded-[24px] border border-slate-200 bg-white px-6 py-10 text-center text-sm text-slate-500">
-                  No coupons match the selected filters.
-                </div>
-              )}
-            </div>
-          </section>
-
-          <section className="rounded-[30px] border border-emerald-100 bg-[linear-gradient(180deg,#f7fff8_0%,#ffffff_100%)] p-5">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <p className="text-2xl font-black text-slate-900">Best Deals of the Day</p>
-                <p className="mt-1 text-sm text-slate-500">Trending deals selected from today&apos;s best marketplace offers.</p>
+            ) : (
+              <div className="rounded-[24px] border border-slate-200 bg-white px-6 py-16 text-center shadow-[0_18px_34px_rgba(15,23,42,0.04)]">
+                <p className="text-3xl font-black text-slate-950">No coupons found</p>
+                <p className="mt-3 text-sm text-slate-500">Try changing your store, category, or validity filters.</p>
               </div>
-              <div className="flex items-center gap-3">
-                <div className="rounded-2xl bg-white px-4 py-3 text-center shadow-[0_10px_25px_rgba(15,23,42,0.05)]">
-                  <p className="text-xs font-black text-slate-400">Offer ends in:</p>
-                  <p className="mt-1 text-sm font-black text-slate-900">12h 45m 30s</p>
-                </div>
-                <button className="rounded-2xl bg-[#16a34a] px-5 py-3 text-sm font-bold text-white">View All Deals</button>
-              </div>
-            </div>
+            )}
+          </div>
 
-            <div className="mt-6">
-              {loading ? (
-                <LoadingSpinner label="Loading best deals..." />
-              ) : (
-                <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
-                  {bestDeals.map((coupon) => (
-                    <CouponCard key={`best-${coupon._id}`} coupon={coupon} />
-                  ))}
+          <div className="mt-6 grid gap-4 rounded-[24px] border border-slate-200 bg-white p-5 shadow-[0_18px_34px_rgba(15,23,42,0.04)] md:grid-cols-2 xl:grid-cols-4">
+            {[
+              ["100% Verified", "All coupons are manually verified", "bg-emerald-50 text-emerald-600"],
+              ["Best Savings", "Get the best deals & exclusive offers", "bg-rose-50 text-rose-500"],
+              ["Secure & Safe", "Your data and payments are 100% secure", "bg-sky-50 text-sky-600"],
+              ["24/7 Support", "We’re here to help you anytime", "bg-violet-50 text-violet-600"]
+            ].map(([title, description, tone]) => (
+              <div key={title} className="flex items-start gap-4 rounded-[18px] bg-slate-50 p-4">
+                <div className={`flex h-12 w-12 items-center justify-center rounded-full ${tone}`}>
+                  <Sparkles className="h-5 w-5" />
                 </div>
-              )}
-            </div>
-          </section>
+                <div>
+                  <p className="text-lg font-black text-slate-900">{title}</p>
+                  <p className="mt-1 text-sm leading-6 text-slate-500">{description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </section>
       </div>
     </div>
+  );
+}
+
+function GridIcon() {
+  return (
+    <span className="inline-grid grid-cols-2 gap-0.5">
+      <span className="h-1.5 w-1.5 rounded-full bg-current" />
+      <span className="h-1.5 w-1.5 rounded-full bg-current" />
+      <span className="h-1.5 w-1.5 rounded-full bg-current" />
+      <span className="h-1.5 w-1.5 rounded-full bg-current" />
+    </span>
   );
 }
