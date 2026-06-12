@@ -12,6 +12,16 @@ const { sendEmail } = require("../services/email.service");
 
 const getCommissionPercent = 10;
 const buildRazorpayReceipt = (couponId) => `cp_${String(couponId).slice(-8)}_${Date.now().toString().slice(-10)}`;
+const appendPaymentEvent = (transaction, { type, status, message, payload }) => {
+  transaction.paymentEvents = transaction.paymentEvents || [];
+  transaction.paymentEvents.push({
+    type,
+    status,
+    message,
+    payload,
+    createdAt: new Date()
+  });
+};
 const isBenignCaptureError = (error) => {
   const description = String(error?.error?.description || error?.description || error?.message || "").toLowerCase();
   return (
@@ -48,6 +58,27 @@ const sendCouponDeliveryEmail = async ({ email, coupon, transaction }) => {
   });
 };
 
+const deliverCouponEmailIfNeeded = async ({ buyerId, coupon, transaction }) => {
+  if (!buyerId || !coupon || !transaction || transaction.couponEmailSentAt) {
+    return transaction;
+  }
+
+  const buyer = await User.findById(buyerId).select("email");
+  if (!buyer?.email) {
+    return transaction;
+  }
+
+  await sendCouponDeliveryEmail({
+    email: buyer.email,
+    coupon,
+    transaction
+  });
+
+  transaction.couponEmailSentAt = new Date();
+  await transaction.save();
+  return transaction;
+};
+
 const createOrderController = asyncHandler(async (req, res) => {
   const coupon = await Coupon.findById(req.body.couponId).populate("sellerId");
   if (!coupon || coupon.status !== "available") {
@@ -81,8 +112,23 @@ const createOrderController = asyncHandler(async (req, res) => {
     sellerAmount,
     currency: coupon.currency,
     gatewayOrderId: order.id,
-    gatewayReference: order.receipt
+    gatewayReference: order.receipt,
+    gatewayPayload: {
+      order
+    }
   });
+  appendPaymentEvent(transaction, {
+    type: "order_created",
+    status: "created",
+    message: "Checkout order created.",
+    payload: {
+      orderId: order.id,
+      receipt: order.receipt,
+      amount: coupon.sellingPrice,
+      currency: coupon.currency
+    }
+  });
+  await transaction.save();
 
   await createAdminNotification({
     type: "coupon_purchase_started",
@@ -126,6 +172,13 @@ const verifyAuthorized = asyncHandler(async (req, res) => {
 
   if (!isValid) {
     transaction.paymentStatus = "failed";
+    transaction.failedAt = new Date();
+    appendPaymentEvent(transaction, {
+      type: "verification_failed",
+      status: "failed",
+      message: "Razorpay signature verification failed.",
+      payload: { razorpayOrderId, razorpayPaymentId }
+    });
     await transaction.save();
     await createNotification({
       userId: transaction.buyerId,
@@ -148,6 +201,17 @@ const verifyAuthorized = asyncHandler(async (req, res) => {
   transaction.paymentStatus = "authorized";
   transaction.gatewayPaymentId = razorpayPaymentId;
   transaction.gatewaySignature = razorpaySignature;
+  transaction.authorizedAt = new Date();
+  transaction.gatewayPayload = {
+    ...(transaction.gatewayPayload || {}),
+    authorized: { razorpayOrderId, razorpayPaymentId, razorpaySignature }
+  };
+  appendPaymentEvent(transaction, {
+    type: "payment_authorized",
+    status: "authorized",
+    message: "Payment authorized and moved to escrow.",
+    payload: { razorpayOrderId, razorpayPaymentId }
+  });
   await transaction.save();
 
   if (transaction.escrowStatus === "holding") {
@@ -178,6 +242,11 @@ const revealCoupon = asyncHandler(async (req, res) => {
 
   if (transaction.couponRevealedAt) {
     const revealedCoupon = await revealCouponCodeForTransaction(transaction.couponId._id);
+    await deliverCouponEmailIfNeeded({
+      buyerId: req.user._id,
+      coupon: revealedCoupon,
+      transaction
+    });
     return sendResponse(res, 200, "Coupon already revealed", { transaction, revealedCoupon });
   }
 
@@ -190,7 +259,6 @@ const revealCoupon = asyncHandler(async (req, res) => {
   await coupon.save();
 
   const revealedCoupon = await revealCouponCodeForTransaction(coupon._id);
-  const buyer = await User.findById(req.user._id);
   await createNotification({
     userId: req.user._id,
     type: "coupon_revealed",
@@ -199,8 +267,8 @@ const revealCoupon = asyncHandler(async (req, res) => {
     link: "/orders",
     metadata: { couponId: coupon._id, transactionId: transaction._id }
   });
-  await sendCouponDeliveryEmail({
-    email: buyer?.email,
+  await deliverCouponEmailIfNeeded({
+    buyerId: req.user._id,
     coupon: revealedCoupon,
     transaction
   });
@@ -233,10 +301,23 @@ const confirmWorked = asyncHandler(async (req, res) => {
   }
 
   transaction.paymentStatus = "captured";
+  if (!transaction.capturedAt) {
+    transaction.capturedAt = new Date();
+  }
   if (transaction.transactionStatus !== "completed") {
     transaction.escrowStatus = "released";
     transaction.transactionStatus = "completed";
     transaction.releasedAt = new Date();
+    appendPaymentEvent(transaction, {
+      type: "payment_captured",
+      status: "captured",
+      message: "Payment captured and seller payout released.",
+      payload: {
+        paymentId: transaction.gatewayPaymentId,
+        amount: transaction.amount,
+        currency: transaction.currency
+      }
+    });
     await transaction.save();
 
     const coupon = await Coupon.findById(transaction.couponId._id);
@@ -338,11 +419,32 @@ const webhookHandler = asyncHandler(async (req, res) => {
 
   if (event === "payment.authorized") {
     transaction.paymentStatus = transaction.paymentStatus === "captured" ? "captured" : "authorized";
+    transaction.authorizedAt = transaction.authorizedAt || new Date();
+    appendPaymentEvent(transaction, {
+      type: "webhook_authorized",
+      status: transaction.paymentStatus,
+      message: "Webhook received for authorized payment.",
+      payload: req.body?.payload || {}
+    });
   } else if (event === "payment.captured") {
     transaction.paymentStatus = "captured";
+    transaction.capturedAt = transaction.capturedAt || new Date();
+    appendPaymentEvent(transaction, {
+      type: "webhook_captured",
+      status: "captured",
+      message: "Webhook received for captured payment.",
+      payload: req.body?.payload || {}
+    });
   } else if (event === "payment.failed") {
     transaction.paymentStatus = "failed";
     transaction.transactionStatus = "cancelled";
+    transaction.failedAt = new Date();
+    appendPaymentEvent(transaction, {
+      type: "webhook_failed",
+      status: "failed",
+      message: "Webhook received for failed payment.",
+      payload: req.body?.payload || {}
+    });
     await createNotification({
       userId: transaction.buyerId,
       type: "payment_failed",

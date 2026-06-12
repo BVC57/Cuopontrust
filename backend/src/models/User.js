@@ -33,6 +33,12 @@ const userSchema = new mongoose.Schema(
     pendingBalance: { type: Number, default: 0 },
     totalSales: { type: Number, default: 0 },
     totalPurchases: { type: Number, default: 0 },
+    notificationPreferences: {
+      orderUpdates: { type: Boolean, default: true },
+      paymentAlerts: { type: Boolean, default: true },
+      listingUpdates: { type: Boolean, default: true },
+      marketingEmails: { type: Boolean, default: false }
+    },
     isEmailVerified: { type: Boolean, default: false },
     lastLogin: Date,
     bannedAt: Date

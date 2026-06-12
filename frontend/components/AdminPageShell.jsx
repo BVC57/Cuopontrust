@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Bell, CalendarDays, ChevronDown, LogOut, Moon, Search, Settings, SunMedium, UserCircle2 } from "lucide-react";
-import { clearSession, getStoredUser } from "../lib/auth";
+import { AUTH_EVENT, clearSession, getStoredUser } from "../lib/auth";
 import api from "../lib/api";
 import AdminRoute from "./AdminRoute";
 import AdminSidebar from "./AdminSidebar";
@@ -20,15 +20,7 @@ export default function AdminPageShell({
   dateLabel = "24 May 2025 - 30 May 2025"
 }) {
   const router = useRouter();
-  const [theme, setTheme] = useState(() => {
-    if (typeof window !== "undefined") {
-      const storedTheme = window.localStorage.getItem("couponx_admin_theme");
-      if (storedTheme === "light" || storedTheme === "dark") return storedTheme;
-      const documentTheme = document.documentElement.getAttribute("data-admin-theme");
-      if (documentTheme === "light" || documentTheme === "dark") return documentTheme;
-    }
-    return "dark";
-  });
+  const [theme, setTheme] = useState("light");
   const [menuOpen, setMenuOpen] = useState(false);
   const [dateOpen, setDateOpen] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
@@ -66,7 +58,10 @@ export default function AdminPageShell({
   const dateOptions = ["24 May 2025 - 30 May 2025", "This Week", "Last 7 Days", "This Month"];
 
   useEffect(() => {
-    setUser(getStoredUser());
+    const syncUser = () => setUser(getStoredUser());
+    syncUser();
+    window.addEventListener(AUTH_EVENT, syncUser);
+    return () => window.removeEventListener(AUTH_EVENT, syncUser);
   }, []);
 
   useEffect(() => {
@@ -84,6 +79,22 @@ export default function AdminPageShell({
     loadNotifications();
     pollId = window.setInterval(loadNotifications, 15000);
     return () => window.clearInterval(pollId);
+  }, []);
+
+  useEffect(() => {
+    const storedTheme = window.localStorage.getItem("couponx_admin_theme");
+    if (storedTheme === "light" || storedTheme === "dark") {
+      setTheme(storedTheme);
+      return;
+    }
+
+    const documentTheme = document.documentElement.getAttribute("data-admin-theme");
+    if (documentTheme === "light" || documentTheme === "dark") {
+      setTheme(documentTheme);
+      return;
+    }
+
+    document.documentElement.setAttribute("data-admin-theme", "light");
   }, []);
 
   useEffect(() => {

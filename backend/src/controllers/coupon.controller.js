@@ -1,3 +1,4 @@
+const fs = require("fs/promises");
 const { validationResult } = require("express-validator");
 const Coupon = require("../models/Coupon");
 const FraudReport = require("../models/FraudReport");
@@ -48,6 +49,17 @@ const calculateDiscountPercent = (coupon) => {
   }
 
   return Math.max(0, Math.min(100, Math.round(((couponAmount - sellingPrice) / couponAmount) * 100)));
+};
+
+const removeUploadedFile = async (filePath) => {
+  if (!filePath) {
+    return;
+  }
+  try {
+    await fs.unlink(filePath);
+  } catch {
+    // ignore cleanup failures
+  }
 };
 
 const listCoupons = asyncHandler(async (req, res) => {
@@ -161,42 +173,17 @@ const sellCoupon = asyncHandler(async (req, res) => {
     return sendResponse(res, 400, "This coupon is already listed or used");
   }
 
-  const coupon = await Coupon.create({
-    sellerId: req.user._id,
-    platformName: req.body.platformName,
-    platformBrandKey: resolveBrand(req.body.platformName)?.key || "",
-    platformLogoPath: resolveBrand(req.body.platformName)?.logoPath || "",
-    title: req.body.title,
-    categories: parseCategories(req.body.categories, req.body.customCategory),
-    couponCodeEncrypted: encryptCouponCode(req.body.couponCode),
-    couponCodeHash,
-    couponAmount: Number(req.body.couponAmount),
-    sellingPrice: Number(req.body.sellingPrice),
-    currency: req.body.currency,
-    country: req.body.country,
-    expiryDate: expiry,
-    terms: req.body.terms,
-    proofImagePath: `/uploads/coupons/${req.file.filename}`
-  });
-
   const aiResult = await verifyCouponWithAI({
     imagePath: req.file.path,
     userInput: req.body
   });
 
-  coupon.aiExtractedData = aiResult.extractedData;
-  coupon.aiMatchScore = aiResult.matchScore;
-  coupon.aiVerificationStatus = aiResult.status;
-  coupon.screenshotTamperRisk = aiResult.screenshotTamperRisk;
-  coupon.status = aiResult.status === "matched" ? "available" : "ai_failed";
-  await coupon.save();
-
   if (aiResult.status !== "matched") {
     req.user.suspiciousUploadCount += 1;
     await req.user.save();
+    await removeUploadedFile(req.file.path);
     await createFraudReport({
       userId: req.user._id,
-      couponId: coupon._id,
       type: aiResult.screenshotTamperRisk === "critical" ? "manipulated_screenshot" : "ai_mismatch",
       riskLevel: aiResult.screenshotTamperRisk,
       description: "Coupon failed AI verification",
@@ -228,11 +215,40 @@ const sellCoupon = asyncHandler(async (req, res) => {
       });
     }
 
-    return sendResponse(res, 400, "Coupon details do not match uploaded screenshot", {
-      coupon,
-      aiResult
-    });
+    return sendResponse(
+      res,
+      400,
+      aiResult.failureReasons?.[0] || "Coupon details do not match uploaded screenshot",
+      {
+        aiResult
+      }
+    );
   }
+
+  const coupon = await Coupon.create({
+    sellerId: req.user._id,
+    platformName: req.body.platformName,
+    platformBrandKey: resolveBrand(req.body.platformName)?.key || "",
+    platformLogoPath: resolveBrand(req.body.platformName)?.logoPath || "",
+    title: req.body.title,
+    categories: parseCategories(req.body.categories, req.body.customCategory),
+    couponCodeEncrypted: encryptCouponCode(req.body.couponCode),
+    couponCodeHash,
+    couponAmount: Number(req.body.couponAmount),
+    sellingPrice: Number(req.body.sellingPrice),
+    currency: req.body.currency,
+    country: req.body.country,
+    expiryDate: expiry,
+    terms: req.body.terms,
+    proofImagePath: `/uploads/coupons/${req.file.filename}`,
+    aiExtractedData: aiResult.extractedData,
+    aiMatchScore: aiResult.matchScore,
+    aiVerificationStatus: aiResult.status,
+    screenshotTamperRisk: aiResult.screenshotTamperRisk,
+    aiChecks: aiResult.checks || {},
+    aiFailureReasons: aiResult.failureReasons || [],
+    status: "available"
+  });
 
   await createNotification({
     userId: req.user._id,

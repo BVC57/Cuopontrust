@@ -5,7 +5,7 @@ import { Download } from "lucide-react";
 import { Cell, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import AdminPageShell from "../../../components/AdminPageShell";
 import LoadingSpinner from "../../../components/LoadingSpinner";
-import { AdminEmptyState, AdminGhostButton, AdminMetricCard, AdminSurface, formatCompactNumber, formatCurrency, formatDate } from "../../../components/admin/AdminUi";
+import { AdminEmptyState, AdminGhostButton, AdminMetricCard, AdminPagination, AdminSurface, formatCompactNumber, formatCurrency, formatDate, paginateItems } from "../../../components/admin/AdminUi";
 import api from "../../../lib/api";
 
 const colors = ["#22c55e", "#f59e0b", "#3b82f6", "#8b5cf6", "#94a3b8"];
@@ -13,6 +13,8 @@ const colors = ["#22c55e", "#f59e0b", "#3b82f6", "#8b5cf6", "#94a3b8"];
 export default function AdminRevenuePage() {
   const [revenue, setRevenue] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(7);
 
   useEffect(() => {
     setLoading(true);
@@ -55,6 +57,7 @@ export default function AdminRevenuePage() {
     }, {});
     return Object.entries(grouped).map(([name, value]) => ({ name, value }));
   }, [revenue]);
+  const paginatedTimeline = useMemo(() => paginateItems(timeline, page, pageSize), [timeline, page, pageSize]);
 
   if (loading) {
     return (
@@ -98,7 +101,7 @@ export default function AdminRevenuePage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {timeline.map((row, index) => (
+                  {paginatedTimeline.map((row, index) => (
                     <tr key={row.label} className={index ? "border-t border-slate-100" : ""}>
                       <td className="px-5 py-4 text-sm font-medium text-slate-700">{row.label}</td>
                       <td className="px-5 py-4 text-sm font-bold text-slate-900">{formatCurrency(row.coupon)}</td>
@@ -115,6 +118,21 @@ export default function AdminRevenuePage() {
               <AdminEmptyState title="No revenue data found" description="There is no revenue data available for the current period." />
             </div>
           )}
+          {timeline.length ? (
+            <div className="mt-4">
+              <AdminPagination
+                totalCount={timeline.length}
+                page={page}
+                pageSize={pageSize}
+                onPageChange={setPage}
+                onPageSizeChange={(value) => {
+                  setPageSize(value);
+                  setPage(1);
+                }}
+                pageSizeOptions={[7, 14, 21]}
+              />
+            </div>
+          ) : null}
         </AdminSurface>
         <div className="space-y-5">
           <AdminSurface className="p-5">

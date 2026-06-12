@@ -6,7 +6,7 @@ import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import toast from "react-hot-toast";
 import AdminPageShell from "../../../components/AdminPageShell";
 import LoadingSpinner from "../../../components/LoadingSpinner";
-import { AdminDetailModal, AdminEmptyState, AdminGhostButton, AdminMetricCard, AdminStatusChip, AdminSurface, AdminToolbar, AdminUserIdentity, formatCompactNumber, formatCurrency, formatDateTime } from "../../../components/admin/AdminUi";
+import { AdminDetailModal, AdminEmptyState, AdminGhostButton, AdminMetricCard, AdminPagination, AdminStatusChip, AdminSurface, AdminToolbar, AdminUserIdentity, formatCompactNumber, formatCurrency, formatDateTime, paginateItems } from "../../../components/admin/AdminUi";
 import api, { extractError } from "../../../lib/api";
 
 const pieTones = ["#22c55e", "#f59e0b", "#ef4444", "#3b82f6"];
@@ -16,6 +16,8 @@ export default function AdminPaymentsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selectedPayment, setSelectedPayment] = useState(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const loadPayments = async () => {
     setLoading(true);
@@ -37,6 +39,7 @@ export default function AdminPaymentsPage() {
     () => payments.filter((row) => `${row.gatewayOrderId} ${row.buyerId?.email || ""} ${row.sellerId?.email || ""}`.toLowerCase().includes(search.toLowerCase())),
     [payments, search]
   );
+  const paginatedPayments = useMemo(() => paginateItems(filtered, page, pageSize), [filtered, page, pageSize]);
 
   const metricRows = useMemo(() => {
     const totalAmount = payments.reduce((sum, row) => sum + Number(row.amount || 0), 0);
@@ -74,6 +77,10 @@ export default function AdminPaymentsPage() {
   }, [payments]);
 
   const failedPayments = payments.filter((row) => row.paymentStatus === "failed").slice(0, 3);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
 
   const deletePayment = async (id) => {
     try {
@@ -129,7 +136,7 @@ export default function AdminPaymentsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((row, index) => (
+                  {paginatedPayments.map((row, index) => (
                     <tr key={row._id} className={index ? "border-t border-slate-100" : ""}>
                       <td className="px-5 py-4 text-sm font-bold text-[#6f4cff]">{row.gatewayPaymentId || row.gatewayOrderId || row._id.slice(-8)}</td>
                       <td className="px-5 py-4"><AdminUserIdentity name={row.buyerId?.name || "Buyer"} email={row.buyerId?.email} /></td>
@@ -152,6 +159,18 @@ export default function AdminPaymentsPage() {
           ) : (
             <AdminEmptyState title="No payments found" description="No payment data is available for the current search or filter selection." />
           )}
+          {filtered.length ? (
+            <AdminPagination
+              totalCount={filtered.length}
+              page={page}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              onPageSizeChange={(value) => {
+                setPageSize(value);
+                setPage(1);
+              }}
+            />
+          ) : null}
         </AdminSurface>
 
         <div className="space-y-5">
@@ -223,6 +242,7 @@ export default function AdminPaymentsPage() {
         {selectedPayment ? (
           <div className="space-y-4">
             <AdminUserIdentity name={selectedPayment.buyerId?.name || "Buyer"} email={selectedPayment.buyerId?.email} />
+            <AdminUserIdentity name={selectedPayment.sellerId?.name || "Seller"} email={selectedPayment.sellerId?.email} accent="from-blue-500 to-cyan-500" />
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Transaction ID</p><p className="mt-2 text-sm font-bold text-slate-900">{selectedPayment.gatewayPaymentId || selectedPayment._id}</p></div>
               <div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Order ID</p><p className="mt-2 text-sm font-bold text-slate-900">{selectedPayment.gatewayOrderId || "-"}</p></div>
@@ -230,6 +250,31 @@ export default function AdminPaymentsPage() {
               <div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Status</p><div className="mt-2"><AdminStatusChip status={selectedPayment.paymentStatus === "captured" ? "success" : selectedPayment.paymentStatus} /></div></div>
               <div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Gateway</p><p className="mt-2 text-sm font-bold text-slate-900">{selectedPayment.paymentGateway || "razorpay"}</p></div>
               <div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Created</p><p className="mt-2 text-sm font-bold text-slate-900">{formatDateTime(selectedPayment.createdAt)}</p></div>
+              <div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Seller Amount</p><p className="mt-2 text-sm font-bold text-slate-900">{formatCurrency(selectedPayment.sellerAmount, selectedPayment.currency)}</p></div>
+              <div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Platform Fee</p><p className="mt-2 text-sm font-bold text-slate-900">{formatCurrency(selectedPayment.platformFee, selectedPayment.currency)}</p></div>
+              <div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Escrow</p><div className="mt-2"><AdminStatusChip status={selectedPayment.escrowStatus || "holding"} /></div></div>
+              <div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Coupon</p><p className="mt-2 text-sm font-bold text-slate-900">{selectedPayment.couponId?.title || "-"}</p></div>
+            </div>
+            <div className="rounded-2xl bg-slate-50 p-4">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Payment Record Timeline</p>
+              <div className="mt-4 space-y-3">
+                {(selectedPayment.paymentEvents || []).length ? (
+                  selectedPayment.paymentEvents.slice().reverse().map((event, index) => (
+                    <div key={`${event.type}-${index}`} className="flex items-start justify-between gap-4 rounded-2xl border border-slate-100 bg-white px-4 py-3">
+                      <div>
+                        <p className="text-sm font-bold text-slate-900">{event.message || event.type}</p>
+                        <p className="mt-1 text-xs uppercase tracking-[0.14em] text-slate-400">{event.type.replaceAll("_", " ")}</p>
+                      </div>
+                      <div className="text-right">
+                        <div><AdminStatusChip status={event.status || selectedPayment.paymentStatus} /></div>
+                        <p className="mt-1 text-xs text-slate-400">{formatDateTime(event.createdAt)}</p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-slate-500">No event history stored for this payment yet.</p>
+                )}
+              </div>
             </div>
           </div>
         ) : null}

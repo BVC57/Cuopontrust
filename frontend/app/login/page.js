@@ -43,7 +43,7 @@ export default function LoginPage() {
   const onSendOtp = async ({ email: submittedEmail }) => {
     try {
       const normalizedEmail = submittedEmail.trim().toLowerCase();
-      const { data } = await api.post("/auth/send-otp", { email: normalizedEmail });
+      const { data } = await api.post("/auth/send-otp", { email: normalizedEmail, intent: "login" });
       setEmail(normalizedEmail);
       setOtpDigits(["", "", "", "", "", ""]);
       setOtpSent(true);
@@ -65,7 +65,7 @@ export default function LoginPage() {
         return;
       }
 
-      const { data } = await api.post("/auth/verify-otp", { email, otp });
+      const { data } = await api.post("/auth/verify-otp", { email, otp, intent: "login" });
       const meResponse = await api.get("/auth/me", {
         headers: { Authorization: `Bearer ${data.token}` }
       });
@@ -80,7 +80,7 @@ export default function LoginPage() {
   const handleResendOtp = async () => {
     if (timer > 0) return;
     try {
-      const { data } = await api.post("/auth/send-otp", { email });
+      const { data } = await api.post("/auth/send-otp", { email, intent: "login" });
       setTimer(59);
       toast.success(data?.message || "OTP resent successfully");
     } catch (error) {

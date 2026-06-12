@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Eye, RotateCcw, Trash2 } from "lucide-react";
 import AdminPageShell from "../../../components/AdminPageShell";
 import LoadingSpinner from "../../../components/LoadingSpinner";
-import { AdminDetailModal, AdminEmptyState, AdminGhostButton, AdminMetricCard, AdminStatusChip, AdminSurface, AdminToolbar, formatCompactNumber, formatDate } from "../../../components/admin/AdminUi";
+import { AdminDetailModal, AdminEmptyState, AdminGhostButton, AdminMetricCard, AdminPagination, AdminStatusChip, AdminSurface, AdminToolbar, formatCompactNumber, formatDate, paginateItems } from "../../../components/admin/AdminUi";
 import api from "../../../lib/api";
 import { resolveBrand } from "../../../lib/brandCatalog";
 
@@ -21,6 +21,8 @@ export default function AdminAiFailedPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selectedCoupon, setSelectedCoupon] = useState(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => {
     setLoading(true);
@@ -28,6 +30,7 @@ export default function AdminAiFailedPage() {
   }, []);
 
   const filtered = useMemo(() => coupons.filter((coupon) => `${coupon.title} ${coupon.platformName}`.toLowerCase().includes(search.toLowerCase())), [coupons, search]);
+  const paginatedCoupons = useMemo(() => paginateItems(filtered, page, pageSize), [filtered, page, pageSize]);
 
   const metrics = useMemo(() => [
     { label: "Total Failed Coupons", value: formatCompactNumber(coupons.length), change: "+18.6%", tone: "red" },
@@ -36,6 +39,10 @@ export default function AdminAiFailedPage() {
     { label: "Needs Review", value: formatCompactNumber(coupons.filter((coupon) => coupon.screenshotTamperRisk !== "critical").length), change: "-5.3%", tone: "amber" },
     { label: "Fixed & Re-verified", value: formatCompactNumber(coupons.filter((coupon) => coupon.aiMatchScore > 80).length), change: "+12.8%", tone: "green" }
   ], [coupons]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
 
   if (loading) {
     return (
@@ -81,11 +88,11 @@ export default function AdminAiFailedPage() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((coupon, index) => {
+                {paginatedCoupons.map((coupon, index) => {
                   const brand = resolveBrand(coupon.platformBrandKey || coupon.platformName);
                   return (
                     <tr key={coupon._id} className={index ? "border-t border-slate-100" : ""}>
-                      <td className="px-5 py-4 text-sm font-bold text-slate-900">{index + 1}</td>
+                      <td className="px-5 py-4 text-sm font-bold text-slate-900">{(page - 1) * pageSize + index + 1}</td>
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
                           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-50">
@@ -121,6 +128,20 @@ export default function AdminAiFailedPage() {
         ) : (
           <AdminEmptyState title="No AI failed coupons found" description="There are no AI failed coupons for the current filters." />
         )}
+        {filtered.length ? (
+          <div className="mt-4">
+            <AdminPagination
+              totalCount={filtered.length}
+              page={page}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              onPageSizeChange={(value) => {
+                setPageSize(value);
+                setPage(1);
+              }}
+            />
+          </div>
+        ) : null}
       </AdminSurface>
       <AdminDetailModal open={Boolean(selectedCoupon)} title="Failed Coupon Details" onClose={() => setSelectedCoupon(null)}>
         {selectedCoupon ? (

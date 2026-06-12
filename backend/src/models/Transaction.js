@@ -19,6 +19,19 @@ const transactionSchema = new mongoose.Schema(
       enum: ["created", "authorized", "captured", "refunded", "cancelled", "failed"],
       default: "created"
     },
+    paymentEvents: {
+      type: [
+        {
+          type: { type: String, required: true },
+          status: String,
+          message: String,
+          payload: mongoose.Schema.Types.Mixed,
+          createdAt: { type: Date, default: Date.now }
+        }
+      ],
+      default: []
+    },
+    gatewayPayload: { type: mongoose.Schema.Types.Mixed, default: {} },
     escrowStatus: {
       type: String,
       enum: ["holding", "released", "refunded", "disputed"],
@@ -29,8 +42,13 @@ const transactionSchema = new mongoose.Schema(
       enum: ["created", "coupon_revealed", "completed", "disputed", "refunded", "cancelled"],
       default: "created"
     },
+    authorizedAt: Date,
+    capturedAt: Date,
+    failedAt: Date,
+    refundedAt: Date,
     couponRevealedAt: Date,
-    releasedAt: Date
+    releasedAt: Date,
+    couponEmailSentAt: Date
   },
   { timestamps: true }
 );

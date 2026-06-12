@@ -5,7 +5,7 @@ import { Download, Eye } from "lucide-react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import AdminPageShell from "../../../components/AdminPageShell";
 import LoadingSpinner from "../../../components/LoadingSpinner";
-import { AdminDetailModal, AdminEmptyState, AdminGhostButton, AdminMetricCard, AdminStatusChip, AdminSurface, AdminToolbar, AdminUserIdentity, formatCompactNumber, formatCurrency, formatDateTime } from "../../../components/admin/AdminUi";
+import { AdminDetailModal, AdminEmptyState, AdminGhostButton, AdminMetricCard, AdminPagination, AdminStatusChip, AdminSurface, AdminToolbar, AdminUserIdentity, formatCompactNumber, formatCurrency, formatDateTime, paginateItems } from "../../../components/admin/AdminUi";
 import api from "../../../lib/api";
 
 const colors = ["#22c55e", "#f59e0b", "#8b5cf6", "#94a3b8"];
@@ -15,6 +15,8 @@ export default function AdminTransactionsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selectedTransaction, setSelectedTransaction] = useState(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => {
     setLoading(true);
@@ -22,6 +24,7 @@ export default function AdminTransactionsPage() {
   }, []);
 
   const filtered = useMemo(() => transactions.filter((row) => `${row._id} ${row.buyerId?.email || ""}`.toLowerCase().includes(search.toLowerCase())), [transactions, search]);
+  const paginatedTransactions = useMemo(() => paginateItems(filtered, page, pageSize), [filtered, page, pageSize]);
 
   const metrics = useMemo(() => {
     const totalAmount = transactions.reduce((sum, row) => sum + Number(row.amount || 0), 0);
@@ -40,6 +43,10 @@ export default function AdminTransactionsPage() {
     { name: "Pending", value: transactions.filter((row) => ["created", "authorized"].includes(row.paymentStatus)).length },
     { name: "Failed", value: transactions.filter((row) => row.paymentStatus === "failed").length }
   ], [transactions]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
 
   if (loading) {
     return (
@@ -85,7 +92,7 @@ export default function AdminTransactionsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((row, index) => (
+                  {paginatedTransactions.map((row, index) => (
                     <tr key={row._id} className={index ? "border-t border-slate-100" : ""}>
                       <td className="px-5 py-4 text-sm font-bold text-[#6f4cff]">{row._id.slice(-10).toUpperCase()}</td>
                       <td className="px-5 py-4"><AdminUserIdentity name={row.buyerId?.name || "Buyer"} email={row.buyerId?.email} /></td>
@@ -103,6 +110,18 @@ export default function AdminTransactionsPage() {
           ) : (
             <AdminEmptyState title="No transactions found" description="No transactions match the current search or filter selection." />
           )}
+          {filtered.length ? (
+            <AdminPagination
+              totalCount={filtered.length}
+              page={page}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              onPageSizeChange={(value) => {
+                setPageSize(value);
+                setPage(1);
+              }}
+            />
+          ) : null}
         </AdminSurface>
         <div className="space-y-5">
           <AdminSurface className="p-5">

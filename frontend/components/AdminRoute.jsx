@@ -1,24 +1,27 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { getStoredUser } from "../lib/auth";
+import { getStoredToken, getStoredUser } from "../lib/auth";
 import LoadingSpinner from "./LoadingSpinner";
 
 export default function AdminRoute({ children }) {
+  const router = useRouter();
   const [allowed, setAllowed] = useState(false);
 
   useEffect(() => {
     const user = getStoredUser();
-    if (!user) {
-      window.location.href = "/login";
+    const token = getStoredToken();
+    if (!token || !user) {
+      router.replace("/login");
       return;
     }
     if (user.role !== "super_admin") {
-      window.location.href = "/";
+      router.replace("/");
       return;
     }
     setAllowed(true);
-  }, []);
+  }, [router]);
 
   if (!allowed) {
     return <LoadingSpinner label="Checking admin access..." />;

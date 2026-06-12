@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { 
   Tag, 
   Sparkles, 
@@ -50,8 +50,10 @@ const aiSteps = [
 
 export default function SellPage() {
   const router = useRouter();
+  const abortRef = useRef(null);
   const [popupOpen, setPopupOpen] = useState(true);
   const [file, setFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState("");
   
   // Controlled form states
   const [platformName, setPlatformName] = useState("");
@@ -68,6 +70,7 @@ export default function SellPage() {
 
   const [checking, setChecking] = useState(false);
   const [result, setResult] = useState(null);
+  const [cancelled, setCancelled] = useState(false);
   
   // Verification steps tracking state
   const [stepsList, setStepsList] = useState(
@@ -79,6 +82,17 @@ export default function SellPage() {
       prev.includes(category) ? prev.filter((item) => item !== category) : [...prev, category]
     );
   };
+
+  useEffect(() => {
+    if (!file) {
+      setPreviewUrl("");
+      return undefined;
+    }
+
+    const objectUrl = URL.createObjectURL(file);
+    setPreviewUrl(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [file]);
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -92,7 +106,9 @@ export default function SellPage() {
     }
 
     setChecking(true);
+    setCancelled(false);
     setResult(null);
+    abortRef.current = new AbortController();
 
     // Initialize checking steps structure
     setStepsList(
@@ -125,7 +141,8 @@ export default function SellPage() {
 
     // Launch API call in background
     const apiPromise = api.post("/coupons/sell", formData, {
-      headers: { "Content-Type": "multipart/form-data" }
+      headers: { "Content-Type": "multipart/form-data" },
+      signal: abortRef.current.signal
     })
     .then((res) => {
       apiResolved = true;
@@ -136,16 +153,112 @@ export default function SellPage() {
     .catch((err) => {
       apiResolved = true;
       apiSuccess = false;
+      if (err?.code === "ERR_CANCELED") {
+        apiData = { cancelled: true };
+        apiErrorMsg = "Verification cancelled";
+        throw err;
+      }
       apiData = err?.response?.data || {};
       apiErrorMsg = extractError(err);
       throw err;
     });
+    void apiPromise.catch(() => null);
 
     // Run animation steps
     let currentStep = 0;
 
     const runAnimation = async () => {
       while (currentStep < 8) {
+        if (cancelled) {
+          break;
+        }
+
+        if (apiResolved && !apiSuccess) {
+          const aiResult = apiData?.aiResult || {};
+          const checks = aiResult.checks || {};
+          setStepsList((prev) => prev.map((step, index) => {
+            if (index < 2) {
+              return step.status === "pending" ? step : { ...step, status: "success" };
+            }
+
+            if (index === 2) {
+              return {
+                ...step,
+                status: checks.couponCodeMatch ? "success" : "error",
+                details: checks.couponCodeMatch
+                  ? "Code is visible in the screenshot"
+                  : aiResult.failureReasons?.find((item) => item.toLowerCase().includes("coupon code")) || "Coupon code is not visible in the screenshot"
+              };
+            }
+
+            if (index === 3) {
+              return {
+                ...step,
+                status: checks.expiryDateMatch ? "success" : "error",
+                details: checks.expiryDateMatch
+                  ? "Expiry date matched"
+                  : aiResult.failureReasons?.find((item) => item.toLowerCase().includes("expiry")) || `Mismatch (Expected: ${expiryDate}, Found: ${aiResult.extractedData?.expiryDate || "None"})`
+              };
+            }
+
+            if (index === 4) {
+              return {
+                ...step,
+                status: checks.amountMatch ? "success" : "error",
+                details: checks.amountMatch
+                  ? "Amount matched"
+                  : aiResult.failureReasons?.find((item) => item.toLowerCase().includes("amount")) || `Mismatch (Expected: ${couponAmount}, Found: ${aiResult.extractedData?.couponAmount || "None"})`
+              };
+            }
+
+            if (index === 5) {
+              return {
+                ...step,
+                status: apiErrorMsg.includes("already listed") ? "error" : "pending",
+                details: apiErrorMsg.includes("already listed") ? "Duplicate code hash detected" : ""
+              };
+            }
+
+            if (index === 6) {
+              return {
+                ...step,
+                status: apiErrorMsg.includes("Expired coupons") ? "error" : "pending",
+                details: apiErrorMsg.includes("Expired coupons") ? "Coupon has expired" : ""
+              };
+            }
+
+            if (index === 7) {
+              return {
+                ...step,
+                status: aiResult.screenshotTamperRisk === "critical" || checks.ocrReadable === false ? "error" : "pending",
+                details: aiResult.screenshotTamperRisk === "critical"
+                  ? `Tamper risk level: ${aiResult.screenshotTamperRisk?.toUpperCase() || "CRITICAL"}`
+                  : checks.ocrReadable === false
+                    ? "Screenshot text is not readable enough for verification"
+                    : ""
+              };
+            }
+
+            if (index === 8) {
+              return {
+                ...step,
+                status: "error",
+                details: apiErrorMsg
+              };
+            }
+
+            return step;
+          }));
+
+          setResult({ success: false, message: apiErrorMsg, data: apiData });
+          if (apiErrorMsg !== "Verification cancelled") {
+            toast.error(apiErrorMsg);
+          }
+          abortRef.current = null;
+          setChecking(false);
+          return;
+        }
+
         // Step checking duration
         const duration = currentStep === 0 || currentStep === 1 || currentStep === 7 ? 800 : 500;
         await new Promise((resolve) => setTimeout(resolve, duration));
@@ -171,13 +284,13 @@ export default function SellPage() {
 
               if (currentStep === 2) {
                 stepPass = !!checks.couponCodeMatch;
-                stepDetails = stepPass ? "Codes match perfectly" : `Mismatch (Expected: ${couponCode}, Found: ${aiResult.extractedData?.couponCode || "None"})`;
+                stepDetails = stepPass ? "Code is visible in the screenshot" : aiResult.failureReasons?.find((item) => item.toLowerCase().includes("coupon code")) || "Coupon code is not visible in the screenshot";
               } else if (currentStep === 3) {
                 stepPass = !!checks.expiryDateMatch;
-                stepDetails = stepPass ? "Dates match perfectly" : `Mismatch (Expected: ${expiryDate}, Found: ${aiResult.extractedData?.expiryDate ? new Date(aiResult.extractedData.expiryDate).toLocaleDateString() : "None"})`;
+                stepDetails = stepPass ? "Expiry date matched" : aiResult.failureReasons?.find((item) => item.toLowerCase().includes("expiry")) || `Mismatch (Expected: ${expiryDate}, Found: ${aiResult.extractedData?.expiryDate || "None"})`;
               } else if (currentStep === 4) {
                 stepPass = !!checks.amountMatch;
-                stepDetails = stepPass ? "Amounts match perfectly" : `Mismatch (Expected: ${couponAmount}, Found: ${aiResult.extractedData?.couponAmount || "None"})`;
+                stepDetails = stepPass ? "Amount matched" : aiResult.failureReasons?.find((item) => item.toLowerCase().includes("amount")) || `Mismatch (Expected: ${couponAmount}, Found: ${aiResult.extractedData?.couponAmount || "None"})`;
               } else if (currentStep === 5) {
                 stepPass = !apiErrorMsg.includes("already listed");
                 stepDetails = stepPass ? "No duplicate coupon code hash found" : "Duplicate code hash detected";
@@ -185,8 +298,10 @@ export default function SellPage() {
                 stepPass = !apiErrorMsg.includes("Expired coupons");
                 stepDetails = stepPass ? "Coupon is active and valid" : "Coupon has expired";
               } else if (currentStep === 7) {
-                stepPass = aiResult.screenshotTamperRisk !== "critical";
-                stepDetails = `Tamper risk level: ${aiResult.screenshotTamperRisk?.toUpperCase() || "LOW"}`;
+                stepPass = !!checks.ocrReadable && aiResult.screenshotTamperRisk !== "critical";
+                stepDetails = !checks.ocrReadable
+                  ? "Screenshot text is not readable enough for verification"
+                  : `Tamper risk level: ${aiResult.screenshotTamperRisk?.toUpperCase() || "LOW"}`;
               }
 
               next[currentStep].status = stepPass ? "success" : "error";
@@ -210,6 +325,17 @@ export default function SellPage() {
         }
       }
 
+      if (cancelled) {
+        setStepsList((prev) => prev.map((step, index) => ({
+          ...step,
+          status: index === 8 ? "error" : step.status === "checking" ? "pending" : step.status,
+          details: index === 8 ? "Verification cancelled by user." : step.details
+        })));
+        setResult({ success: false, message: "Verification cancelled by user." });
+        setChecking(false);
+        return;
+      }
+
       // Step 8: Final results summary
       setStepsList((prev) => {
         const next = [...prev];
@@ -226,17 +352,39 @@ export default function SellPage() {
         }, 1200);
       } else {
         setResult({ success: false, message: apiErrorMsg, data: apiData });
-        toast.error(apiErrorMsg);
+        if (apiErrorMsg !== "Verification cancelled") {
+          toast.error(apiErrorMsg);
+        }
       }
+      abortRef.current = null;
       setChecking(false);
     };
 
     runAnimation();
   };
 
+  const handleCancelVerification = () => {
+    if (checking) {
+      setCancelled(true);
+      abortRef.current?.abort();
+      abortRef.current = null;
+      toast("Verification cancelled", { icon: "X" });
+    }
+    router.push("/");
+  };
+
+  useEffect(() => () => abortRef.current?.abort(), []);
+
   return (
     <ProtectedRoute>
-      <SafetyPopup open={popupOpen} onContinue={() => setPopupOpen(false)} />
+      <SafetyPopup
+        open={popupOpen}
+        onContinue={() => setPopupOpen(false)}
+        onClose={() => {
+          setPopupOpen(false);
+          router.push("/");
+        }}
+      />
       
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 font-sans">
         
@@ -461,27 +609,40 @@ export default function SellPage() {
               {/* Upload screenshot */}
               <div>
                 <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">Upload Coupon Screenshot</span>
-                <UploadBox onChange={(e) => setFile(e.target.files?.[0] || null)} fileName={file?.name} />
+                <UploadBox
+                  onChange={(e) => setFile(e.target.files?.[0] || null)}
+                  fileName={file?.name}
+                  previewUrl={previewUrl}
+                />
               </div>
 
               {/* Submit Button */}
-              <button
-                type="submit"
-                disabled={checking}
-                className="w-full bg-[#16a34a] hover:bg-[#15803d] disabled:bg-slate-300 disabled:text-slate-500 text-white rounded-[16px] py-4 font-bold text-base shadow-[0_8px_20px_rgba(22,163,74,0.18)] active:scale-[0.99] transition-all flex items-center justify-center gap-2"
-              >
-                {checking ? (
-                  <>
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                    AI Verification In Progress...
-                  </>
-                ) : (
-                  <>
-                    Submit & Start AI Verification
-                    <ArrowRight className="h-5 w-5" />
-                  </>
-                )}
-              </button>
+              <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+                <button
+                  type="submit"
+                  disabled={checking}
+                  className="w-full bg-[#16a34a] hover:bg-[#15803d] disabled:bg-slate-300 disabled:text-slate-500 text-white rounded-[16px] py-4 font-bold text-base shadow-[0_8px_20px_rgba(22,163,74,0.18)] active:scale-[0.99] transition-all flex items-center justify-center gap-2"
+                >
+                  {checking ? (
+                    <>
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      AI Verification In Progress...
+                    </>
+                  ) : (
+                    <>
+                      Submit & Start AI Verification
+                      <ArrowRight className="h-5 w-5" />
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCancelVerification}
+                  className="rounded-[16px] border border-slate-200 bg-white px-5 py-4 text-sm font-bold text-slate-600 transition-all hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+              </div>
             </form>
           </div>
 

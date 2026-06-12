@@ -11,11 +11,13 @@ import {
   AdminEmptyState,
   AdminGhostButton,
   AdminMetricCard,
+  AdminPagination,
   AdminStatusChip,
   AdminSurface,
   AdminToolbar,
   formatCompactNumber,
-  formatDate
+  formatDate,
+  paginateItems
 } from "../../../components/admin/AdminUi";
 import api, { extractError } from "../../../lib/api";
 import { resolveBrand } from "../../../lib/brandCatalog";
@@ -27,6 +29,8 @@ export default function AdminCouponsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [selectedCoupon, setSelectedCoupon] = useState(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const loadCoupons = async () => {
     setLoading(true);
@@ -66,6 +70,11 @@ export default function AdminCouponsPage() {
     ],
     [coupons]
   );
+  const paginatedCoupons = useMemo(() => paginateItems(filteredCoupons, page, pageSize), [filteredCoupons, page, pageSize]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, statusFilter, categoryFilter]);
 
   const removeCoupon = async (id) => {
     try {
@@ -139,10 +148,10 @@ export default function AdminCouponsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredCoupons.map((coupon, index) => {
+                    {paginatedCoupons.map((coupon, index) => {
                       return (
                         <tr key={coupon._id} className={index ? "border-t border-slate-100" : ""}>
-                          <td className="px-5 py-4 text-sm font-bold text-slate-600">{index + 1}</td>
+                          <td className="px-5 py-4 text-sm font-bold text-slate-600">{(page - 1) * pageSize + index + 1}</td>
                           <td className="px-5 py-4 text-sm font-bold text-slate-900">{coupon.title}</td>
                           <td className="px-5 py-4"><span className="rounded-xl bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-600">Hidden</span></td>
                           <td className="px-5 py-4 text-sm font-medium text-slate-600">{coupon.platformName}</td>
@@ -166,6 +175,20 @@ export default function AdminCouponsPage() {
             ) : (
               <AdminEmptyState title="No coupons found" description="No coupon data is available for the current search and filter selection." />
             )}
+            {filteredCoupons.length ? (
+              <div className="mt-4">
+                <AdminPagination
+                  totalCount={filteredCoupons.length}
+                  page={page}
+                  pageSize={pageSize}
+                  onPageChange={setPage}
+                  onPageSizeChange={(value) => {
+                    setPageSize(value);
+                    setPage(1);
+                  }}
+                />
+              </div>
+            ) : null}
           </AdminSurface>
 
           <AdminDetailModal open={Boolean(selectedCoupon)} title="Coupon Details" onClose={() => setSelectedCoupon(null)}>
@@ -197,6 +220,26 @@ export default function AdminCouponsPage() {
                   <div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Selling Price</p><p className="mt-2 text-sm font-bold text-slate-900">{selectedCoupon.sellingPrice}</p></div>
                   <div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Status</p><div className="mt-2"><AdminStatusChip status={selectedCoupon.status === "available" ? "active" : selectedCoupon.status} /></div></div>
                   <div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Expiry Date</p><p className="mt-2 text-sm font-bold text-slate-900">{formatDate(selectedCoupon.expiryDate)}</p></div>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">AI Match Score</p><p className="mt-2 text-sm font-bold text-slate-900">{selectedCoupon.aiMatchScore || 0}</p></div>
+                  <div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">OCR Confidence</p><p className="mt-2 text-sm font-bold text-slate-900">{selectedCoupon.aiExtractedData?.confidenceScore ?? "-"}</p></div>
+                </div>
+                <div className="rounded-2xl bg-slate-50 p-4">
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">AI Failure Reasons</p>
+                  <div className="mt-3 space-y-2">
+                    {(selectedCoupon.aiFailureReasons || []).length ? (
+                      selectedCoupon.aiFailureReasons.map((item) => (
+                        <p key={item} className="text-sm font-semibold text-rose-500">{item}</p>
+                      ))
+                    ) : (
+                      <p className="text-sm text-slate-500">No AI mismatch reasons recorded.</p>
+                    )}
+                  </div>
+                </div>
+                <div className="rounded-2xl bg-slate-50 p-4">
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Visible Screenshot Text</p>
+                  <p className="mt-2 text-sm leading-7 text-slate-600">{selectedCoupon.aiExtractedData?.visibleTextSnippet || "No OCR text stored."}</p>
                 </div>
                 <div className="rounded-2xl bg-slate-50 p-4">
                   <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Terms</p>

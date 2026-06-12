@@ -47,19 +47,19 @@ export default function RegisterPage() {
   }, [timer]);
 
   const handleSendOtp = async () => {
-    if (!email.trim()) {
-      toast.error("Enter your email address first.");
-      return;
-    }
     if (!username.trim()) {
       toast.error("Enter your username first.");
+      return;
+    }
+    if (!email.trim()) {
+      toast.error("Enter your email address first.");
       return;
     }
 
     setIsSendingOtp(true);
     try {
       const normalizedEmail = email.trim().toLowerCase();
-      const { data } = await api.post("/auth/send-otp", { email: normalizedEmail });
+      const { data } = await api.post("/auth/send-otp", { email: normalizedEmail, intent: "register" });
       setEmail(normalizedEmail);
       setOtpSent(true);
       setOtpDigits(["", "", "", "", "", ""]);
@@ -114,7 +114,7 @@ export default function RegisterPage() {
     setIsVerifying(true);
     try {
       const normalizedEmail = email.trim().toLowerCase();
-      const { data } = await api.post("/auth/verify-otp", { email: normalizedEmail, otp });
+      const { data } = await api.post("/auth/verify-otp", { email: normalizedEmail, otp, intent: "register" });
       saveSession({ token: data.token, user: data.user });
 
       try {
@@ -172,6 +172,23 @@ export default function RegisterPage() {
         <div className="rounded-[24px] border border-[#e8f2ec] bg-[#fafcfa] p-5 shadow-[0_8px_30px_rgba(0,0,0,0.01)] sm:mt-8 sm:p-6">
           <form onSubmit={handleRegister} className="space-y-4">
             <label className="block">
+              <span className="mb-2 block text-xs font-extrabold uppercase tracking-wider text-slate-600">Username</span>
+              <div className="flex items-center gap-3 rounded-[16px] border border-slate-200 bg-white px-4 py-3.5 transition-all focus-within:border-[#16a34a] focus-within:ring-2 focus-within:ring-emerald-500/20">
+                <User className="h-5 w-5 flex-shrink-0 text-slate-400" />
+                <input
+                  suppressHydrationWarning
+                  type="text"
+                  value={username}
+                  onChange={(event) => setUsername(event.target.value)}
+                  placeholder="Choose a unique username"
+                  className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-slate-800 outline-none placeholder:text-slate-400"
+                  disabled={otpSent}
+                  required
+                />
+              </div>
+            </label>
+
+            <label className="block">
               <span className="mb-2 block text-xs font-extrabold uppercase tracking-wider text-slate-600">Email Address</span>
               <div className="flex items-center gap-3 rounded-[16px] border border-slate-200 bg-white px-4 py-2.5 transition-all focus-within:border-[#16a34a] focus-within:ring-2 focus-within:ring-emerald-500/20">
                 <Mail className="h-5 w-5 flex-shrink-0 text-slate-400" />
@@ -193,23 +210,6 @@ export default function RegisterPage() {
                 >
                   {isSendingOtp ? "Sending..." : timer > 0 ? `Resend (${timer}s)` : "Send OTP"}
                 </button>
-              </div>
-            </label>
-
-            <label className="block">
-              <span className="mb-2 block text-xs font-extrabold uppercase tracking-wider text-slate-600">Username</span>
-              <div className="flex items-center gap-3 rounded-[16px] border border-slate-200 bg-white px-4 py-3.5 transition-all focus-within:border-[#16a34a] focus-within:ring-2 focus-within:ring-emerald-500/20">
-                <User className="h-5 w-5 flex-shrink-0 text-slate-400" />
-                <input
-                  suppressHydrationWarning
-                  type="text"
-                  value={username}
-                  onChange={(event) => setUsername(event.target.value)}
-                  placeholder="Choose a unique username"
-                  className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-slate-800 outline-none placeholder:text-slate-400"
-                  disabled={otpSent}
-                  required
-                />
               </div>
             </label>
 

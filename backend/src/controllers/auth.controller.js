@@ -20,10 +20,15 @@ const sendOtpController = asyncHandler(async (req, res) => {
   }
 
   const email = req.body.email.toLowerCase();
+  const intent = req.body.intent === "register" ? "register" : "login";
 
   console.log("Send OTP request:", email);
 
   const existingUser = await User.findOne({ email });
+  if (intent === "login" && !existingUser) {
+    return sendResponse(res, 404, "User not registered. Please register first.");
+  }
+
   const result = await sendOtp(email, { isNewUser: !existingUser });
   return sendResponse(res, 200, result.message, {
     emailSent: result.emailSent,
@@ -58,6 +63,7 @@ const verifyOtpController = asyncHandler(async (req, res) => {
   }
 
   const email = req.body.email.toLowerCase();
+  const intent = req.body.intent === "register" ? "register" : "login";
   const result = await verifyOtp(email, req.body.otp);
 
   if (!result.valid) {
@@ -65,6 +71,10 @@ const verifyOtpController = asyncHandler(async (req, res) => {
   }
 
   let user = await User.findOne({ email });
+  if (intent === "login" && !user) {
+    return sendResponse(res, 404, "User not registered. Please register first.");
+  }
+
   const isNewUser = !user;
   if (!user) {
     user = await User.create({
