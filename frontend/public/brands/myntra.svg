@@ -1,0 +1,5 @@
+<svg width="160" height="64" viewBox="0 0 160 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="160" height="64" rx="18" fill="white"/>
+  <path d="M28 43V18H36L43 29L50 18H58V43H50V29L43 39L36 29V43H28Z" fill="#EC4899"/>
+  <text x="70" y="37" fill="#EC4899" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="700">Myntra</text>
+</svg>

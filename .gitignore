@@ -1,0 +1,47 @@
+# Dependencies
+node_modules/
+
+# Environment Files
+.env
+.env.local
+.env.development
+.env.production
+.env.staging
+
+# Expo
+.expo/
+dist/
+web-build/
+
+# Android
+android/app/build/
+android/.gradle/
+
+# iOS
+ios/build/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Cache
+.cache/
+.parcel-cache/
+
+# VS Code
+.vscode/
+
+# Mac
+.DS_Store
+
+# Build Files
+build/
+coverage/
+
+# React Native
+*.keystore
+*.jks
+
+# MongoDB
+dump/

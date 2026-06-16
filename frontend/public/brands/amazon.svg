@@ -1,0 +1,6 @@
+<svg width="160" height="64" viewBox="0 0 160 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="160" height="64" rx="18" fill="white"/>
+  <text x="26" y="36" fill="#111827" font-size="28" font-family="Arial, Helvetica, sans-serif" font-weight="700">a</text>
+  <text x="46" y="37" fill="#111827" font-size="23" font-family="Arial, Helvetica, sans-serif" font-weight="700">mazon</text>
+  <path d="M45 45C62 56 97 57 121 44" stroke="#F59E0B" stroke-width="4" stroke-linecap="round"/>
+</svg>

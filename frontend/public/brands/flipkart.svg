@@ -1,0 +1,7 @@
+<svg width="160" height="64" viewBox="0 0 160 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="160" height="64" rx="18" fill="white"/>
+  <rect x="22" y="14" width="36" height="36" rx="10" fill="#2563EB"/>
+  <text x="35" y="38" fill="white" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="700">f</text>
+  <path d="M52 18L64 24L58 36L46 30L52 18Z" fill="#FACC15"/>
+  <text x="72" y="37" fill="#2563EB" font-size="20" font-family="Arial, Helvetica, sans-serif" font-weight="700">Flipkart</text>
+</svg>
