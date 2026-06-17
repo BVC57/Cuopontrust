@@ -14,12 +14,39 @@ body {
 
 body {
   background:
-    radial-gradient(circle at top left, rgba(79, 70, 229, 0.09), transparent 28%),
-    radial-gradient(circle at top right, rgba(124, 58, 237, 0.08), transparent 22%),
-    linear-gradient(180deg, #ffffff 0%, #f7f8ff 36%, #f8fafc 100%);
+    radial-gradient(circle at top left, rgba(16, 185, 129, 0.12), transparent 26%),
+    radial-gradient(circle at top right, rgba(59, 130, 246, 0.1), transparent 24%),
+    radial-gradient(circle at bottom left, rgba(14, 165, 233, 0.08), transparent 28%),
+    linear-gradient(180deg, #f4fff9 0%, #f5fbff 38%, #f8fcff 100%);
   color: #0f172a;
   font-family: var(--font-manrope), sans-serif;
   min-height: 100vh;
+  position: relative;
+  isolation: isolate;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -2;
+  background:
+    radial-gradient(circle at top left, rgba(110, 231, 183, 0.28), transparent 18%),
+    radial-gradient(circle at top right, rgba(96, 165, 250, 0.24), transparent 18%),
+    radial-gradient(circle at bottom left, rgba(34, 211, 238, 0.18), transparent 20%),
+    radial-gradient(circle at bottom right, rgba(59, 130, 246, 0.16), transparent 18%);
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.68) 0%, rgba(255,255,255,0.4) 100%);
+  backdrop-filter: blur(2px);
 }
 
 * {
@@ -42,6 +69,51 @@ canvas {
     linear-gradient(rgba(99, 102, 241, 0.06) 1px, transparent 1px),
     linear-gradient(90deg, rgba(99, 102, 241, 0.06) 1px, transparent 1px);
   background-size: 22px 22px;
+}
+
+.rgb-shell {
+  position: relative;
+  isolation: isolate;
+}
+
+.rgb-shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  background:
+    radial-gradient(circle at top left, rgba(110, 231, 183, 0.14), transparent 20%),
+    radial-gradient(circle at top right, rgba(96, 165, 250, 0.16), transparent 20%),
+    radial-gradient(circle at bottom left, rgba(125, 211, 252, 0.1), transparent 22%),
+    radial-gradient(circle at bottom right, rgba(34, 211, 238, 0.1), transparent 20%);
+}
+
+.rgb-panel,
+.rgb-card {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.rgb-panel::before,
+.rgb-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(circle at top left, rgba(110, 231, 183, 0.18), transparent 16%),
+    radial-gradient(circle at top right, rgba(96, 165, 250, 0.18), transparent 16%),
+    radial-gradient(circle at bottom left, rgba(125, 211, 252, 0.12), transparent 18%),
+    radial-gradient(circle at bottom right, rgba(34, 211, 238, 0.1), transparent 18%);
+}
+
+.rgb-panel > *,
+.rgb-card > * {
+  position: relative;
+  z-index: 1;
 }
 
 .lux-card {
@@ -87,6 +159,45 @@ canvas {
 .shine-surface {
   position: relative;
   overflow: hidden;
+}
+
+.lux-card,
+.admin-panel,
+.admin-content-surface,
+.admin-input-surface,
+.admin-header-card,
+.admin-sidebar {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.lux-card::before,
+.admin-panel::before,
+.admin-content-surface::before,
+.admin-input-surface::before,
+.admin-header-card::before,
+.admin-sidebar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(circle at top left, rgba(110, 231, 183, 0.14), transparent 15%),
+    radial-gradient(circle at top right, rgba(96, 165, 250, 0.16), transparent 15%),
+    radial-gradient(circle at bottom left, rgba(125, 211, 252, 0.08), transparent 16%),
+    radial-gradient(circle at bottom right, rgba(34, 211, 238, 0.08), transparent 16%);
+}
+
+.lux-card > *,
+.admin-panel > *,
+.admin-content-surface > *,
+.admin-input-surface > *,
+.admin-header-card > *,
+.admin-sidebar > * {
+  position: relative;
+  z-index: 1;
 }
 
 .shine-surface::after {
@@ -251,9 +362,10 @@ canvas {
 
 .admin-page-root {
   background:
-    radial-gradient(circle at top left, rgba(34, 197, 94, 0.06), transparent 22%),
-    radial-gradient(circle at top right, rgba(16, 185, 129, 0.06), transparent 24%),
-    linear-gradient(180deg, #f8fdf9 0%, #f7fafc 100%);
+    radial-gradient(circle at top left, rgba(110, 231, 183, 0.16), transparent 20%),
+    radial-gradient(circle at top right, rgba(96, 165, 250, 0.16), transparent 20%),
+    radial-gradient(circle at bottom right, rgba(125, 211, 252, 0.08), transparent 24%),
+    linear-gradient(180deg, #f5fff9 0%, #f5fbff 100%);
 }
 
 .admin-panel {

@@ -64,11 +64,11 @@ export default function RouteChrome({ children }) {
   }
 
   if (isAuthPage || isAdminPage) {
-    return <main>{children}</main>;
+    return <main className="rgb-shell">{children}</main>;
   }
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(34,197,94,0.16),transparent_24%),radial-gradient(circle_at_top_right,rgba(124,58,237,0.14),transparent_22%),radial-gradient(circle_at_center_top,rgba(251,191,36,0.08),transparent_18%),linear-gradient(180deg,#f3fff6_0%,#f9fffb_18%,#ffffff_48%,#fbfffc_100%)]">
+    <div className="rgb-shell min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(34,197,94,0.16),transparent_24%),radial-gradient(circle_at_top_right,rgba(124,58,237,0.14),transparent_22%),radial-gradient(circle_at_center_top,rgba(251,191,36,0.08),transparent_18%),linear-gradient(180deg,#f3fff6_0%,#f9fffb_18%,#ffffff_48%,#fbfffc_100%)]">
       <Navbar />
       <main>{children}</main>
       <Footer />

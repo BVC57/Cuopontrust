@@ -7,15 +7,20 @@ import {
   Award,
   BadgeCheck,
   Bolt,
+  CheckCircle2,
   Coins,
   FilePlus2,
   Headphones,
   IndianRupee,
   Lock,
+  Shield,
   ShieldCheck,
+  ShoppingBag,
   Star,
   Tag,
+  TrendingUp,
   Users,
+  XCircle,
   Wallet
 } from "lucide-react";
 import { getStoredUser } from "../lib/auth";
@@ -27,25 +32,56 @@ const featuredBrands = ["amazon", "Flipkart", "zomato", "swiggy"];
 const buyerProblems = [
   "Expensive deals everywhere",
   "Fake or expired coupons",
-  "Limited discount options"
+  "Limited discount options",
+  "Unreliable sellers"
 ];
 
 const sellerProblems = [
   "Unused coupons going to waste",
   "No way to monetize deals",
-  "Coupons expiring unused"
+  "Coupons expiring unused",
+  "No trusted platform to sell"
 ];
 
 const buyerSolutions = [
   "Verified authentic coupons only",
   "Save up to 70% on 100+ brands",
-  "Instant delivery and secure transactions"
+  "Instant delivery and secure transactions",
+  "Trusted sellers and real savings"
 ];
 
 const sellerSolutions = [
   "Turn unused coupons into cash",
   "Easy listing in just minutes",
-  "Earn monthly from extra deals"
+  "Earn monthly from extra deals",
+  "Secure payments and withdrawals"
+];
+
+const smartHighlights = [
+  {
+    title: "100% Verified",
+    text: "All coupons verified for your safety",
+    icon: ShieldCheck,
+    tone: "text-[#22c55e] bg-emerald-50"
+  },
+  {
+    title: "Secure & Safe",
+    text: "Secure payments and buyer protection",
+    icon: Shield,
+    tone: "text-[#60a5fa] bg-sky-50"
+  },
+  {
+    title: "24/7 Support",
+    text: "We're here to help whenever you need us",
+    icon: Headphones,
+    tone: "text-[#8b5cf6] bg-violet-50"
+  },
+  {
+    title: "Trusted Community",
+    text: "Thousands of happy buyers & sellers",
+    icon: Users,
+    tone: "text-[#f59e0b] bg-amber-50"
+  }
 ];
 
 const savingTiles = [
@@ -344,30 +380,209 @@ export default function HomePage() {
       </section>
 
       <section className="mx-auto mt-16 max-w-7xl px-4 sm:px-6">
-        <SectionHeading title="The Smart Way to Save and Earn" />
-        <div className="mt-8 grid gap-6 lg:grid-cols-2">
-          <div className="lux-card shine-surface rounded-[28px] bg-[linear-gradient(180deg,#fbfffc_0%,#f6fff8_100%)] p-6 shadow-[0_14px_34px_rgba(15,23,42,0.04)]">
-            <p className="text-2xl font-black text-[#16a34a]">For Smart Buyers</p>
-            <p className="mt-5 text-sm font-bold text-[#ef4444]">Problems You Face:</p>
-            <ul className="mt-3 space-y-2 text-sm text-slate-500">
-              {buyerProblems.map((item) => <li key={item}>- {item}</li>)}
-            </ul>
-            <p className="mt-6 text-sm font-bold text-[#16a34a]">CouponX Solution:</p>
-            <ul className="mt-3 space-y-2 text-sm text-slate-500">
-              {buyerSolutions.map((item) => <li key={item}>+ {item}</li>)}
-            </ul>
+        <div className="relative overflow-hidden rounded-[38px] border border-white/70 bg-[radial-gradient(circle_at_top_left,rgba(34,197,94,0.08),transparent_24%),radial-gradient(circle_at_top_right,rgba(139,92,246,0.08),transparent_22%),linear-gradient(180deg,#ffffff_0%,#fbfffd_100%)] px-5 py-10 shadow-[0_24px_70px_rgba(15,23,42,0.06)] sm:px-8 lg:px-10">
+          <div className="pointer-events-none absolute -left-16 top-10 h-48 w-48 rounded-full bg-[rgba(34,197,94,0.12)] blur-3xl" />
+          <div className="pointer-events-none absolute -right-16 top-10 h-48 w-48 rounded-full bg-[rgba(124,58,237,0.12)] blur-3xl" />
+
+          <div className="mx-auto max-w-4xl text-center">
+            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-100 bg-[linear-gradient(180deg,#f5fff8_0%,#ffffff_100%)] px-4 py-2 text-sm font-black text-[#16a34a] shadow-[0_10px_24px_rgba(15,23,42,0.05)]">
+              <Star className="h-4 w-4 fill-[#fbbf24] text-[#fbbf24]" />
+              Smart Savings, Real Earnings
+            </div>
+
+            <h2 className="mt-6 text-[2.5rem] font-black tracking-tight text-slate-950 sm:text-[4rem] sm:leading-[1.05]">
+              The Smart Way to <span className="relative inline-block text-[#16a34a]">Save
+                <span className="absolute left-0 right-0 top-[92%] h-3 rounded-full bg-[linear-gradient(90deg,rgba(34,197,94,0.2),rgba(34,197,94,0.45),rgba(34,197,94,0.18))]" />
+              </span>{" "}
+              and <span className="relative inline-block bg-[linear-gradient(90deg,#7c3aed_0%,#8b5cf6_100%)] bg-clip-text text-transparent">Earn
+                <span className="absolute left-0 right-0 top-[92%] h-3 rounded-full bg-[linear-gradient(90deg,rgba(139,92,246,0.18),rgba(124,58,237,0.42),rgba(139,92,246,0.18))]" />
+              </span>
+            </h2>
+
+            <p className="mx-auto mt-5 max-w-3xl text-base leading-8 text-slate-500 sm:text-lg">
+              Whether you&apos;re looking to save on your favorite brands or turn unused coupons into real money, CouponX makes it simple, secure, and rewarding.
+            </p>
           </div>
 
-          <div className="lux-card shine-surface rounded-[28px] bg-[linear-gradient(180deg,#fbfffc_0%,#f6fff8_100%)] p-6 shadow-[0_14px_34px_rgba(15,23,42,0.04)]">
-            <p className="text-2xl font-black text-[#7c3aed]">For Smart Sellers</p>
-            <p className="mt-5 text-sm font-bold text-[#ef4444]">Problems You Face:</p>
-            <ul className="mt-3 space-y-2 text-sm text-slate-500">
-              {sellerProblems.map((item) => <li key={item}>- {item}</li>)}
-            </ul>
-            <p className="mt-6 text-sm font-bold text-[#16a34a]">CouponX Solution:</p>
-            <ul className="mt-3 space-y-2 text-sm text-slate-500">
-              {sellerSolutions.map((item) => <li key={item}>+ {item}</li>)}
-            </ul>
+          <div className="mt-10 grid gap-6 lg:grid-cols-2">
+            <div className="rounded-[34px] border border-emerald-200/80 bg-[linear-gradient(180deg,#ffffff_0%,#fbfffc_100%)] p-5 shadow-[0_18px_40px_rgba(34,197,94,0.08)] sm:p-8">
+              <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
+                <div className="flex h-32 w-32 items-center justify-center rounded-[32px] bg-[radial-gradient(circle_at_top_left,rgba(34,197,94,0.22),transparent_40%),linear-gradient(180deg,#f2fff6_0%,#ffffff_100%)] shadow-[0_18px_32px_rgba(34,197,94,0.12)]">
+                  <div className="flex h-20 w-20 items-center justify-center rounded-[26px] bg-[linear-gradient(180deg,#4ade80_0%,#16a34a_100%)] text-white shadow-[0_18px_28px_rgba(34,197,94,0.24)]">
+                    <ShoppingBag className="h-10 w-10" />
+                  </div>
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <div className="inline-flex rounded-full bg-[linear-gradient(180deg,#edfdf2_0%,#ffffff_100%)] px-4 py-2 text-sm font-black text-[#15803d]">
+                    For Smart Buyers
+                  </div>
+                  <h3 className="mt-4 text-3xl font-black tracking-tight text-slate-950 sm:text-[3rem] sm:leading-[1.02]">
+                    Save More,
+                    <br />
+                    Spend Smarter
+                  </h3>
+                  <div className="mt-4 h-1 w-16 rounded-full bg-[linear-gradient(90deg,#86efac_0%,#22c55e_100%)]" />
+                </div>
+              </div>
+
+              <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_1px_minmax(0,1fr)] lg:items-start">
+                <div>
+                  <div className="flex items-center gap-3">
+                    <XCircle className="h-6 w-6 text-[#ef4444]" />
+                    <p className="text-xl font-black text-[#ef4444]">Problems You Face</p>
+                  </div>
+                  <ul className="mt-6 space-y-4">
+                    {buyerProblems.map((item) => (
+                      <li key={item} className="flex items-start gap-3 text-lg text-slate-700">
+                        <span className="mt-1 inline-flex h-6 w-6 flex-none items-center justify-center rounded-full bg-rose-50 text-[#ef4444]">
+                          <XCircle className="h-4 w-4" />
+                        </span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="hidden h-full bg-[linear-gradient(180deg,transparent_0%,rgba(203,213,225,0.9)_8%,rgba(203,213,225,0.9)_92%,transparent_100%)] lg:block" />
+
+                <div>
+                  <div className="flex items-center gap-3">
+                    <CheckCircle2 className="h-6 w-6 text-[#16a34a]" />
+                    <p className="text-xl font-black text-[#16a34a]">CouponX Solution</p>
+                  </div>
+                  <ul className="mt-6 space-y-4">
+                    {buyerSolutions.map((item) => (
+                      <li key={item} className="flex items-start gap-3 text-lg text-slate-700">
+                        <span className="mt-1 inline-flex h-6 w-6 flex-none items-center justify-center rounded-full bg-emerald-50 text-[#16a34a]">
+                          <CheckCircle2 className="h-4 w-4" />
+                        </span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+
+              <div className="mt-8 flex flex-col items-center justify-between gap-5 rounded-[28px] bg-[linear-gradient(90deg,#effdf5_0%,#f8fff9_60%,#edfdf2_100%)] px-6 py-6 sm:flex-row">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-[20px] bg-[linear-gradient(180deg,#22c55e_0%,#15803d_100%)] text-white shadow-[0_16px_28px_rgba(34,197,94,0.2)]">
+                    <ShieldCheck className="h-8 w-8" />
+                  </div>
+                  <p className="text-xl font-black leading-8 text-slate-900">
+                    Verified deals. Real savings.
+                    <br />
+                    Better shopping experience.
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="rotate-[-18deg] rounded-[18px] bg-[linear-gradient(180deg,#86efac_0%,#22c55e_100%)] px-5 py-4 text-white shadow-[0_14px_24px_rgba(34,197,94,0.18)]">
+                    <Tag className="h-8 w-8" />
+                  </div>
+                  <div className="rotate-[10deg] rounded-[18px] bg-[linear-gradient(180deg,#dcfce7_0%,#fefce8_100%)] px-5 py-4 text-[#16a34a] shadow-[0_14px_24px_rgba(34,197,94,0.1)]">
+                    <BadgeCheck className="h-8 w-8" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-[34px] border border-violet-200/80 bg-[linear-gradient(180deg,#ffffff_0%,#fcfbff_100%)] p-5 shadow-[0_18px_40px_rgba(124,58,237,0.08)] sm:p-8">
+              <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
+                <div className="flex h-32 w-32 items-center justify-center rounded-[32px] bg-[radial-gradient(circle_at_top_left,rgba(139,92,246,0.22),transparent_40%),linear-gradient(180deg,#faf5ff_0%,#ffffff_100%)] shadow-[0_18px_32px_rgba(124,58,237,0.12)]">
+                  <div className="flex h-20 w-20 items-center justify-center rounded-[26px] bg-[linear-gradient(180deg,#8b5cf6_0%,#6d28d9_100%)] text-white shadow-[0_18px_28px_rgba(124,58,237,0.24)]">
+                    <Wallet className="h-10 w-10" />
+                  </div>
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <div className="inline-flex rounded-full bg-[linear-gradient(180deg,#f5f3ff_0%,#ffffff_100%)] px-4 py-2 text-sm font-black text-[#6d28d9]">
+                    For Smart Sellers
+                  </div>
+                  <h3 className="mt-4 text-3xl font-black tracking-tight text-slate-950 sm:text-[3rem] sm:leading-[1.02]">
+                    Turn Unused Coupons
+                    <br />
+                    Into Real Cash
+                  </h3>
+                  <div className="mt-4 h-1 w-16 rounded-full bg-[linear-gradient(90deg,#a78bfa_0%,#7c3aed_100%)]" />
+                </div>
+              </div>
+
+              <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_1px_minmax(0,1fr)] lg:items-start">
+                <div>
+                  <div className="flex items-center gap-3">
+                    <XCircle className="h-6 w-6 text-[#ef4444]" />
+                    <p className="text-xl font-black text-[#ef4444]">Problems You Face</p>
+                  </div>
+                  <ul className="mt-6 space-y-4">
+                    {sellerProblems.map((item) => (
+                      <li key={item} className="flex items-start gap-3 text-lg text-slate-700">
+                        <span className="mt-1 inline-flex h-6 w-6 flex-none items-center justify-center rounded-full bg-rose-50 text-[#ef4444]">
+                          <XCircle className="h-4 w-4" />
+                        </span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="hidden h-full bg-[linear-gradient(180deg,transparent_0%,rgba(221,214,254,0.95)_8%,rgba(221,214,254,0.95)_92%,transparent_100%)] lg:block" />
+
+                <div>
+                  <div className="flex items-center gap-3">
+                    <CheckCircle2 className="h-6 w-6 text-[#7c3aed]" />
+                    <p className="text-xl font-black text-[#7c3aed]">CouponX Solution</p>
+                  </div>
+                  <ul className="mt-6 space-y-4">
+                    {sellerSolutions.map((item) => (
+                      <li key={item} className="flex items-start gap-3 text-lg text-slate-700">
+                        <span className="mt-1 inline-flex h-6 w-6 flex-none items-center justify-center rounded-full bg-violet-50 text-[#7c3aed]">
+                          <CheckCircle2 className="h-4 w-4" />
+                        </span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+
+              <div className="mt-8 flex flex-col items-center justify-between gap-5 rounded-[28px] bg-[linear-gradient(90deg,#f6f3ff_0%,#fbf9ff_60%,#f5f3ff_100%)] px-6 py-6 sm:flex-row">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-[20px] bg-[linear-gradient(180deg,#7c3aed_0%,#5b21b6_100%)] text-white shadow-[0_16px_28px_rgba(124,58,237,0.2)]">
+                    <TrendingUp className="h-8 w-8" />
+                  </div>
+                  <p className="text-xl font-black leading-8 text-slate-900">
+                    List once. Earn more.
+                    <br />
+                    Make every coupon count.
+                  </p>
+                </div>
+                <div className="flex items-center gap-3 text-[#7c3aed]">
+                  <div className="rounded-full bg-white p-4 shadow-[0_14px_24px_rgba(124,58,237,0.12)]">
+                    <Coins className="h-8 w-8" />
+                  </div>
+                  <div className="rounded-full bg-[linear-gradient(180deg,#c4b5fd_0%,#8b5cf6_100%)] p-4 text-white shadow-[0_14px_24px_rgba(124,58,237,0.18)]">
+                    <Wallet className="h-8 w-8" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-8 grid gap-4 rounded-[30px] border border-white/80 bg-white/90 p-4 shadow-[0_18px_36px_rgba(15,23,42,0.05)] md:grid-cols-2 xl:grid-cols-4 xl:divide-x xl:divide-slate-100">
+            {smartHighlights.map((item) => {
+              const Icon = item.icon;
+              return (
+                <div key={item.title} className="flex items-start gap-4 rounded-[22px] px-4 py-4 xl:px-6">
+                  <div className={`flex h-14 w-14 flex-none items-center justify-center rounded-full ${item.tone}`}>
+                    <Icon className="h-7 w-7" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-black tracking-tight text-slate-950">{item.title}</p>
+                    <p className="mt-2 text-sm leading-7 text-slate-500">{item.text}</p>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>

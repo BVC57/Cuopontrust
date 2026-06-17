@@ -149,7 +149,7 @@ export default function AdminPageShell({
   return (
     <AdminRoute>
       <div className={`admin-shell admin-page-root ${theme === "dark" ? "admin-theme-dark" : "admin-theme-light"}`}>
-        <div className="admin-shell-frame">
+        <div className="admin-shell-frame rgb-shell">
           <div className="admin-sidebar-column">
             <AdminSidebar />
           </div>

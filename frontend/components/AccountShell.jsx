@@ -18,9 +18,9 @@ export default function AccountShell({ title, subtitle, children, aside }) {
   const pathname = usePathname();
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
+    <div className="rgb-shell mx-auto max-w-7xl px-4 py-10 sm:px-6">
       <section className="space-y-6">
-        <div className="overflow-hidden rounded-[34px] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.88)_0%,rgba(248,255,251,0.98)_100%)] p-4 shadow-[0_22px_60px_rgba(15,23,42,0.08)] backdrop-blur-sm">
+        <div className="rgb-panel overflow-hidden rounded-[34px] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.88)_0%,rgba(248,255,251,0.98)_100%)] p-4 shadow-[0_22px_60px_rgba(15,23,42,0.08)] backdrop-blur-sm">
           <div className="relative rounded-[28px] bg-[radial-gradient(circle_at_left_top,rgba(34,197,94,0.2),transparent_18%),radial-gradient(circle_at_right_top,rgba(124,58,237,0.14),transparent_18%),linear-gradient(180deg,#ffffff_0%,#fafffb_100%)] px-6 py-7">
             <div className="pointer-events-none absolute -left-14 top-6 h-44 w-44 rounded-full bg-[rgba(34,197,94,0.16)] blur-3xl" />
             <div className="pointer-events-none absolute -right-10 top-0 h-40 w-40 rounded-full bg-[rgba(124,58,237,0.14)] blur-3xl" />
@@ -35,7 +35,7 @@ export default function AccountShell({ title, subtitle, children, aside }) {
           </div>
         </div>
 
-        <div className="rounded-[28px] border border-emerald-100 bg-white p-3 shadow-[0_14px_34px_rgba(15,23,42,0.05)]">
+        <div className="rgb-panel rounded-[28px] border border-emerald-100 bg-white p-3 shadow-[0_14px_34px_rgba(15,23,42,0.05)]">
           <div className="flex flex-wrap gap-2">
             {accountLinks.map(({ href, label, icon: Icon }) => {
               const active = pathname === href;

@@ -108,7 +108,7 @@ app.use("/api/coupons", couponRoutes);
 app.use("/api/blogs", blogRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/wallet", walletRoutes);
-app.use("/api/disputes", disputeRoutes);
+app.use("/api/disputes", disputeRoutes);  
 app.use("/api/contact", contactRoutes);
 app.use("/api/super-admin", adminRoutes);
 
