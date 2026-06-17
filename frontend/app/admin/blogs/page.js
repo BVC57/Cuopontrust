@@ -6,12 +6,14 @@ import { Pencil, Plus, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import AdminPageShell from "../../../components/AdminPageShell";
 import LoadingSpinner from "../../../components/LoadingSpinner";
-import { AdminEmptyState, AdminGhostButton, AdminSurface, AdminTableContainer, formatDate } from "../../../components/admin/AdminUi";
+import { AdminEmptyState, AdminGhostButton, AdminPagination, AdminSurface, AdminTableContainer, formatDate, paginateItems } from "../../../components/admin/AdminUi";
 import api, { extractError } from "../../../lib/api";
 
 export default function AdminBlogsPage() {
   const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const loadBlogs = async () => {
     setLoading(true);
@@ -38,6 +40,7 @@ export default function AdminBlogsPage() {
   }, [blogs]);
 
   const publishedCount = useMemo(() => blogs.filter((item) => item.status === "published").length, [blogs]);
+  const paginatedBlogs = useMemo(() => paginateItems(sortedBlogs, page, pageSize), [sortedBlogs, page, pageSize]);
 
   const handleDelete = async (id) => {
     try {
@@ -87,7 +90,7 @@ export default function AdminBlogsPage() {
             <p className="mt-1 text-sm text-slate-400">Newest posts are shown first.</p>
           </div>
           <AdminTableContainer>
-            <table className="min-w-[980px] w-full">
+            <table className="min-w-[1180px] w-full">
               <thead className="sticky top-0 z-10 bg-slate-50">
                 <tr>
                   {["Post", "Author", "Status", "Published", "Actions"].map((label) => (
@@ -96,7 +99,7 @@ export default function AdminBlogsPage() {
                 </tr>
               </thead>
               <tbody>
-                {sortedBlogs.map((row, index) => (
+                {paginatedBlogs.map((row, index) => (
                   <tr key={row._id} className={index ? "border-t border-slate-100" : ""}>
                     <td className="px-5 py-4">
                       <div>
@@ -129,6 +132,16 @@ export default function AdminBlogsPage() {
               </tbody>
             </table>
           </AdminTableContainer>
+          <AdminPagination
+            totalCount={sortedBlogs.length}
+            page={page}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            onPageSizeChange={(value) => {
+              setPageSize(value);
+              setPage(1);
+            }}
+          />
         </AdminSurface>
       ) : (
         <AdminEmptyState title="No blogs available" description="Use Add New to create your first blog post." />

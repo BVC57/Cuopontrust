@@ -5,7 +5,7 @@ import { Download, Eye } from "lucide-react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import AdminPageShell from "../../../components/AdminPageShell";
 import LoadingSpinner from "../../../components/LoadingSpinner";
-import { AdminDetailModal, AdminEmptyState, AdminGhostButton, AdminMetricCard, AdminPagination, AdminStatusChip, AdminSurface, AdminToolbar, AdminUserIdentity, formatCompactNumber, formatCurrency, formatDateTime, paginateItems } from "../../../components/admin/AdminUi";
+import { AdminDetailModal, AdminEmptyState, AdminGhostButton, AdminMetricCard, AdminPagination, AdminStatusChip, AdminSurface, AdminTableContainer, AdminToolbar, AdminUserIdentity, formatCompactNumber, formatCurrency, formatDateTime, paginateItems } from "../../../components/admin/AdminUi";
 import api from "../../../lib/api";
 
 const colors = ["#16a34a", "#22c55e", "#15803d", "#94a3b8"];
@@ -72,19 +72,75 @@ export default function AdminTransactionsPage() {
         ]}
         extra={<AdminGhostButton>More Filters</AdminGhostButton>}
       />
-      <div className="grid gap-5 xl:grid-cols-[1.65fr_0.75fr]">
-        <AdminSurface className="p-5">
-          <div className="mb-5 flex items-center justify-between">
-            <div>
-              <h2 className="text-3xl font-black tracking-tight text-slate-900">All Transactions</h2>
-              <p className="mt-1 text-sm text-slate-400">({formatCompactNumber(filtered.length)})</p>
-            </div>
-            <AdminGhostButton><Download className="h-4 w-4" />Export</AdminGhostButton>
+      <div className="grid gap-4 xl:grid-cols-4">
+        <AdminSurface className="p-5 xl:col-span-2">
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-2xl font-black text-slate-900">Transaction Analytics</h3>
+            <button className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700">This Week</button>
           </div>
-          {filtered.length ? (
-            <div className="overflow-hidden rounded-[24px] border border-slate-100">
-              <table className="min-w-full">
-                <thead className="bg-slate-50">
+          <div className="grid gap-4 lg:grid-cols-[240px_minmax(0,1fr)] lg:items-center">
+            <div className="h-[220px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={analytics} dataKey="value" innerRadius={68} outerRadius={100}>
+                    {analytics.map((entry, index) => <Cell key={entry.name} fill={colors[index % colors.length]} />)}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {analytics.map((entry, index) => (
+                <div key={entry.name} className="rounded-[22px] border border-slate-100 bg-slate-50/80 px-4 py-4">
+                  <div className="flex items-center gap-2">
+                    <span className="h-3 w-3 rounded-full" style={{ backgroundColor: colors[index % colors.length] }} />
+                    <span className="text-sm font-semibold text-slate-600">{entry.name}</span>
+                  </div>
+                  <p className="mt-3 text-2xl font-black text-slate-900">{formatCompactNumber(entry.value)}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </AdminSurface>
+        <AdminSurface className="p-5 xl:col-span-2">
+          <h3 className="text-2xl font-black text-slate-900">Transaction Health</h3>
+          <div className="mt-5 grid gap-4 sm:grid-cols-2">
+            <div className="rounded-[22px] border border-slate-100 bg-slate-50/80 px-4 py-4">
+              <p className="text-sm font-semibold text-slate-500">Completed Rate</p>
+              <p className="mt-3 text-3xl font-black text-emerald-600">
+                {transactions.length ? Math.round((transactions.filter((row) => row.transactionStatus === "completed").length / transactions.length) * 100) : 0}%
+              </p>
+            </div>
+            <div className="rounded-[22px] border border-slate-100 bg-slate-50/80 px-4 py-4">
+              <p className="text-sm font-semibold text-slate-500">Refund Risk</p>
+              <p className="mt-3 text-3xl font-black text-amber-600">
+                {transactions.length ? Math.round((transactions.filter((row) => row.paymentStatus === "refunded").length / transactions.length) * 100) : 0}%
+              </p>
+            </div>
+            <div className="rounded-[22px] border border-slate-100 bg-slate-50/80 px-4 py-4">
+              <p className="text-sm font-semibold text-slate-500">Pending Authorizations</p>
+              <p className="mt-3 text-3xl font-black text-slate-900">{formatCompactNumber(transactions.filter((row) => ["created", "authorized"].includes(row.paymentStatus)).length)}</p>
+            </div>
+            <div className="rounded-[22px] border border-slate-100 bg-slate-50/80 px-4 py-4">
+              <p className="text-sm font-semibold text-slate-500">Failed Records</p>
+              <p className="mt-3 text-3xl font-black text-rose-500">{formatCompactNumber(transactions.filter((row) => row.paymentStatus === "failed").length)}</p>
+            </div>
+          </div>
+        </AdminSurface>
+      </div>
+
+      <AdminSurface className="p-5">
+        <div className="mb-5 flex items-center justify-between">
+          <div>
+            <h2 className="text-3xl font-black tracking-tight text-slate-900">All Transactions</h2>
+            <p className="mt-1 text-sm text-slate-400">({formatCompactNumber(filtered.length)})</p>
+          </div>
+          <AdminGhostButton><Download className="h-4 w-4" />Export</AdminGhostButton>
+        </div>
+        {filtered.length ? (
+          <AdminTableContainer className="admin-table-shell" maxHeight="max-h-[640px]">
+              <table className="min-w-[1280px] w-full">
+                <thead className="sticky top-0 z-10 bg-slate-50">
                   <tr>
                     {["Transaction ID", "User", "Type", "Amount", "Payment Method", "Status", "Date & Time", "Actions"].map((label) => (
                       <th key={label} className="px-5 py-4 text-left text-xs font-black uppercase tracking-[0.18em] text-slate-400">{label}</th>
@@ -106,42 +162,23 @@ export default function AdminTransactionsPage() {
                   ))}
                 </tbody>
               </table>
-            </div>
-          ) : (
-            <AdminEmptyState title="No transactions found" description="No transactions match the current search or filter selection." />
-          )}
-          {filtered.length ? (
-            <AdminPagination
-              totalCount={filtered.length}
-              page={page}
-              pageSize={pageSize}
-              onPageChange={setPage}
-              onPageSizeChange={(value) => {
-                setPageSize(value);
-                setPage(1);
-              }}
-            />
-          ) : null}
-        </AdminSurface>
-        <div className="space-y-5">
-          <AdminSurface className="p-5">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-2xl font-black text-slate-900">Transaction Analytics</h3>
-              <button className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700">This Week</button>
-            </div>
-            <div className="h-[220px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={analytics} dataKey="value" innerRadius={68} outerRadius={100}>
-                    {analytics.map((entry, index) => <Cell key={entry.name} fill={colors[index % colors.length]} />)}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </AdminSurface>
-        </div>
-      </div>
+          </AdminTableContainer>
+        ) : (
+          <AdminEmptyState title="No transactions found" description="No transactions match the current search or filter selection." />
+        )}
+        {filtered.length ? (
+          <AdminPagination
+            totalCount={filtered.length}
+            page={page}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            onPageSizeChange={(value) => {
+              setPageSize(value);
+              setPage(1);
+            }}
+          />
+        ) : null}
+      </AdminSurface>
       <AdminDetailModal open={Boolean(selectedTransaction)} title="Transaction Details" onClose={() => setSelectedTransaction(null)}>
         {selectedTransaction ? (
           <div className="space-y-4">

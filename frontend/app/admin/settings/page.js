@@ -53,7 +53,7 @@ export default function AdminSettingsPage() {
   };
 
   return (
-    <AdminPageShell title="Settings" subtitle="Manage platform rules, business details, and admin preferences." breadcrumbs={["Dashboard", "Settings", "General Settings"]} actions={<AdminPrimaryButton type="submit" form="admin-settings-form">Save Changes</AdminPrimaryButton>}>
+    <AdminPageShell title="Settings" subtitle="Manage platform rules, business details, and admin preferences." breadcrumbs={["Dashboard", "Settings", "General Settings"]}>
       <form id="admin-settings-form" onSubmit={submit} className="grid gap-5 xl:grid-cols-[0.55fr_1.45fr]">
         <div className="space-y-5">
           <AdminSurface className="p-4">
@@ -79,6 +79,18 @@ export default function AdminSettingsPage() {
         </div>
 
         <div className="space-y-5">
+          <AdminSurface className="p-5">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h3 className="text-2xl font-black text-slate-900">Update Settings</h3>
+                <p className="mt-1 text-sm text-slate-400">Save your latest platform configuration changes from here.</p>
+              </div>
+              <AdminPrimaryButton type="submit" form="admin-settings-form" className="sm:self-start">
+                Save Changes
+              </AdminPrimaryButton>
+            </div>
+          </AdminSurface>
+
           <div className="grid gap-5 xl:grid-cols-2">
             <AdminSurface className="p-5">
               <h3 className="text-2xl font-black text-slate-900">Site Information</h3>

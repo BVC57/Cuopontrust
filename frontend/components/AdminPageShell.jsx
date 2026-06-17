@@ -157,7 +157,7 @@ export default function AdminPageShell({
           <section className="admin-main-column">
             <div className="admin-topbar">
               <div className="flex w-full flex-col gap-5">
-                <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex w-full items-start justify-between gap-3 xl:flex-nowrap">
                   <div ref={searchRef} className="relative hidden min-w-[360px] xl:block">
                     <div className="admin-input-surface flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-[0_10px_22px_rgba(15,23,42,0.03)]">
                       <Search className="h-4 w-4 text-slate-400" />
@@ -186,10 +186,9 @@ export default function AdminPageShell({
                     ) : null}
                   </div>
 
-                  {actions}
-
-                  <div className="flex flex-wrap items-center gap-2">
-                    <div ref={dateRef} className="relative">
+                  <div className="flex shrink-0 items-center gap-2 self-start">
+                    {actions ? <div className="flex-none">{actions}</div> : null}
+                    <div ref={dateRef} className="relative flex-none">
                       <button type="button" onClick={() => setDateOpen((prev) => !prev)} className="admin-input-surface inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-[0_10px_22px_rgba(15,23,42,0.03)]">
                         <CalendarDays className="h-4 w-4 text-slate-400" />
                         <span>{selectedDateLabel}</span>
@@ -210,7 +209,7 @@ export default function AdminPageShell({
                       {theme === "dark" ? <SunMedium className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
                     </button>
 
-                    <div ref={notificationRef} className="relative">
+                    <div ref={notificationRef} className="relative flex-none">
                       <button type="button" onClick={() => setNotificationOpen((prev) => !prev)} className="admin-input-surface relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-[0_10px_22px_rgba(15,23,42,0.03)]">
                         <Bell className="h-5 w-5" />
                         {hasUnreadNotifications ? <span className="absolute right-1.5 top-1.5 h-2.5 w-2.5 rounded-full bg-[#22c55e] shadow-[0_0_0_3px_rgba(255,255,255,0.96)]" /> : null}
@@ -247,13 +246,13 @@ export default function AdminPageShell({
                       ) : null}
                     </div>
 
-                    <div ref={menuRef} className="relative">
-                      <button type="button" onClick={() => setMenuOpen((prev) => !prev)} className="admin-input-surface inline-flex items-center gap-1 rounded-2xl border border-slate-200 bg-white px-2 py-1.5 text-sm font-bold text-slate-900 shadow-[0_10px_22px_rgba(15,23,42,0.03)]">
+                    <div ref={menuRef} className="relative z-[90] flex-none">
+                      <button type="button" onClick={() => setMenuOpen((prev) => !prev)} className="admin-input-surface inline-flex min-w-[84px] items-center justify-between gap-2 rounded-2xl border border-slate-200 bg-white px-2 py-1.5 text-sm font-bold text-slate-900 shadow-[0_10px_22px_rgba(15,23,42,0.03)]">
                         <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[#7c3aed] to-[#c084fc] text-white">{initials}</div>
                         <ChevronDown className="h-4 w-4 text-slate-400" />
                       </button>
                       {menuOpen ? (
-                        <div className="admin-content-surface absolute right-0 top-[calc(100%+10px)] z-[80] min-w-[210px] rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_20px_50px_rgba(15,23,42,0.12)]">
+                        <div className="admin-content-surface absolute right-0 top-[calc(100%+10px)] z-[95] w-[308px] rounded-[28px] border border-slate-200 bg-white p-3 shadow-[0_20px_50px_rgba(15,23,42,0.12)]">
                           <div className="rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-3">
                             <p className="text-sm font-black text-slate-900">{user?.name || "Super Admin"}</p>
                             <p className="mt-1 text-xs text-slate-500">{user?.email || "admin@couponx.com"}</p>

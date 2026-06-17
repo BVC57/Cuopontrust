@@ -111,16 +111,63 @@ export default function AdminWithdrawalsPage() {
         extra={<AdminGhostButton>More Filters</AdminGhostButton>}
         action={<AdminGhostButton><Download className="h-4 w-4" />Export</AdminGhostButton>}
       />
-      <div className="grid gap-5 xl:grid-cols-[1.65fr_0.75fr]">
+      <div className="grid gap-4 xl:grid-cols-2">
         <AdminSurface className="p-5">
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-2xl font-black text-slate-900">Withdrawal Summary</h3>
+            <button className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700">This Week</button>
+          </div>
+          <div className="grid gap-4 lg:grid-cols-[240px_minmax(0,1fr)] lg:items-center">
+            <div className="h-[220px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={analytics.entries} dataKey="value" innerRadius={68} outerRadius={100}>
+                    {analytics.entries.map((entry, index) => <Cell key={entry.name} fill={colors[index % colors.length]} />)}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {analytics.entries.map((entry, index) => (
+                <div key={entry.name} className="rounded-[22px] border border-slate-100 bg-slate-50/80 px-4 py-4">
+                  <div className="flex items-center gap-2">
+                    <span className="h-3 w-3 rounded-full" style={{ backgroundColor: colors[index % colors.length] }} />
+                    <span className="text-sm font-semibold capitalize text-slate-600">{entry.name}</span>
+                  </div>
+                  <p className="mt-3 text-2xl font-black text-slate-900">{formatCurrency(entry.value)}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </AdminSurface>
+        <AdminSurface className="p-5">
+          <h3 className="text-2xl font-black text-slate-900">Top Payment Methods</h3>
+          <div className="mt-5 space-y-4">
+            {byMethod.map((method, index) => (
+              <div key={method.name}>
+                <div className="mb-2 flex items-center justify-between text-sm">
+                  <span className="font-semibold text-slate-700">{method.name}</span>
+                  <span className="font-bold text-slate-900">{formatCurrency(method.value)} ({method.percent}%)</span>
+                </div>
+                <div className="h-2 rounded-full bg-slate-100">
+                  <div className="h-2 rounded-full" style={{ width: `${method.percent}%`, backgroundColor: colors[index % colors.length] }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </AdminSurface>
+      </div>
+
+      <AdminSurface className="p-5">
           <div className="mb-5">
             <h2 className="text-3xl font-black tracking-tight text-slate-900">All Withdrawals</h2>
             <p className="mt-1 text-sm text-slate-400">({formatCompactNumber(filtered.length)})</p>
           </div>
           {filtered.length ? (
             <div className="overflow-hidden rounded-[24px] border border-slate-100">
-              <table className="min-w-full">
-                <thead className="bg-slate-50">
+              <table className="min-w-[1380px] w-full">
+                <thead className="sticky top-0 z-10 bg-slate-50">
                   <tr>
                     {["User", "Amount", "Method", "Bank / UPI", "Status", "Requested On", "Actions"].map((label) => (
                       <th key={label} className="px-5 py-4 text-left text-xs font-black uppercase tracking-[0.18em] text-slate-400">{label}</th>
@@ -163,42 +210,7 @@ export default function AdminWithdrawalsPage() {
               }}
             />
           ) : null}
-        </AdminSurface>
-        <div className="space-y-5">
-          <AdminSurface className="p-5">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-2xl font-black text-slate-900">Withdrawal Summary</h3>
-              <button className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700">This Week</button>
-            </div>
-            <div className="h-[220px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={analytics.entries} dataKey="value" innerRadius={68} outerRadius={100}>
-                    {analytics.entries.map((entry, index) => <Cell key={entry.name} fill={colors[index % colors.length]} />)}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </AdminSurface>
-          <AdminSurface className="p-5">
-            <h3 className="text-2xl font-black text-slate-900">Top Payment Methods</h3>
-            <div className="mt-5 space-y-4">
-              {byMethod.map((method, index) => (
-                <div key={method.name}>
-                  <div className="mb-2 flex items-center justify-between text-sm">
-                    <span className="font-semibold text-slate-700">{method.name}</span>
-                    <span className="font-bold text-slate-900">{formatCurrency(method.value)} ({method.percent}%)</span>
-                  </div>
-                  <div className="h-2 rounded-full bg-slate-100">
-                    <div className="h-2 rounded-full" style={{ width: `${method.percent}%`, backgroundColor: colors[index % colors.length] }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </AdminSurface>
-        </div>
-      </div>
+      </AdminSurface>
       <AdminDetailModal open={Boolean(selectedWithdrawal)} title="Withdrawal Details" onClose={() => setSelectedWithdrawal(null)}>
         {selectedWithdrawal ? (
           <div className="space-y-4">

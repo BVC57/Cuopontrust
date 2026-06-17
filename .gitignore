@@ -13,6 +13,8 @@ node_modules/
 dist/
 web-build/
 
+.next/
+
 # Android
 android/app/build/
 android/.gradle/

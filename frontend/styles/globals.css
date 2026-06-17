@@ -172,6 +172,10 @@ canvas {
   isolation: isolate;
 }
 
+.admin-content-surface.absolute {
+  position: absolute;
+}
+
 .lux-card::before,
 .admin-panel::before,
 .admin-content-surface::before,
@@ -229,6 +233,7 @@ canvas {
   overflow: hidden;
   background-attachment: scroll;
   position: relative;
+  scrollbar-gutter: stable;
 }
 
 .admin-shell-frame {
@@ -239,6 +244,7 @@ canvas {
   max-width: 1500px;
   margin: 0 auto;
   padding: 24px;
+  overflow: hidden;
 }
 
 .admin-theme-dark {
@@ -420,9 +426,10 @@ canvas {
 
 .admin-content-scroll {
   min-height: 0;
-  overflow-y: auto;
+  overflow-y: scroll;
   overflow-x: hidden;
   padding-right: 4px;
+  scrollbar-gutter: stable;
   scrollbar-width: thin;
   scrollbar-color: rgba(22, 163, 74, 0.55) transparent;
 }
@@ -461,6 +468,10 @@ canvas {
   justify-content: space-between;
   gap: 20px;
   background: transparent;
+  width: 100%;
+  min-width: 0;
+  position: relative;
+  z-index: 40;
 }
 
 .admin-header-glow {
