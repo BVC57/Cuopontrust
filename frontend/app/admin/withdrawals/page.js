@@ -10,11 +10,25 @@ import { AdminDetailModal, AdminEmptyState, AdminGhostButton, AdminMetricCard, A
 import api, { extractError } from "../../../lib/api";
 
 const colors = ["#22c55e", "#f59e0b", "#ef4444", "#16a34a", "#94a3b8"];
+const downloadCsv = (filename, rows) => {
+  const escapeCell = (value) => `"${String(value ?? "").replace(/"/g, '""')}"`;
+  const content = rows.map((row) => row.map(escapeCell).join(",")).join("\n");
+  const blob = new Blob([content], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+};
 
 export default function AdminWithdrawalsPage() {
   const [withdrawals, setWithdrawals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [methodFilter, setMethodFilter] = useState("all");
+  const [bankFilter, setBankFilter] = useState("all");
   const [selectedWithdrawal, setSelectedWithdrawal] = useState(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -35,7 +49,28 @@ export default function AdminWithdrawalsPage() {
     loadWithdrawals();
   }, []);
 
-  const filtered = useMemo(() => withdrawals.filter((row) => `${row.userId?.email || ""} ${row.upiId || ""} ${row.bankName || ""} ${row.bankDetails || ""}`.toLowerCase().includes(search.toLowerCase())), [withdrawals, search]);
+  const methodOptions = useMemo(() => [
+    { value: "all", label: "All Payment Methods" },
+    { value: "bank", label: "Bank Transfer" },
+    { value: "upi", label: "UPI" }
+  ], []);
+  const bankOptions = useMemo(() => {
+    const bankNames = [...new Set(withdrawals.map((row) => String(row.bankName || "").trim()).filter(Boolean))];
+    return [{ value: "all", label: "All Banks" }, ...bankNames.map((name) => ({ value: name, label: name }))];
+  }, [withdrawals]);
+
+  const filtered = useMemo(
+    () =>
+      withdrawals.filter((row) => {
+        const searchHaystack = `${row.userId?.email || ""} ${row.userId?.name || ""} ${row.upiId || ""} ${row.bankName || ""} ${row.bankDetails || ""} ${row.ifscCode || ""}`.toLowerCase();
+        const method = row.method === "bank" || row.bankDetails ? "bank" : "upi";
+        const statusMatch = statusFilter === "all" || row.status === statusFilter;
+        const methodMatch = methodFilter === "all" || method === methodFilter;
+        const bankMatch = bankFilter === "all" || String(row.bankName || "").trim() === bankFilter;
+        return searchHaystack.includes(search.toLowerCase()) && statusMatch && methodMatch && bankMatch;
+      }),
+    [withdrawals, search, statusFilter, methodFilter, bankFilter]
+  );
   const paginatedWithdrawals = useMemo(() => paginateItems(filtered, page, pageSize), [filtered, page, pageSize]);
 
   const metrics = useMemo(() => {
@@ -64,7 +99,7 @@ export default function AdminWithdrawalsPage() {
 
   useEffect(() => {
     setPage(1);
-  }, [search]);
+  }, [search, statusFilter, methodFilter, bankFilter]);
 
   const byMethod = useMemo(() => {
     const grouped = withdrawals.reduce((acc, row) => {
@@ -86,6 +121,25 @@ export default function AdminWithdrawalsPage() {
     }
   };
 
+  const exportWithdrawals = () => {
+    downloadCsv("admin-withdrawals.csv", [
+      ["Withdrawal ID", "User", "User Email", "Amount", "Currency", "Method", "Bank Name", "UPI ID", "IFSC", "Status", "Requested On"],
+      ...filtered.map((row) => [
+        row._id,
+        row.userId?.name || "User",
+        row.userId?.email || "",
+        row.amount || 0,
+        row.currency || "INR",
+        row.method === "bank" || row.bankDetails ? "Bank Transfer" : "UPI",
+        row.bankName || "",
+        row.upiId || "",
+        row.ifscCode || "",
+        row.status,
+        formatDateTime(row.createdAt)
+      ])
+    ]);
+  };
+
   if (loading) {
     return (
       <AdminPageShell title="Withdrawals" subtitle="Review all seller withdrawals and payout states." breadcrumbs={["Dashboard", "Withdrawals", "All Withdrawals"]}>
@@ -104,12 +158,12 @@ export default function AdminWithdrawalsPage() {
         onSearchChange={setSearch}
         searchPlaceholder="Search by user, email, ID, or UTR..."
         filters={[
-          { key: "status", value: "all", options: [{ value: "all", label: "All Status" }] },
-          { key: "method", value: "all", options: [{ value: "all", label: "All Payment Methods" }] },
-          { key: "bank", value: "all", options: [{ value: "all", label: "All Banks" }] }
+          { key: "status", value: statusFilter, onChange: setStatusFilter, options: [{ value: "all", label: "All Status" }, { value: "pending", label: "Pending" }, { value: "approved", label: "Approved" }, { value: "rejected", label: "Rejected" }] },
+          { key: "method", value: methodFilter, onChange: setMethodFilter, options: methodOptions },
+          { key: "bank", value: bankFilter, onChange: setBankFilter, options: bankOptions }
         ]}
-        extra={<AdminGhostButton>More Filters</AdminGhostButton>}
-        action={<AdminGhostButton><Download className="h-4 w-4" />Export</AdminGhostButton>}
+        extra={<AdminGhostButton onClick={() => { setStatusFilter("all"); setMethodFilter("all"); setBankFilter("all"); setSearch(""); }}>Reset Filters</AdminGhostButton>}
+        action={<AdminGhostButton onClick={exportWithdrawals}><Download className="h-4 w-4" />Export</AdminGhostButton>}
       />
       <div className="grid gap-4 xl:grid-cols-2">
         <AdminSurface className="p-5">
@@ -165,7 +219,7 @@ export default function AdminWithdrawalsPage() {
             <p className="mt-1 text-sm text-slate-400">({formatCompactNumber(filtered.length)})</p>
           </div>
           {filtered.length ? (
-            <div className="overflow-hidden rounded-[24px] border border-slate-100">
+            <div className="admin-table-shell overflow-hidden rounded-[24px] border border-slate-100 overflow-x-auto overflow-y-auto max-h-[640px]">
               <table className="min-w-[1380px] w-full">
                 <thead className="sticky top-0 z-10 bg-slate-50">
                   <tr>

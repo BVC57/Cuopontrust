@@ -29,7 +29,7 @@ export default function AccountShell({ title, subtitle, children, aside }) {
                 <Flame className="h-3.5 w-3.5 text-orange-500" />
                 {title}
               </div>
-              <h1 className="mt-5 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">{title}</h1>
+              <h1 className="app-main-heading mt-5 font-black text-slate-950">{title}</h1>
               {subtitle ? <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-500">{subtitle}</p> : null}
             </div>
           </div>

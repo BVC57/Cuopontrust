@@ -148,7 +148,7 @@ export default function AdminContactIssuesPage() {
             <h2 className="text-3xl font-black tracking-tight text-slate-900">All Contact Issues</h2>
             <p className="mt-1 text-sm font-semibold text-slate-400">({formatCompactNumber(filtered.length)})</p>
           </div>
-          <div className="overflow-hidden rounded-[24px] border border-slate-100">
+          <div className="admin-table-shell overflow-hidden rounded-[24px] border border-slate-100 overflow-x-auto overflow-y-auto max-h-[640px]">
             <table className="min-w-full">
               <thead className="bg-slate-50">
                 <tr>

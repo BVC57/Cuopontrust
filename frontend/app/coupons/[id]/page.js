@@ -241,7 +241,7 @@ export default function CouponDetailsPage() {
                 Verified
               </span>
 
-              <h1 className="mt-4 text-3xl font-black uppercase tracking-tight text-slate-950 sm:text-4xl xl:text-[50px]">
+              <h1 className="app-main-heading mt-4 uppercase text-slate-950">
                 {coupon.title}
               </h1>
               <p className="mt-2 text-xl font-medium text-slate-500 sm:text-[30px] sm:leading-[1.2]">On {coupon.platformName} purchases</p>

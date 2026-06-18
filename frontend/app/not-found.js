@@ -11,7 +11,7 @@ export default function NotFoundPage() {
           <div className="inline-flex rounded-full border border-emerald-100 bg-emerald-50 px-4 py-2 text-xs font-black uppercase tracking-[0.24em] text-emerald-700">
             Error 404
           </div>
-          <h1 className="mt-6 max-w-xl text-4xl font-black leading-tight text-slate-950 sm:text-5xl">
+          <h1 className="app-main-heading mt-6 max-w-xl font-black text-slate-950">
             This page could not be found.
           </h1>
           <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-500 sm:text-base">

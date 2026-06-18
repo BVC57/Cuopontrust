@@ -179,7 +179,7 @@ const heroFeatures = [
 function SectionHeading({ title, subtitle }) {
   return (
     <div className="text-center">
-      <h2 className="text-[2rem] font-black tracking-tight text-slate-950 sm:text-[2.2rem]">{title}</h2>
+      <h2 className="app-section-heading font-black text-slate-950">{title}</h2>
       {subtitle ? <p className="mt-2 text-sm text-slate-500">{subtitle}</p> : null}
     </div>
   );
@@ -250,7 +250,7 @@ export default function HomePage() {
                 India&apos;s 1st Coupon Buy &amp; Sell Platform
               </div>
 
-              <h1 className="mt-5 text-[2.8rem] font-black leading-[0.95] tracking-tight text-slate-950 sm:text-[4.3rem]">
+              <h1 className="app-main-heading mt-5 font-black text-slate-950">
                 Trusted by Thousands,
                 <br />
                 Loved for Real <span className="bg-[linear-gradient(90deg,#5b3df5_0%,#7c5cff_100%)] bg-clip-text text-transparent">Savings</span>
@@ -390,7 +390,7 @@ export default function HomePage() {
               Smart Savings, Real Earnings
             </div>
 
-            <h2 className="mt-6 text-[2.5rem] font-black tracking-tight text-slate-950 sm:text-[4rem] sm:leading-[1.05]">
+            <h2 className="app-main-heading mt-6 font-black text-slate-950">
               The Smart Way to <span className="relative inline-block text-[#16a34a]">Save
                 <span className="absolute left-0 right-0 top-[92%] h-3 rounded-full bg-[linear-gradient(90deg,rgba(34,197,94,0.2),rgba(34,197,94,0.45),rgba(34,197,94,0.18))]" />
               </span>{" "}
@@ -417,7 +417,7 @@ export default function HomePage() {
                   <div className="inline-flex rounded-full bg-[linear-gradient(180deg,#edfdf2_0%,#ffffff_100%)] px-4 py-2 text-sm font-black text-[#15803d]">
                     For Smart Buyers
                   </div>
-                  <h3 className="mt-4 text-3xl font-black tracking-tight text-slate-950 sm:text-[3rem] sm:leading-[1.02]">
+                  <h3 className="mt-4 text-2xl font-black tracking-tight text-slate-950 sm:text-[2.35rem] sm:leading-[1.08]">
                     Save More,
                     <br />
                     Spend Smarter
@@ -498,7 +498,7 @@ export default function HomePage() {
                   <div className="inline-flex rounded-full bg-[linear-gradient(180deg,#f5f3ff_0%,#ffffff_100%)] px-4 py-2 text-sm font-black text-[#6d28d9]">
                     For Smart Sellers
                   </div>
-                  <h3 className="mt-4 text-3xl font-black tracking-tight text-slate-950 sm:text-[3rem] sm:leading-[1.02]">
+                  <h3 className="mt-4 text-2xl font-black tracking-tight text-slate-950 sm:text-[2.35rem] sm:leading-[1.08]">
                     Turn Unused Coupons
                     <br />
                     Into Real Cash

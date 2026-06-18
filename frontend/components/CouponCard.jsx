@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
-import { Copy, ExternalLink, Heart, LockKeyhole, ShieldCheck, Star, Users } from "lucide-react";
+import { Copy, ExternalLink, Heart, LockKeyhole, ShieldCheck, Star } from "lucide-react";
 import { isAuthenticated } from "../lib/auth";
 import { formatDate, formatMoney } from "../lib/format";
 import { resolveBrand } from "../lib/brandCatalog";
@@ -74,10 +74,16 @@ export default function CouponCard({ coupon }) {
   const title = String(coupon.title || "").trim().toUpperCase() || `${coupon.platformName} OFFER`;
   const subtitle = coupon.description || `On ${coupon.platformName} purchases`;
   const codeLabel = coupon.revealedCouponCode || "Code hidden until payment";
-  const primaryActionLabel = isPurchasedByViewer ? "View Coupon" : isSold ? "Sold" : coupon.revealedCouponCode ? "Copy Code" : "Unlock & Buy";
+  const primaryActionLabel = isPurchasedByViewer
+    ? "View Coupon"
+    : isSold
+      ? "Sold"
+      : coupon.revealedCouponCode
+        ? "Copy Code"
+        : `Buy in ${formatMoney(coupon.sellingPrice, coupon.currency)}`;
   const categoryLabels = (coupon.categories || []).slice(0, 2).map(normalizeCategory);
-  const usageLabel = coupon.views ? `Used ${coupon.views} times` : coupon.savedCount ? `Saved ${coupon.savedCount} times` : "Verified deal";
   const expiryLabel = coupon.expiryDate ? formatDate(coupon.expiryDate) : "Limited time";
+  const totalSavings = Math.max(0, Number(coupon.couponAmount || 0) - Number(coupon.sellingPrice || 0));
 
   return (
     <div className={`group flex h-full min-h-[352px] flex-col rounded-[24px] border p-4 shadow-[0_18px_34px_rgba(15,23,42,0.05)] transition hover:-translate-y-1 hover:shadow-[0_24px_44px_rgba(15,23,42,0.10)] ${theme.shell}`}>
@@ -124,6 +130,13 @@ export default function CouponCard({ coupon }) {
           <p className="pb-1 text-lg font-bold text-slate-400 line-through">{formatMoney(coupon.couponAmount, coupon.currency)}</p>
         </div>
 
+        <div className="mt-4 flex items-center justify-center">
+          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-600">
+            <Star className="h-3.5 w-3.5" />
+            Total Saving {formatMoney(totalSavings, coupon.currency)}
+          </span>
+        </div>
+
         <div className={`mt-5 flex min-h-[52px] items-center justify-between rounded-[16px] border border-dashed bg-white/90 px-4 ${theme.code}`}>
           <span className="flex items-center gap-2 text-sm font-bold">
             {coupon.revealedCouponCode ? <Copy className="h-4 w-4" /> : <LockKeyhole className="h-4 w-4" />}
@@ -152,10 +165,7 @@ export default function CouponCard({ coupon }) {
 
         <div className="mt-auto flex items-center justify-between pt-5 text-xs font-semibold text-slate-500">
           <span>Valid Till {expiryLabel}</span>
-          <span className="inline-flex items-center gap-1">
-            <Users className="h-3.5 w-3.5" />
-            {usageLabel}
-          </span>
+          <span>Verified deal</span>
         </div>
       </div>
     </div>

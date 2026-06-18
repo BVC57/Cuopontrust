@@ -10,11 +10,25 @@ import { AdminDetailModal, AdminEmptyState, AdminGhostButton, AdminMetricCard, A
 import api, { extractError } from "../../../lib/api";
 
 const pieTones = ["#16a34a", "#22c55e", "#ef4444", "#15803d"];
+const downloadCsv = (filename, rows) => {
+  const escapeCell = (value) => `"${String(value ?? "").replace(/"/g, '""')}"`;
+  const content = rows.map((row) => row.map(escapeCell).join(",")).join("\n");
+  const blob = new Blob([content], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+};
 
 export default function AdminPaymentsPage() {
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [methodFilter, setMethodFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("all");
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -35,52 +49,112 @@ export default function AdminPaymentsPage() {
     loadPayments();
   }, []);
 
+  const successfulPayments = useMemo(
+    () => payments.filter((row) => row.paymentStatus === "captured"),
+    [payments]
+  );
+  const failedPaymentsAll = useMemo(
+    () => payments.filter((row) => row.paymentStatus === "failed"),
+    [payments]
+  );
+  const visiblePayments = useMemo(
+    () => payments.filter((row) => ["captured", "failed"].includes(row.paymentStatus)),
+    [payments]
+  );
+  const paymentMethodOptions = useMemo(() => {
+    const methods = [...new Set(visiblePayments.map((row) => String(row.paymentGateway || "razorpay").toLowerCase()))];
+    return [{ value: "all", label: "All Payment Methods" }, ...methods.map((value) => ({ value, label: value.toUpperCase() }))];
+  }, [visiblePayments]);
+
+  const dateMatches = (value) => {
+    if (dateFilter === "all") return true;
+    const date = new Date(value);
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    if (dateFilter === "today") {
+      return date >= todayStart;
+    }
+    const last7 = new Date(todayStart);
+    last7.setDate(last7.getDate() - 7);
+    if (dateFilter === "last7") {
+      return date >= last7;
+    }
+    const last30 = new Date(todayStart);
+    last30.setDate(last30.getDate() - 30);
+    return date >= last30;
+  };
+
   const filtered = useMemo(
-    () => payments.filter((row) => `${row.gatewayOrderId} ${row.buyerId?.email || ""} ${row.sellerId?.email || ""}`.toLowerCase().includes(search.toLowerCase())),
-    [payments, search]
+    () =>
+      visiblePayments.filter((row) => {
+        const searchHaystack = `${row.gatewayPaymentId || ""} ${row.gatewayOrderId || ""} ${row.buyerId?.email || ""} ${row.sellerId?.email || ""} ${row.buyerId?.name || ""}`.toLowerCase();
+        const method = String(row.paymentGateway || "razorpay").toLowerCase();
+        const statusMatch = statusFilter === "all" || row.paymentStatus === statusFilter;
+        const methodMatch = methodFilter === "all" || method === methodFilter;
+        return searchHaystack.includes(search.toLowerCase()) && statusMatch && methodMatch && dateMatches(row.createdAt);
+      }),
+    [visiblePayments, search, statusFilter, methodFilter, dateFilter]
   );
   const paginatedPayments = useMemo(() => paginateItems(filtered, page, pageSize), [filtered, page, pageSize]);
 
   const metricRows = useMemo(() => {
-    const totalAmount = payments.reduce((sum, row) => sum + Number(row.amount || 0), 0);
-    const successAmount = payments.filter((row) => row.paymentStatus === "captured").reduce((sum, row) => sum + Number(row.amount || 0), 0);
-    const pendingAmount = payments.filter((row) => ["created", "authorized"].includes(row.paymentStatus)).reduce((sum, row) => sum + Number(row.amount || 0), 0);
-    const failedAmount = payments.filter((row) => row.paymentStatus === "failed").reduce((sum, row) => sum + Number(row.amount || 0), 0);
-    const refundedAmount = payments.filter((row) => row.paymentStatus === "refunded").reduce((sum, row) => sum + Number(row.amount || 0), 0);
+    const successAmount = successfulPayments.reduce((sum, row) => sum + Number(row.amount || 0), 0);
+    const platformRevenue = successfulPayments.reduce((sum, row) => sum + Number(row.platformFee || 0), 0);
+    const sellerReleased = successfulPayments.reduce((sum, row) => sum + Number(row.sellerAmount || 0), 0);
 
     return [
-      { label: "Total Payments", value: formatCurrency(totalAmount), change: "+20.5%", tone: "green", icon: Wallet },
-      { label: "Successful Payments", value: formatCurrency(successAmount), change: "+21.3%", tone: "purple", icon: Wallet },
-      { label: "Pending Payments", value: formatCurrency(pendingAmount), change: "-6.4%", tone: "amber", icon: Wallet },
-      { label: "Failed Payments", value: formatCurrency(failedAmount), change: "-8.7%", tone: "red", icon: Wallet },
-      { label: "Refunded Amount", value: formatCurrency(refundedAmount), change: "+12.6%", tone: "blue", icon: Wallet }
+      { label: "Total Collected", value: formatCurrency(successAmount), change: "+20.5%", tone: "green", icon: Wallet },
+      { label: "Successful Payments", value: formatCompactNumber(successfulPayments.length), change: "+21.3%", tone: "purple", icon: Wallet },
+      { label: "Platform Revenue", value: formatCurrency(platformRevenue), change: "+11.4%", tone: "blue", icon: Wallet },
+      { label: "Seller Released", value: formatCurrency(sellerReleased), change: "+13.1%", tone: "green", icon: Wallet },
+      { label: "Failed Payments", value: formatCompactNumber(failedPaymentsAll.length), change: "-8.7%", tone: "red", icon: Wallet }
     ];
-  }, [payments]);
+  }, [successfulPayments, failedPaymentsAll]);
 
   const analytics = useMemo(() => {
     return [
-      { name: "Success", value: payments.filter((row) => row.paymentStatus === "captured").reduce((sum, row) => sum + Number(row.amount || 0), 0) },
-      { name: "Pending", value: payments.filter((row) => ["created", "authorized"].includes(row.paymentStatus)).reduce((sum, row) => sum + Number(row.amount || 0), 0) },
-      { name: "Failed", value: payments.filter((row) => row.paymentStatus === "failed").reduce((sum, row) => sum + Number(row.amount || 0), 0) },
-      { name: "Refunded", value: payments.filter((row) => row.paymentStatus === "refunded").reduce((sum, row) => sum + Number(row.amount || 0), 0) }
+      { name: "Success Amount", value: successfulPayments.reduce((sum, row) => sum + Number(row.amount || 0), 0) },
+      { name: "Platform Fee", value: successfulPayments.reduce((sum, row) => sum + Number(row.platformFee || 0), 0) },
+      { name: "Seller Amount", value: successfulPayments.reduce((sum, row) => sum + Number(row.sellerAmount || 0), 0) },
+      { name: "Failed Attempts", value: failedPaymentsAll.length }
     ];
-  }, [payments]);
+  }, [successfulPayments, failedPaymentsAll]);
 
   const paymentMethods = useMemo(() => {
-    const grouped = payments.reduce((acc, row) => {
+    const grouped = successfulPayments.reduce((acc, row) => {
       const key = row.paymentGateway || "razorpay";
       acc[key] = (acc[key] || 0) + Number(row.amount || 0);
       return acc;
     }, {});
     const total = Object.values(grouped).reduce((sum, value) => sum + value, 0) || 1;
     return Object.entries(grouped).map(([name, value]) => ({ name, value, percent: ((value / total) * 100).toFixed(1) }));
-  }, [payments]);
+  }, [successfulPayments]);
 
-  const failedPayments = payments.filter((row) => row.paymentStatus === "failed").slice(0, 3);
+  const failedPayments = failedPaymentsAll.slice(0, 3);
 
   useEffect(() => {
     setPage(1);
-  }, [search]);
+  }, [search, statusFilter, methodFilter, dateFilter]);
+
+  const exportPayments = () => {
+    downloadCsv("admin-payments.csv", [
+      ["Transaction ID", "Order ID", "Buyer", "Buyer Email", "Seller", "Seller Email", "Amount", "Platform Fee", "Seller Amount", "Gateway", "Status", "Created At"],
+      ...filtered.map((row) => [
+        row.gatewayPaymentId || row._id,
+        row.gatewayOrderId || "",
+        row.buyerId?.name || "Buyer",
+        row.buyerId?.email || "",
+        row.sellerId?.name || "Seller",
+        row.sellerId?.email || "",
+        row.amount || 0,
+        row.platformFee || 0,
+        row.sellerAmount || 0,
+        row.paymentGateway || "razorpay",
+        row.paymentStatus,
+        formatDateTime(row.createdAt)
+      ])
+    ]);
+  };
 
   const deletePayment = async (id) => {
     try {
@@ -94,14 +168,14 @@ export default function AdminPaymentsPage() {
 
   if (loading) {
     return (
-      <AdminPageShell title="Payments" subtitle="Track successful, pending, failed, and refunded payments." breadcrumbs={["Dashboard", "Payments"]}>
+      <AdminPageShell title="Payments" subtitle="Track completed and failed payments. Revenue totals use successful captures only." breadcrumbs={["Dashboard", "Payments"]}>
         <LoadingSpinner label="Loading payments..." />
       </AdminPageShell>
     );
   }
 
   return (
-    <AdminPageShell title="Payments" subtitle="Track successful, pending, failed, and refunded payments." breadcrumbs={["Dashboard", "Payments"]}>
+    <AdminPageShell title="Payments" subtitle="Track completed and failed payments. Revenue totals use successful captures only." breadcrumbs={["Dashboard", "Payments"]}>
       <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-5">
         {metricRows.map((metric) => <AdminMetricCard key={metric.label} {...metric} />)}
       </div>
@@ -111,12 +185,12 @@ export default function AdminPaymentsPage() {
         onSearchChange={setSearch}
         searchPlaceholder="Search by transaction ID, user, email..."
         filters={[
-          { key: "method", value: "all", options: [{ value: "all", label: "All Payment Methods" }] },
-          { key: "status", value: "all", options: [{ value: "all", label: "All Status" }] },
-          { key: "date", value: "all", options: [{ value: "all", label: "Select Date" }], icon: "calendar" }
+          { key: "status", value: statusFilter, onChange: setStatusFilter, options: [{ value: "all", label: "All Status" }, { value: "captured", label: "Success" }, { value: "failed", label: "Failed" }] },
+          { key: "method", value: methodFilter, onChange: setMethodFilter, options: paymentMethodOptions },
+          { key: "date", value: dateFilter, onChange: setDateFilter, options: [{ value: "all", label: "All Time" }, { value: "today", label: "Today" }, { value: "last7", label: "Last 7 Days" }, { value: "last30", label: "Last 30 Days" }], icon: "calendar" }
         ]}
-        extra={<AdminGhostButton>More Filters</AdminGhostButton>}
-        action={<AdminGhostButton><Download className="h-4 w-4" />Export</AdminGhostButton>}
+        extra={<AdminGhostButton onClick={() => { setStatusFilter("all"); setMethodFilter("all"); setDateFilter("all"); setSearch(""); }}>Reset Filters</AdminGhostButton>}
+        action={<AdminGhostButton onClick={exportPayments}><Download className="h-4 w-4" />Export</AdminGhostButton>}
       />
 
       <div className="grid gap-4 xl:grid-cols-3">
@@ -190,7 +264,7 @@ export default function AdminPaymentsPage() {
             <p className="mt-1 text-sm text-slate-400">({formatCompactNumber(filtered.length)})</p>
           </div>
           {filtered.length ? (
-            <div className="overflow-hidden rounded-[24px] border border-slate-100">
+            <div className="admin-table-shell overflow-hidden rounded-[24px] border border-slate-100 overflow-x-auto overflow-y-auto max-h-[640px]">
               <table className="min-w-[1380px] w-full">
                 <thead className="sticky top-0 z-10 bg-slate-50">
                   <tr>

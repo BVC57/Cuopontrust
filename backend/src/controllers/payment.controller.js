@@ -263,14 +263,6 @@ const createOrderController = asyncHandler(async (req, res) => {
   });
   await transaction.save();
 
-  await createAdminNotification({
-    type: "coupon_purchase_started",
-    title: "New purchase started",
-    message: `${req.user.email} started checkout for ${coupon.title}.`,
-    link: "/admin/payments",
-    metadata: { transactionId: transaction._id, couponId: coupon._id }
-  });
-
   return sendResponse(res, 201, "Razorpay order created", {
     transaction,
     order,

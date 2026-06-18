@@ -10,7 +10,7 @@ export default function PageHero({ eyebrow, title, description, children }) {
         <Flame className="h-3.5 w-3.5 text-orange-500" />
         {eyebrow}
       </div>
-      <h1 className="mt-5 max-w-3xl text-4xl font-black tracking-tight text-slate-900 sm:text-5xl">{title}</h1>
+      <h1 className="app-main-heading mt-5 max-w-3xl font-black text-slate-900">{title}</h1>
       <p className="mt-4 max-w-2xl text-base leading-8 text-slate-600">{description}</p>
       {children ? <div className="mt-8">{children}</div> : null}
     </section>

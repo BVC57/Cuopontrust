@@ -17,7 +17,7 @@ export default function InfoPageShell({ eyebrow, title, description, children, c
                   <Flame className="h-3.5 w-3.5 text-orange-500" />
                   {eyebrow}
                 </div>
-                <h1 className="mt-6 text-4xl font-black tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">{title}</h1>
+                <h1 className="app-main-heading mt-6 font-black text-slate-950">{title}</h1>
                 <p className="mt-5 max-w-2xl text-base leading-8 text-slate-500">{description}</p>
                 <div className="mt-6 flex flex-wrap gap-3">
                   <Link

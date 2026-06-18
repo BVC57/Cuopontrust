@@ -19,7 +19,7 @@ function TrustLockedPage() {
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-rose-50 text-rose-600">
           <ShieldAlert className="h-8 w-8" />
         </div>
-        <h1 className="mt-6 text-2xl font-black text-slate-950 sm:text-3xl">Account banned</h1>
+        <h1 className="app-main-heading mt-6 font-black text-slate-950">Account banned</h1>
         <p className="mx-auto mt-4 max-w-md text-sm font-semibold leading-7 text-slate-600">
           Your account is banned for violating our policy. Please contact our admin to recover the account.
         </p>

@@ -22,7 +22,6 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import ProtectedRoute from "../../components/ProtectedRoute";
-import PageHero from "../../components/PageHero";
 import SafetyPopup from "../../components/SafetyPopup";
 import UploadBox from "../../components/UploadBox";
 import api, { extractError } from "../../lib/api";
@@ -48,6 +47,12 @@ const verificationTemplate = [
 ];
 
 const buildPendingSteps = () =>
+  verificationTemplate.map((step) => ({
+    ...step,
+    status: "pending"
+  }));
+
+const buildCheckingSteps = () =>
   verificationTemplate.map((step, index) => ({
     ...step,
     status: index === 0 ? "checking" : "pending"
@@ -58,7 +63,7 @@ const mapVerificationStages = (stages = []) =>
     const match = stages.find((item) => item.id === step.id);
     return {
       ...step,
-      status: match?.status || (index === 0 ? "checking" : "pending"),
+      status: match?.status || "pending",
       details: match?.detail || step.details
     };
   });
@@ -163,7 +168,7 @@ export default function SellPage() {
     setResult(null);
     abortRef.current = new AbortController();
 
-    setStepsList(buildPendingSteps());
+    setStepsList(buildCheckingSteps());
 
     // Create form data
     const formData = new FormData();
@@ -240,14 +245,7 @@ export default function SellPage() {
       />
       
       <div className="mx-auto max-w-7xl px-4 py-8 font-sans sm:px-6">
-        <PageHero
-          eyebrow="India's first coupon buy & sell platform"
-          title="List a coupon with AI verification"
-          description="Upload your unused coupon screenshot. Our verification flow checks validity, matches fields, and reduces risky listings before publishing."
-        />
-
-        {/* 2-Column Responsive Layout */}
-        <div className="mt-8 grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+        <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
           
           {/* Left Column: Form Fields */}
           <div className="rounded-[32px] border border-slate-100 bg-white p-6 sm:p-8 shadow-[0_12px_40px_rgba(0,0,0,0.02)]">
@@ -594,8 +592,8 @@ export default function SellPage() {
                   </h3>
                 </div>
                 <p className="mt-3 text-sm leading-relaxed font-semibold opacity-90">
-                  {result.success 
-                    ? "Congratulations! Our AI successfully matched all parameters and security flags. Your coupon has been listed in the Marketplace." 
+                  {result.success
+                    ? "Congratulations! Our AI successfully matched the required verification checks and security flags. Your coupon has been listed in the Marketplace."
                     : result.message}
                 </p>
               </div>
@@ -612,7 +610,7 @@ export default function SellPage() {
               <div className="space-y-4 text-xs font-semibold text-slate-500">
                 <div className="flex gap-2">
                   <div className="h-1.5 w-1.5 rounded-full bg-[#16a34a] mt-1.5 flex-shrink-0" />
-                  <p>Screenshot proof must be a direct copy of the original coupon showing code, expiration date, and coupon amount clearly.</p>
+                  <p>Screenshot proof must be a direct copy of the original coupon. Standard coupons should show code, expiry, and amount clearly, while code-only offers can skip amount or expiry matching when those values are not visible.</p>
                 </div>
                 <div className="flex gap-2">
                   <div className="h-1.5 w-1.5 rounded-full bg-[#16a34a] mt-1.5 flex-shrink-0" />

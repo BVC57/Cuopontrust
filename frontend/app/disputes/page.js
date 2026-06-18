@@ -17,7 +17,7 @@ export default function DisputesPage() {
     <ProtectedRoute>
       <AccountShell title="My Disputes" subtitle="Track support cases, comments, and dispute resolution progress in one place.">
         <div className="rounded-[28px] border border-white/70 bg-white p-6 shadow-soft">
-          <h1 className="text-2xl font-semibold text-slate-900">My disputes</h1>
+          <h2 className="text-2xl font-semibold text-slate-900">My disputes</h2>
           <div className="mt-6 space-y-3">
             {disputes.map((item) => (
               <div key={item._id} className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-4">

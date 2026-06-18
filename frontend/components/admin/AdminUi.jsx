@@ -160,7 +160,7 @@ export function AdminUserIdentity({ name, email, accent = "from-emerald-500 to-t
 export function AdminToolbar({ searchValue, onSearchChange, searchPlaceholder = "Search...", filters = [], action = null, extra = null }) {
   return (
     <AdminSurface className="p-4">
-      <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
+      <div className="flex flex-col gap-3 xl:flex-row xl:flex-wrap xl:items-center">
         <div className="admin-input-surface flex min-w-0 flex-1 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3">
           <Search className="h-4 w-4 text-slate-400" />
           <input
@@ -171,10 +171,10 @@ export function AdminToolbar({ searchValue, onSearchChange, searchPlaceholder = 
           />
         </div>
         {filters.map((filter) => (
-          <div key={filter.key} className="admin-input-surface flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">
+          <div key={filter.key} className={cn("admin-input-surface relative flex min-w-[190px] items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600", filter.className)}>
             {filter.icon === "calendar" ? <CalendarDays className="h-4 w-4 text-slate-400" /> : null}
             {filter.options ? (
-              <select value={filter.value} onChange={(event) => filter.onChange?.(event.target.value)} className="admin-select-field bg-transparent font-medium outline-none">
+              <select value={filter.value} onChange={(event) => filter.onChange?.(event.target.value)} className="admin-select-field w-full bg-transparent pr-6 font-medium outline-none">
                 {filter.options.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
@@ -184,7 +184,7 @@ export function AdminToolbar({ searchValue, onSearchChange, searchPlaceholder = 
             ) : (
               <span className="font-medium">{filter.label}</span>
             )}
-            <ChevronDown className="h-4 w-4 text-slate-400" />
+            <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           </div>
         ))}
         {extra}
@@ -240,7 +240,7 @@ export function AdminTableShell({ title, count, children, side = null, footer = 
 
 export function AdminTableContainer({ children, className = "", maxHeight = "max-h-[580px]" }) {
   return (
-    <div className={cn("overflow-x-auto overflow-y-auto rounded-[24px] border border-slate-100", maxHeight, className)}>
+    <div className={cn("admin-table-shell overflow-x-auto overflow-y-auto rounded-[24px] border border-slate-100", maxHeight, className)}>
       {children}
     </div>
   );
@@ -280,13 +280,19 @@ export function AdminPagination({ totalCount = 0, page = 1, pageSize = 10, onPag
         <button type="button" onClick={() => onPageChange?.(Math.min(totalPages, page + 1))} disabled={page >= totalPages} className="rounded-xl border border-slate-200 bg-white px-3 py-2 font-semibold text-slate-600 disabled:cursor-not-allowed disabled:opacity-50">
           Next
         </button>
-        <select value={pageSize} onChange={(event) => onPageSizeChange?.(Number(event.target.value))} className="admin-select-field rounded-xl border border-slate-200 bg-white px-3 py-2 font-semibold text-slate-600 outline-none">
-          {pageSizeOptions.map((option) => (
-            <option key={option} value={option}>
-              {option} / page
-            </option>
-          ))}
-        </select>
+        <div className="admin-pagination-size inline-flex items-center gap-3 rounded-[22px] border border-slate-200 bg-white px-3 py-2 shadow-[0_10px_22px_rgba(15,23,42,0.03)]">
+          <div className="relative min-w-[110px]">
+            <select value={pageSize} onChange={(event) => onPageSizeChange?.(Number(event.target.value))} className="admin-select-field admin-pagination-select rounded-[18px] border-0 bg-slate-100/80 px-4 py-3 pr-10 text-base font-black text-slate-800 outline-none">
+              {pageSizeOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+          </div>
+          <span className="text-sm font-bold text-slate-600">items per page</span>
+        </div>
       </div>
     </div>
   );

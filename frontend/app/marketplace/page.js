@@ -290,7 +290,7 @@ export default function MarketplacePage() {
                 India&apos;s 1st Coupon Buy &amp; Sell Platform
               </div>
 
-              <h1 className="mt-5 text-[2.8rem] font-black leading-[0.95] tracking-tight text-slate-950 sm:text-[4.3rem]">
+              <h1 className="app-main-heading mt-5 font-black text-slate-950">
                 Trusted Marketplace for
                 <br />
                 Real Coupon <span className="bg-[linear-gradient(90deg,#0ea5e9_0%,#2563eb_100%)] bg-clip-text text-transparent">Savings</span>

@@ -64,6 +64,28 @@ canvas {
   font-family: var(--font-space-grotesk), sans-serif;
 }
 
+.app-main-heading {
+  font-size: 2.1rem;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.app-section-heading {
+  font-size: 2rem;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+}
+
+@media (min-width: 640px) {
+  .app-main-heading {
+    font-size: 3rem;
+  }
+
+  .app-section-heading {
+    font-size: 2.35rem;
+  }
+}
+
 .grid-surface {
   background-image:
     linear-gradient(rgba(99, 102, 241, 0.06) 1px, transparent 1px),
@@ -340,13 +362,16 @@ canvas {
 .admin-select-field {
   appearance: none;
   min-width: 120px;
+  width: 100%;
   color: #0f172a;
+  line-height: 1.4;
 }
 
 .admin-select-field option {
   background: #ffffff;
   color: #0f172a;
   font-weight: 600;
+  padding: 10px 12px;
 }
 
 .admin-theme-dark .admin-select-field {
@@ -356,6 +381,11 @@ canvas {
 .admin-theme-dark .admin-select-field option {
   background: #0f172a;
   color: #e5eefc;
+}
+
+.admin-pagination-select {
+  min-width: 0;
+  width: 100%;
 }
 
 .admin-breadcrumbs {
@@ -447,6 +477,32 @@ canvas {
   border-radius: 999px;
   border: 2px solid transparent;
   background-clip: padding-box;
+}
+
+.admin-table-shell {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(34, 197, 94, 0.75) transparent;
+  scroll-behavior: smooth;
+}
+
+.admin-table-shell::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+.admin-table-shell::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-table-shell::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(34, 197, 94, 0.92), rgba(14, 165, 233, 0.82));
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+
+.admin-table-shell::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 .admin-header-card {

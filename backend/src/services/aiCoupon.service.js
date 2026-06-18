@@ -8,6 +8,7 @@ const OCR_TEXT_LIMIT = 260;
 const compactText = (value = "") => normalizeText(value).replace(/\s+/g, " ").trim();
 const collapseAlphaNumeric = (value = "") => String(value).toLowerCase().replace(/[^a-z0-9]/g, "");
 const buildSnippet = (value = "") => compactText(value).slice(0, OCR_TEXT_LIMIT);
+const normalizeLooseText = (value = "") => compactText(value).toLowerCase();
 
 const OCR_EQUIVALENT_GROUPS = [
   ["0", "o", "q", "d"],
@@ -78,6 +79,45 @@ const buildAmountCandidates = (amount) => {
     `₹${compact}`,
     `₹${integerAmount}`
   ])];
+};
+
+const CODE_ONLY_OFFER_PATTERNS = [
+  "buy one get one",
+  "buy 1 get 1",
+  "buy1get1",
+  "bogo",
+  "1+1",
+  "free item",
+  "free coupon",
+  "freebie",
+  "free offer"
+];
+
+const isCodeOnlyOffer = (userInput = {}) => {
+  const searchable = normalizeLooseText(
+    [
+      userInput.title,
+      userInput.terms,
+      userInput.customCategory,
+      userInput.platformName,
+      Array.isArray(userInput.categories) ? userInput.categories.join(" ") : userInput.categories
+    ]
+      .filter(Boolean)
+      .join(" ")
+  );
+
+  return CODE_ONLY_OFFER_PATTERNS.some((pattern) => searchable.includes(pattern));
+};
+
+const buildVerificationPolicy = (userInput = {}, detectedExpiryDates = [], amountMatchedValue = "") => {
+  const codeOnlyOffer = isCodeOnlyOffer(userInput);
+
+  return {
+    codeOnlyOffer,
+    requiresCodeMatch: true,
+    requiresExpiryMatch: !codeOnlyOffer || detectedExpiryDates.length > 0,
+    requiresAmountMatch: !codeOnlyOffer || Boolean(amountMatchedValue)
+  };
 };
 
 const detectDatesFromText = (text) => {
@@ -211,6 +251,7 @@ const verifyCouponWithAI = async ({ imagePath, userInput }) => {
   const amountMatchedValue = buildAmountCandidates(userInput.couponAmount).find((candidate) =>
     collapsedVisibleText.includes(collapseAlphaNumeric(candidate))
   );
+  const verificationPolicy = buildVerificationPolicy(userInput, detectedExpiryDates, amountMatchedValue);
 
   let tamperRisk = computeTamperRisk(imagePath, userInput);
   if (!ocrResult.readable) {
@@ -219,44 +260,62 @@ const verifyCouponWithAI = async ({ imagePath, userInput }) => {
     tamperRisk = "medium";
   }
 
-  const couponCodeMatch = Boolean(normalizedCode) && couponCodeCheck.matched;
-  const expiryDateMatch = Boolean(normalizedInputExpiryDate) && detectedExpiryDates.includes(normalizedInputExpiryDate);
-  const amountMatch = Boolean(amountMatchedValue);
+  const couponCodeMatchedInImage = Boolean(normalizedCode) && couponCodeCheck.matched;
+  const expiryDateMatchedInImage = Boolean(normalizedInputExpiryDate) && detectedExpiryDates.includes(normalizedInputExpiryDate);
+  const amountMatchedInImage = Boolean(amountMatchedValue);
+  const couponCodeMatch = verificationPolicy.requiresCodeMatch ? couponCodeMatchedInImage : true;
+  const expiryDateMatch = verificationPolicy.requiresExpiryMatch ? expiryDateMatchedInImage : true;
+  const amountMatch = verificationPolicy.requiresAmountMatch ? amountMatchedInImage : true;
   const ocrReadable = ocrResult.readable;
 
   const extractedData = {
     platformName: userInput.platformName,
-    couponCode: couponCodeMatch ? userInput.couponCode : couponCodeCheck.extractedCode,
-    couponAmount: amountMatch ? Number(userInput.couponAmount) : null,
-    currency: amountMatch ? userInput.currency : "",
+    couponCode: couponCodeMatchedInImage ? userInput.couponCode : couponCodeCheck.extractedCode,
+    couponAmount: amountMatchedInImage ? Number(userInput.couponAmount) : null,
+    currency: amountMatchedInImage ? userInput.currency : "",
     expiryDate: extractedExpiryDate,
     detectedExpiryDates,
     terms: userInput.terms,
     confidenceScore: Math.round(ocrResult.confidence),
-    visibleTextSnippet: buildSnippet(ocrResult.text)
+    visibleTextSnippet: buildSnippet(ocrResult.text),
+    verificationPolicy
   };
 
   const failureReasons = [];
   if (!ocrReadable) {
     failureReasons.push("Screenshot text could not be read clearly. Upload a sharper image.");
   }
-  if (!couponCodeMatch) {
+  if (verificationPolicy.requiresCodeMatch && !couponCodeMatchedInImage) {
     failureReasons.push(`Coupon code is not clearly visible in the uploaded screenshot. Expected ${userInput.couponCode}.`);
   }
-  if (!expiryDateMatch) {
+  if (verificationPolicy.requiresExpiryMatch && !expiryDateMatchedInImage) {
     failureReasons.push("Expiry date does not match the uploaded screenshot.");
   }
-  if (!amountMatch) {
+  if (verificationPolicy.requiresAmountMatch && !amountMatchedInImage) {
     failureReasons.push("Coupon amount does not match the uploaded screenshot.");
   }
 
-  const matchScore =
-    (ocrReadable ? 10 : 0) +
-    (couponCodeMatch ? 40 : 0) +
-    (expiryDateMatch ? 20 : 0) +
-    (amountMatch ? 20 : 0);
+  const weightedChecks = [
+    { required: true, matched: ocrReadable, weight: 10 },
+    { required: verificationPolicy.requiresCodeMatch, matched: couponCodeMatchedInImage, weight: 40 },
+    { required: verificationPolicy.requiresExpiryMatch, matched: expiryDateMatchedInImage, weight: 20 },
+    { required: verificationPolicy.requiresAmountMatch, matched: amountMatchedInImage, weight: 20 }
+  ];
 
-  const passed = ocrReadable && couponCodeMatch && expiryDateMatch && amountMatch && matchScore >= 90 && tamperRisk !== "critical";
+  const possibleScore = weightedChecks.reduce((sum, check) => sum + (check.required ? check.weight : 0), 0);
+  const earnedScore = weightedChecks.reduce(
+    (sum, check) => sum + (check.required && check.matched ? check.weight : 0),
+    0
+  );
+  const matchScore = possibleScore > 0 ? Math.round((earnedScore / possibleScore) * 100) : 0;
+
+  const passed =
+    ocrReadable &&
+    couponCodeMatch &&
+    expiryDateMatch &&
+    amountMatch &&
+    matchScore >= 90 &&
+    tamperRisk !== "critical";
 
   return {
     extractedData,
@@ -267,11 +326,18 @@ const verifyCouponWithAI = async ({ imagePath, userInput }) => {
     checks: {
       ocrReadable,
       couponCodeMatch,
+      couponCodeMatchedInImage,
       expiryDateMatch,
+      expiryDateMatchedInImage,
       selectedExpiryDate: normalizedInputExpiryDate,
       normalizedInputExpiryDate,
       detectedExpiryDates,
       amountMatch,
+      amountMatchedInImage,
+      requiresCodeMatch: verificationPolicy.requiresCodeMatch,
+      requiresExpiryMatch: verificationPolicy.requiresExpiryMatch,
+      requiresAmountMatch: verificationPolicy.requiresAmountMatch,
+      codeOnlyOffer: verificationPolicy.codeOnlyOffer,
       couponCodeSimilarity: couponCodeCheck.similarity,
       couponCodeMatchMode: couponCodeCheck.mode
     }

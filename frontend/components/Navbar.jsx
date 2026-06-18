@@ -30,6 +30,8 @@ const resolveAvatarUrl = (avatar) => {
   return `${origin}${avatar.startsWith("/") ? avatar : `/${avatar}`}`;
 };
 
+const formatUnreadCount = (count) => (count > 99 ? "99+" : String(count));
+
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
@@ -42,6 +44,7 @@ export default function Navbar() {
   const profileMenuRef = useRef(null);
   const notificationMenuRef = useRef(null);
   const hasUnreadNotifications = unreadCount > 0;
+  const unreadBadgeLabel = formatUnreadCount(unreadCount);
 
   useEffect(() => {
     const syncUser = () => {
@@ -182,14 +185,22 @@ export default function Navbar() {
                     className="relative inline-flex h-12 w-12 items-center justify-center rounded-full border border-emerald-100 bg-emerald-50 text-[#16a34a]"
                   >
                     <Bell className="h-5 w-5" />
-                    {hasUnreadNotifications ? <span className="absolute right-1.5 top-1.5 h-2.5 w-2.5 rounded-full bg-[#22c55e] shadow-[0_0_0_3px_rgba(240,253,244,0.96)]" /> : null}
+                    {hasUnreadNotifications ? (
+                      <span className="absolute -right-1.5 -top-1.5 inline-flex min-h-[20px] min-w-[20px] items-center justify-center rounded-full bg-[#22c55e] px-1.5 text-[10px] font-black leading-none text-white shadow-[0_0_0_3px_rgba(240,253,244,0.96)]">
+                        {unreadBadgeLabel}
+                      </span>
+                    ) : null}
                   </button>
                   {notificationOpen ? (
                     <div className="absolute right-0 top-14 w-80 overflow-hidden rounded-[26px] border border-emerald-100 bg-white shadow-[0_22px_50px_rgba(15,23,42,0.12)]">
                       <div className="flex items-center justify-between gap-3 border-b border-emerald-100 px-4 py-4">
                         <div className="flex items-center gap-2">
                           <p className="text-sm font-black text-slate-900">Notifications</p>
-                          {hasUnreadNotifications ? <span className="h-2.5 w-2.5 rounded-full bg-[#22c55e]" /> : null}
+                          {hasUnreadNotifications ? (
+                            <span className="inline-flex min-h-[20px] min-w-[20px] items-center justify-center rounded-full bg-[#22c55e] px-1.5 text-[10px] font-black leading-none text-white">
+                              {unreadBadgeLabel}
+                            </span>
+                          ) : null}
                         </div>
                         <button
                           type="button"

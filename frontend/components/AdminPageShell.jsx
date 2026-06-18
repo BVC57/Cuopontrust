@@ -10,6 +10,8 @@ import AdminRoute from "./AdminRoute";
 import AdminSidebar from "./AdminSidebar";
 import { AdminBreadcrumbs } from "./admin/AdminUi";
 
+const formatUnreadCount = (count) => (count > 99 ? "99+" : String(count));
+
 export default function AdminPageShell({
   title,
   subtitle,
@@ -56,6 +58,7 @@ export default function AdminPageShell({
     return quickPages.filter((page) => page.label.toLowerCase().includes(term)).slice(0, 5);
   }, [globalSearch, quickPages]);
   const hasUnreadNotifications = unreadCount > 0;
+  const unreadBadgeLabel = formatUnreadCount(unreadCount);
 
   const dateOptions = ["24 May 2025 - 30 May 2025", "This Week", "Last 7 Days", "This Month"];
 
@@ -212,14 +215,22 @@ export default function AdminPageShell({
                     <div ref={notificationRef} className="relative flex-none">
                       <button type="button" onClick={() => setNotificationOpen((prev) => !prev)} className="admin-input-surface relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-[0_10px_22px_rgba(15,23,42,0.03)]">
                         <Bell className="h-5 w-5" />
-                        {hasUnreadNotifications ? <span className="absolute right-1.5 top-1.5 h-2.5 w-2.5 rounded-full bg-[#22c55e] shadow-[0_0_0_3px_rgba(255,255,255,0.96)]" /> : null}
+                        {hasUnreadNotifications ? (
+                          <span className="absolute -right-1.5 -top-1.5 inline-flex min-h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#22c55e] px-1 text-[9px] font-black leading-none text-white shadow-[0_0_0_3px_rgba(255,255,255,0.96)]">
+                            {unreadBadgeLabel}
+                          </span>
+                        ) : null}
                       </button>
                       {notificationOpen ? (
                         <div className="admin-content-surface absolute right-0 top-[calc(100%+10px)] z-[70] min-w-[320px] max-w-[360px] rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_18px_44px_rgba(15,23,42,0.08)]">
                           <div className="flex items-center justify-between gap-3 px-2 pb-2">
                             <div className="flex items-center gap-2">
                               <p className="text-sm font-black text-slate-900">Notifications</p>
-                              {hasUnreadNotifications ? <span className="h-2.5 w-2.5 rounded-full bg-[#22c55e]" /> : null}
+                              {hasUnreadNotifications ? (
+                                <span className="inline-flex min-h-[20px] min-w-[20px] items-center justify-center rounded-full bg-[#22c55e] px-1.5 text-[10px] font-black leading-none text-white">
+                                  {unreadBadgeLabel}
+                                </span>
+                              ) : null}
                             </div>
                             <button
                               type="button"
@@ -276,7 +287,7 @@ export default function AdminPageShell({
                 </div>
 
                 <div className="min-w-0">
-                  <h1 className="text-[2.1rem] font-black tracking-tight text-slate-950">{title}</h1>
+                  <h1 className="app-main-heading font-black text-slate-950">{title}</h1>
                   <div className="mt-2">
                     <AdminBreadcrumbs items={breadcrumbs} />
                   </div>

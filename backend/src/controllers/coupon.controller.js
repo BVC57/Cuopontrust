@@ -75,9 +75,9 @@ const verificationStageTemplate = [
 
 const resolveAiFailureStepId = (aiResult) => {
   if (!aiResult?.checks?.ocrReadable) return "extract";
-  if (!aiResult?.checks?.couponCodeMatch) return "code";
-  if (!aiResult?.checks?.expiryDateMatch) return "expiry";
-  if (!aiResult?.checks?.amountMatch) return "amount";
+  if (aiResult?.checks?.requiresCodeMatch && !aiResult?.checks?.couponCodeMatch) return "code";
+  if (aiResult?.checks?.requiresExpiryMatch && !aiResult?.checks?.expiryDateMatch) return "expiry";
+  if (aiResult?.checks?.requiresAmountMatch && !aiResult?.checks?.amountMatch) return "amount";
   return null;
 };
 
@@ -105,18 +105,27 @@ const buildVerificationStageDetail = ({ stage, status, failureDetail = "", aiRes
   }
 
   if (aiResult?.checks && stage.id === "code") {
+    if (!aiResult.checks.requiresCodeMatch) {
+      return "Code match skipped for this coupon type";
+    }
     return aiResult.checks.couponCodeMatch
       ? `Coupon code matched (${Number(aiResult.checks.couponCodeSimilarity || 0)}% confidence)`
       : failureDetail || "Coupon code is not clearly visible in the screenshot";
   }
 
   if (aiResult?.checks && stage.id === "expiry") {
+    if (!aiResult.checks.requiresExpiryMatch) {
+      return "Expiry match skipped because no expiry was visible for this code-only offer";
+    }
     return aiResult.checks.expiryDateMatch
       ? `Expiry matched: ${aiResult.extractedData?.expiryDate || aiResult.checks.selectedExpiryDate || "detected"}`
       : failureDetail || "Expiry date does not match the screenshot";
   }
 
   if (aiResult?.checks && stage.id === "amount") {
+    if (!aiResult.checks.requiresAmountMatch) {
+      return "Amount match skipped because this code-only offer has no visible value in the screenshot";
+    }
     return aiResult.checks.amountMatch
       ? `Amount matched: ${aiResult.extractedData?.currency || ""} ${aiResult.extractedData?.couponAmount || ""}`.trim()
       : failureDetail || "Coupon amount does not match the screenshot";
@@ -351,7 +360,6 @@ const sellCoupon = asyncHandler(async (req, res) => {
     type: "coupon_verified",
     title: "Coupon listed successfully",
     message: "Your coupon has been successfully verified and listed.",
-    email: req.user.email,
     link: "/listed-coupons",
     metadata: { couponId: coupon._id }
   });

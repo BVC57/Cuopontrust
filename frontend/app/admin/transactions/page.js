@@ -9,11 +9,25 @@ import { AdminDetailModal, AdminEmptyState, AdminGhostButton, AdminMetricCard, A
 import api from "../../../lib/api";
 
 const colors = ["#16a34a", "#22c55e", "#15803d", "#94a3b8"];
+const downloadCsv = (filename, rows) => {
+  const escapeCell = (value) => `"${String(value ?? "").replace(/"/g, '""')}"`;
+  const content = rows.map((row) => row.map(escapeCell).join(",")).join("\n");
+  const blob = new Blob([content], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+};
 
 export default function AdminTransactionsPage() {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [methodFilter, setMethodFilter] = useState("all");
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -23,41 +37,90 @@ export default function AdminTransactionsPage() {
     api.get("/super-admin/transactions").then(({ data }) => setTransactions(data.transactions || [])).catch(() => setTransactions([])).finally(() => setLoading(false));
   }, []);
 
-  const filtered = useMemo(() => transactions.filter((row) => `${row._id} ${row.buyerId?.email || ""}`.toLowerCase().includes(search.toLowerCase())), [transactions, search]);
+  const successfulTransactions = useMemo(
+    () => transactions.filter((row) => row.paymentStatus === "captured" && row.transactionStatus === "completed"),
+    [transactions]
+  );
+  const failedTransactions = useMemo(
+    () => transactions.filter((row) => row.paymentStatus === "failed"),
+    [transactions]
+  );
+  const visibleTransactions = useMemo(
+    () => transactions.filter((row) => ["captured", "failed"].includes(row.paymentStatus)),
+    [transactions]
+  );
+  const paymentMethodOptions = useMemo(() => {
+    const methods = [...new Set(visibleTransactions.map((row) => String(row.paymentGateway || "razorpay").toLowerCase()))];
+    return [{ value: "all", label: "All Payment Methods" }, ...methods.map((value) => ({ value, label: value.toUpperCase() }))];
+  }, [visibleTransactions]);
+
+  const filtered = useMemo(
+    () =>
+      visibleTransactions.filter((row) => {
+        const searchHaystack = `${row._id} ${row.gatewayOrderId || ""} ${row.buyerId?.email || ""} ${row.buyerId?.name || ""}`.toLowerCase();
+        const normalizedType = row.paymentStatus === "failed" ? "failed" : "completed";
+        const normalizedStatus = row.paymentStatus === "captured" ? "success" : row.paymentStatus;
+        const normalizedMethod = String(row.paymentGateway || "razorpay").toLowerCase();
+        const typeMatch = typeFilter === "all" || normalizedType === typeFilter;
+        const statusMatch = statusFilter === "all" || normalizedStatus === statusFilter;
+        const methodMatch = methodFilter === "all" || normalizedMethod === methodFilter;
+        return searchHaystack.includes(search.toLowerCase()) && typeMatch && statusMatch && methodMatch;
+      }),
+    [visibleTransactions, search, typeFilter, statusFilter, methodFilter]
+  );
   const paginatedTransactions = useMemo(() => paginateItems(filtered, page, pageSize), [filtered, page, pageSize]);
 
   const metrics = useMemo(() => {
-    const totalAmount = transactions.reduce((sum, row) => sum + Number(row.amount || 0), 0);
+    const totalAmount = successfulTransactions.reduce((sum, row) => sum + Number(row.amount || 0), 0);
+    const totalRevenue = successfulTransactions.reduce((sum, row) => sum + Number(row.platformFee || 0), 0);
     return [
-      { label: "Total Transactions", value: formatCompactNumber(transactions.length), change: "+18.7%", tone: "purple" },
-      { label: "Total Amount", value: formatCurrency(totalAmount), change: "+21.4%", tone: "green" },
-      { label: "Successful Transactions", value: formatCompactNumber(transactions.filter((row) => row.transactionStatus === "completed").length), change: "+20.3%", tone: "green" },
-      { label: "Refunded Transactions", value: formatCompactNumber(transactions.filter((row) => row.paymentStatus === "refunded").length), change: "-8.6%", tone: "amber" },
-      { label: "Pending Transactions", value: formatCompactNumber(transactions.filter((row) => ["created", "authorized"].includes(row.paymentStatus)).length), change: "-5.2%", tone: "amber" }
+      { label: "Completed Sales", value: formatCompactNumber(successfulTransactions.length), change: "+18.7%", tone: "purple" },
+      { label: "Completed Amount", value: formatCurrency(totalAmount), change: "+21.4%", tone: "green" },
+      { label: "Platform Revenue", value: formatCurrency(totalRevenue), change: "+10.3%", tone: "blue" },
+      { label: "Failed Transactions", value: formatCompactNumber(failedTransactions.length), change: "-8.6%", tone: "red" },
+      { label: "Visible Records", value: formatCompactNumber(visibleTransactions.length), change: "+4.1%", tone: "green" }
     ];
-  }, [transactions]);
+  }, [successfulTransactions, failedTransactions, visibleTransactions]);
 
   const analytics = useMemo(() => [
-    { name: "Successful", value: transactions.filter((row) => row.transactionStatus === "completed").length },
-    { name: "Refunded", value: transactions.filter((row) => row.paymentStatus === "refunded").length },
-    { name: "Pending", value: transactions.filter((row) => ["created", "authorized"].includes(row.paymentStatus)).length },
-    { name: "Failed", value: transactions.filter((row) => row.paymentStatus === "failed").length }
-  ], [transactions]);
+    { name: "Successful", value: successfulTransactions.length },
+    { name: "Failed", value: failedTransactions.length },
+    { name: "Revenue Entries", value: successfulTransactions.filter((row) => Number(row.platformFee || 0) > 0).length },
+    { name: "Buyer Releases", value: successfulTransactions.filter((row) => row.transactionStatus === "completed").length }
+  ], [successfulTransactions, failedTransactions]);
 
   useEffect(() => {
     setPage(1);
-  }, [search]);
+  }, [search, typeFilter, statusFilter, methodFilter]);
+
+  const exportTransactions = () => {
+    downloadCsv("admin-transactions.csv", [
+      ["Transaction ID", "Buyer", "Buyer Email", "Amount", "Seller Amount", "Platform Fee", "Gateway", "Payment Status", "Transaction Status", "Created At"],
+      ...filtered.map((row) => [
+        row._id,
+        row.buyerId?.name || "Buyer",
+        row.buyerId?.email || "",
+        row.amount || 0,
+        row.sellerAmount || 0,
+        row.platformFee || 0,
+        row.paymentGateway || "razorpay",
+        row.paymentStatus,
+        row.transactionStatus || "",
+        formatDateTime(row.createdAt)
+      ])
+    ]);
+  };
 
   if (loading) {
     return (
-      <AdminPageShell title="Transactions" subtitle="Monitor transaction lifecycle and payment movement." breadcrumbs={["Dashboard", "Transactions"]}>
+      <AdminPageShell title="Transactions" subtitle="Monitor completed and failed transaction outcomes. Money totals use successful captures only." breadcrumbs={["Dashboard", "Transactions"]}>
         <LoadingSpinner label="Loading transactions..." />
       </AdminPageShell>
     );
   }
 
   return (
-    <AdminPageShell title="Transactions" subtitle="Monitor transaction lifecycle and payment movement." breadcrumbs={["Dashboard", "Transactions"]}>
+    <AdminPageShell title="Transactions" subtitle="Monitor completed and failed transaction outcomes. Money totals use successful captures only." breadcrumbs={["Dashboard", "Transactions"]}>
       <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-5">
         {metrics.map((metric) => <AdminMetricCard key={metric.label} {...metric} />)}
       </div>
@@ -66,11 +129,12 @@ export default function AdminTransactionsPage() {
         onSearchChange={setSearch}
         searchPlaceholder="Search by transaction id, user, email..."
         filters={[
-          { key: "type", value: "all", options: [{ value: "all", label: "All Types" }] },
-          { key: "status", value: "all", options: [{ value: "all", label: "All Status" }] },
-          { key: "method", value: "all", options: [{ value: "all", label: "All Payment Methods" }] }
+          { key: "type", value: typeFilter, onChange: setTypeFilter, options: [{ value: "all", label: "All Types" }, { value: "completed", label: "Completed" }, { value: "failed", label: "Failed" }] },
+          { key: "status", value: statusFilter, onChange: setStatusFilter, options: [{ value: "all", label: "All Status" }, { value: "success", label: "Success" }, { value: "failed", label: "Failed" }] },
+          { key: "method", value: methodFilter, onChange: setMethodFilter, options: paymentMethodOptions }
         ]}
-        extra={<AdminGhostButton>More Filters</AdminGhostButton>}
+        extra={<AdminGhostButton onClick={() => { setTypeFilter("all"); setStatusFilter("all"); setMethodFilter("all"); setSearch(""); }}>Reset Filters</AdminGhostButton>}
+        action={<AdminGhostButton onClick={exportTransactions}><Download className="h-4 w-4" />Export</AdminGhostButton>}
       />
       <div className="grid gap-4 xl:grid-cols-4">
         <AdminSurface className="p-5 xl:col-span-2">
@@ -108,22 +172,22 @@ export default function AdminTransactionsPage() {
             <div className="rounded-[22px] border border-slate-100 bg-slate-50/80 px-4 py-4">
               <p className="text-sm font-semibold text-slate-500">Completed Rate</p>
               <p className="mt-3 text-3xl font-black text-emerald-600">
-                {transactions.length ? Math.round((transactions.filter((row) => row.transactionStatus === "completed").length / transactions.length) * 100) : 0}%
+                {visibleTransactions.length ? Math.round((successfulTransactions.length / visibleTransactions.length) * 100) : 0}%
               </p>
             </div>
             <div className="rounded-[22px] border border-slate-100 bg-slate-50/80 px-4 py-4">
-              <p className="text-sm font-semibold text-slate-500">Refund Risk</p>
+              <p className="text-sm font-semibold text-slate-500">Failure Rate</p>
               <p className="mt-3 text-3xl font-black text-amber-600">
-                {transactions.length ? Math.round((transactions.filter((row) => row.paymentStatus === "refunded").length / transactions.length) * 100) : 0}%
+                {visibleTransactions.length ? Math.round((failedTransactions.length / visibleTransactions.length) * 100) : 0}%
               </p>
             </div>
             <div className="rounded-[22px] border border-slate-100 bg-slate-50/80 px-4 py-4">
-              <p className="text-sm font-semibold text-slate-500">Pending Authorizations</p>
-              <p className="mt-3 text-3xl font-black text-slate-900">{formatCompactNumber(transactions.filter((row) => ["created", "authorized"].includes(row.paymentStatus)).length)}</p>
+              <p className="text-sm font-semibold text-slate-500">Seller Released</p>
+              <p className="mt-3 text-3xl font-black text-slate-900">{formatCurrency(successfulTransactions.reduce((sum, row) => sum + Number(row.sellerAmount || 0), 0))}</p>
             </div>
             <div className="rounded-[22px] border border-slate-100 bg-slate-50/80 px-4 py-4">
               <p className="text-sm font-semibold text-slate-500">Failed Records</p>
-              <p className="mt-3 text-3xl font-black text-rose-500">{formatCompactNumber(transactions.filter((row) => row.paymentStatus === "failed").length)}</p>
+              <p className="mt-3 text-3xl font-black text-rose-500">{formatCompactNumber(failedTransactions.length)}</p>
             </div>
           </div>
         </AdminSurface>
@@ -135,7 +199,6 @@ export default function AdminTransactionsPage() {
             <h2 className="text-3xl font-black tracking-tight text-slate-900">All Transactions</h2>
             <p className="mt-1 text-sm text-slate-400">({formatCompactNumber(filtered.length)})</p>
           </div>
-          <AdminGhostButton><Download className="h-4 w-4" />Export</AdminGhostButton>
         </div>
         {filtered.length ? (
           <AdminTableContainer className="admin-table-shell" maxHeight="max-h-[640px]">
@@ -152,7 +215,7 @@ export default function AdminTransactionsPage() {
                     <tr key={row._id} className={index ? "border-t border-slate-100" : ""}>
                       <td className="px-5 py-4 text-sm font-bold text-[#16a34a]">{row._id.slice(-10).toUpperCase()}</td>
                       <td className="px-5 py-4"><AdminUserIdentity name={row.buyerId?.name || "Buyer"} email={row.buyerId?.email} /></td>
-                      <td className="px-5 py-4"><AdminStatusChip status={row.paymentStatus === "refunded" ? "refunded" : "success"} /></td>
+                      <td className="px-5 py-4"><AdminStatusChip status={row.paymentStatus === "failed" ? "failed" : "completed"} /></td>
                       <td className={`px-5 py-4 text-sm font-bold ${row.paymentStatus === "refunded" ? "text-rose-500" : "text-slate-900"}`}>{row.paymentStatus === "refunded" ? "-" : ""}{formatCurrency(row.amount, row.currency)}</td>
                       <td className="px-5 py-4 text-sm font-semibold uppercase text-slate-600">{row.paymentGateway || "razorpay"}</td>
                       <td className="px-5 py-4"><AdminStatusChip status={row.paymentStatus === "captured" ? "success" : row.paymentStatus} /></td>

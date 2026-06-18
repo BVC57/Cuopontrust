@@ -94,7 +94,7 @@ export default function AdminDisputesPage() {
             <p className="mt-1 text-sm text-slate-400">({formatCompactNumber(disputes.length)})</p>
           </div>
           {disputes.length ? (
-            <div className="overflow-hidden rounded-[24px] border border-slate-100">
+            <div className="admin-table-shell overflow-hidden rounded-[24px] border border-slate-100 overflow-x-auto overflow-y-auto max-h-[640px]">
               <table className="min-w-full">
                 <thead className="bg-slate-50">
                   <tr>
