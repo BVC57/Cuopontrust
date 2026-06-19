@@ -59,6 +59,10 @@
     "[project]/app/blog/page": [
       "static/media/xn7gYHE41ni1AdIRggexSvfedN4-s.p.2b9b556b.woff2",
       "static/media/V8mDoQDjQSkFtoMM3T6r8E7mPbF4C_k3HqU-s.p.db698206.woff2"
+    ],
+    "[project]/app/trust-score/page": [
+      "static/media/xn7gYHE41ni1AdIRggexSvfedN4-s.p.2b9b556b.woff2",
+      "static/media/V8mDoQDjQSkFtoMM3T6r8E7mPbF4C_k3HqU-s.p.db698206.woff2"
     ]
   },
   "appUsingSizeAdjust": true,

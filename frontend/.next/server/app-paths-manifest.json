@@ -13,5 +13,6 @@
   "/coupons/[id]/page": "app/coupons/[id]/page.js",
   "/help-support/page": "app/help-support/page.js",
   "/contact-us/page": "app/contact-us/page.js",
-  "/blog/page": "app/blog/page.js"
+  "/blog/page": "app/blog/page.js",
+  "/trust-score/page": "app/trust-score/page.js"
 }

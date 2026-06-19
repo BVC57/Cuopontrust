@@ -1,7 +1,6 @@
 const fs = require("fs");
+const Jimp = require("jimp-compact");
 const path = require("path");
-
-const Jimp = require(path.join(__dirname, "../../../mobile/node_modules/jimp-compact"));
 
 const ensureDir = (dirPath) => {
   if (!fs.existsSync(dirPath)) {
