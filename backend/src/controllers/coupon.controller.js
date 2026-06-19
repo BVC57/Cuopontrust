@@ -13,6 +13,7 @@ const { applyTrustPenalty } = require("../services/trustScore.service");
 const { createFraudReport } = require("../services/fraud.service");
 const { createNotification, createAdminNotification } = require("../services/notification.service");
 const { resolveBrand } = require("../constants/brandCatalog");
+const { createCouponCoverImage } = require("../services/couponImage.service");
 
 const normalizeCategory = (value) =>
   String(value || "")
@@ -330,6 +331,17 @@ const sellCoupon = asyncHandler(async (req, res) => {
     });
   }
 
+  let couponCoverImage = null;
+
+  try {
+    couponCoverImage = await createCouponCoverImage({
+      sourcePath: req.file.path,
+      proofUploadId: req.file.filename
+    });
+  } catch {
+    // Use brand fallback on the client if banner extraction fails.
+  }
+
   const coupon = await Coupon.create({
     sellerId: req.user._id,
     platformName: req.body.platformName,
@@ -346,6 +358,9 @@ const sellCoupon = asyncHandler(async (req, res) => {
     expiryDate: expiry,
     terms: req.body.terms,
     proofImagePath: `/uploads/coupons/${req.file.filename}`,
+    proofImageUploadId: req.file.filename,
+    coverImagePath: couponCoverImage?.coverImagePath || "",
+    coverImageUploadId: couponCoverImage?.coverImageUploadId || "",
     aiExtractedData: aiResult.extractedData,
     aiMatchScore: aiResult.matchScore,
     aiVerificationStatus: aiResult.status,
@@ -428,8 +443,14 @@ const deleteCoupon = asyncHandler(async (req, res) => {
   const proofFilePath = coupon.proofImagePath
     ? path.join(process.cwd(), String(coupon.proofImagePath).replace(/^\/+/, ""))
     : "";
+  const coverFilePath = coupon.coverImagePath
+    ? path.join(process.cwd(), String(coupon.coverImagePath).replace(/^\/+/, ""))
+    : "";
 
   await removeUploadedFile(proofFilePath);
+  if (coverFilePath && coverFilePath !== proofFilePath) {
+    await removeUploadedFile(coverFilePath);
+  }
   await Coupon.deleteOne({ _id: coupon._id });
 
   return sendResponse(res, 200, "Coupon deleted permanently");

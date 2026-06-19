@@ -622,7 +622,7 @@ export default function SellPage() {
                 </div>
                 <div className="flex gap-2">
                   <div className="h-1.5 w-1.5 rounded-full bg-[#16a34a] mt-1.5 flex-shrink-0" />
-                  <p>Keep your Trust Score above 60 to prevent seller dashboard lockouts or automatic account bans.</p>
+                  <p>If your Trust Score falls below 40, your account is banned and seller access is blocked until admin review.</p>
                 </div>
               </div>
             </div>

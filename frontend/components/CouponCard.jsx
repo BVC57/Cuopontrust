@@ -55,9 +55,10 @@ const normalizeCategory = (value = "") =>
     .toUpperCase();
 
 export default function CouponCard({ coupon }) {
+  const safeCoupon = coupon && typeof coupon === "object" ? coupon : null;
   const [loggedIn, setLoggedIn] = useState(false);
-  const brand = coupon.platformBrandKey ? resolveBrand(coupon.platformBrandKey) : resolveBrand(coupon.platformName);
-  const logoPath = coupon.platformLogoPath || brand?.logoPath || "";
+  const brand = safeCoupon?.platformBrandKey ? resolveBrand(safeCoupon.platformBrandKey) : resolveBrand(safeCoupon?.platformName);
+  const logoPath = safeCoupon?.platformLogoPath || brand?.logoPath || "";
 
   useEffect(() => {
     setLoggedIn(isAuthenticated());
@@ -68,22 +69,26 @@ export default function CouponCard({ coupon }) {
     [brand?.key]
   );
 
-  const isSold = coupon.status === "sold";
-  const isPurchasedByViewer = Boolean(coupon.revealedCouponCode || coupon.purchaseStatus || coupon.buyerOwned);
-  const cta = loggedIn ? `/coupons/${coupon._id}` : "/login";
-  const title = String(coupon.title || "").trim().toUpperCase() || `${coupon.platformName} OFFER`;
-  const subtitle = coupon.description || `On ${coupon.platformName} purchases`;
-  const codeLabel = coupon.revealedCouponCode || "Code hidden until payment";
+  if (!safeCoupon) {
+    return null;
+  }
+
+  const isSold = safeCoupon.status === "sold";
+  const isPurchasedByViewer = Boolean(safeCoupon.revealedCouponCode || safeCoupon.purchaseStatus || safeCoupon.buyerOwned);
+  const cta = loggedIn ? `/coupons/${safeCoupon._id}` : "/login";
+  const title = String(safeCoupon.title || "").trim().toUpperCase() || `${safeCoupon.platformName} OFFER`;
+  const subtitle = safeCoupon.description || `On ${safeCoupon.platformName} purchases`;
+  const codeLabel = safeCoupon.revealedCouponCode || "Code hidden until payment";
   const primaryActionLabel = isPurchasedByViewer
     ? "View Coupon"
     : isSold
       ? "Sold"
-      : coupon.revealedCouponCode
+      : safeCoupon.revealedCouponCode
         ? "Copy Code"
-        : `Buy in ${formatMoney(coupon.sellingPrice, coupon.currency)}`;
-  const categoryLabels = (coupon.categories || []).slice(0, 2).map(normalizeCategory);
-  const expiryLabel = coupon.expiryDate ? formatDate(coupon.expiryDate) : "Limited time";
-  const totalSavings = Math.max(0, Number(coupon.couponAmount || 0) - Number(coupon.sellingPrice || 0));
+        : `Buy in ${formatMoney(safeCoupon.sellingPrice, safeCoupon.currency)}`;
+  const categoryLabels = (safeCoupon.categories || []).slice(0, 2).map(normalizeCategory);
+  const expiryLabel = safeCoupon.expiryDate ? formatDate(safeCoupon.expiryDate) : "Limited time";
+  const totalSavings = Math.max(0, Number(safeCoupon.couponAmount || 0) - Number(safeCoupon.sellingPrice || 0));
 
   return (
     <div className={`group flex h-full min-h-[352px] flex-col rounded-[24px] border p-4 shadow-[0_18px_34px_rgba(15,23,42,0.05)] transition hover:-translate-y-1 hover:shadow-[0_24px_44px_rgba(15,23,42,0.10)] ${theme.shell}`}>
@@ -102,9 +107,9 @@ export default function CouponCard({ coupon }) {
       <div className="mt-5 flex flex-1 flex-col">
         <div className="flex min-h-[58px] items-center justify-center">
           {logoPath ? (
-            <Image src={logoPath} alt={coupon.platformName} width={140} height={40} className="h-10 w-auto object-contain" />
+            <Image src={logoPath} alt={safeCoupon.platformName} width={140} height={40} className="h-10 w-auto object-contain" />
           ) : (
-            <p className="text-2xl font-black uppercase tracking-tight text-slate-900">{coupon.platformName}</p>
+            <p className="text-2xl font-black uppercase tracking-tight text-slate-900">{safeCoupon.platformName}</p>
           )}
         </div>
 
@@ -126,24 +131,24 @@ export default function CouponCard({ coupon }) {
         ) : null}
 
         <div className="mt-5 flex items-end justify-center gap-3">
-          <p className="text-[2rem] font-black leading-none text-[#16a34a]">{formatMoney(coupon.sellingPrice, coupon.currency)}</p>
-          <p className="pb-1 text-lg font-bold text-slate-400 line-through">{formatMoney(coupon.couponAmount, coupon.currency)}</p>
+          <p className="text-[2rem] font-black leading-none text-[#16a34a]">{formatMoney(safeCoupon.sellingPrice, safeCoupon.currency)}</p>
+          <p className="pb-1 text-lg font-bold text-slate-400 line-through">{formatMoney(safeCoupon.couponAmount, safeCoupon.currency)}</p>
         </div>
 
         <div className="mt-4 flex items-center justify-center">
           <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-600">
             <Star className="h-3.5 w-3.5" />
-            Total Saving {formatMoney(totalSavings, coupon.currency)}
+            Total Saving {formatMoney(totalSavings, safeCoupon.currency)}
           </span>
         </div>
 
         <div className={`mt-5 flex min-h-[52px] items-center justify-between rounded-[16px] border border-dashed bg-white/90 px-4 ${theme.code}`}>
           <span className="flex items-center gap-2 text-sm font-bold">
-            {coupon.revealedCouponCode ? <Copy className="h-4 w-4" /> : <LockKeyhole className="h-4 w-4" />}
+            {safeCoupon.revealedCouponCode ? <Copy className="h-4 w-4" /> : <LockKeyhole className="h-4 w-4" />}
             <span className="line-clamp-2">{codeLabel}</span>
           </span>
           <span className="text-slate-400">
-            {coupon.revealedCouponCode ? <Copy className="h-4 w-4" /> : <LockKeyhole className="h-4 w-4" />}
+            {safeCoupon.revealedCouponCode ? <Copy className="h-4 w-4" /> : <LockKeyhole className="h-4 w-4" />}
           </span>
         </div>
 
@@ -158,7 +163,7 @@ export default function CouponCard({ coupon }) {
               className={`inline-flex w-full items-center justify-center gap-2 rounded-[16px] px-4 py-3 text-sm font-black shadow-[0_14px_24px_rgba(15,23,42,0.08)] ${theme.button}`}
             >
               {primaryActionLabel}
-              {coupon.revealedCouponCode ? <Copy className="h-4 w-4" /> : <ExternalLink className="h-4 w-4" />}
+              {safeCoupon.revealedCouponCode ? <Copy className="h-4 w-4" /> : <ExternalLink className="h-4 w-4" />}
             </Link>
           )}
         </div>

@@ -15,7 +15,7 @@ export default function SafetyPopup({ open, onContinue, onClose }) {
     { text: "Screenshot proof is compulsory.", type: "info" },
     { text: "Coupon code, expiry date and amount must match the screenshot.", type: "critical" },
     { text: "Fake coupons reduce your trust score.", type: "warning" },
-    { text: "Trust score below 40 will ban your account.", type: "critical" },
+    { text: "If your trust score falls below 40, your account will be banned.", type: "critical" },
     { text: "Duplicate, expired, and edited screenshots are not allowed.", type: "critical" }
   ];
 
@@ -92,7 +92,7 @@ export default function SafetyPopup({ open, onContinue, onClose }) {
             className="mt-0.5 h-4.5 w-4.5 rounded border-slate-300 text-[#16a34a] focus:ring-emerald-500/20 focus:ring-offset-0 accent-[#16a34a] transition-all cursor-pointer flex-shrink-0"
           />
           <span className="text-xs font-semibold leading-6 text-slate-500 transition-all group-hover:text-slate-700">
-            I have read and agree to all the safety rules. I understand that listing invalid, expired, or manipulated coupons will decrease my trust score and can result in account suspension.
+            I have read and agree to all the safety rules. I understand that listing invalid, expired, or manipulated coupons will decrease my trust score, and if my trust score falls below 40, my account will be banned.
           </span>
         </label>
 

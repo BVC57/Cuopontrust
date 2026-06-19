@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import api, { extractError } from "../../../lib/api";
+import api, { extractError, resolveUploadUrl } from "../../../lib/api";
 import LoadingSpinner from "../../../components/LoadingSpinner";
 import { getStoredUser, isAuthenticated } from "../../../lib/auth";
 import { formatDate, formatMoney } from "../../../lib/format";
@@ -65,12 +65,14 @@ export default function CouponDetailsPage() {
   const [buying, setBuying] = useState(false);
   const [revealedCoupon, setRevealedCoupon] = useState(null);
   const [ownedCoupon, setOwnedCoupon] = useState(false);
+  const [heroImageFailed, setHeroImageFailed] = useState(false);
 
   useEffect(() => {
     const loadCoupon = async () => {
       try {
         const loggedInNow = isAuthenticated();
         setLoggedIn(loggedInNow);
+        setHeroImageFailed(false);
 
         const { data } = await api.get(`/coupons/${params.id}`);
         setCoupon(data.coupon);
@@ -181,6 +183,7 @@ export default function CouponDetailsPage() {
       )
     : 0;
   const redeemSteps = buildRedeemSteps(coupon?.platformName || "the store");
+  const heroImageUrl = !heroImageFailed ? resolveUploadUrl(coupon?.coverImagePath) : "";
 
   if (loading) {
     return (
@@ -226,6 +229,20 @@ export default function CouponDetailsPage() {
         <section className="relative overflow-hidden rounded-[30px] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.92)_0%,rgba(248,255,251,0.98)_100%)] p-6 shadow-[0_18px_40px_rgba(15,23,42,0.06)] sm:p-8">
           <div className="pointer-events-none absolute -left-20 top-8 h-48 w-48 rounded-full bg-[rgba(34,197,94,0.14)] blur-3xl" />
           <div className="pointer-events-none absolute -right-14 top-0 h-48 w-48 rounded-full bg-[rgba(124,58,237,0.12)] blur-3xl" />
+          {heroImageUrl ? (
+            <div className="relative mb-6 overflow-hidden rounded-[26px] border border-slate-200 bg-slate-100 shadow-[0_16px_30px_rgba(15,23,42,0.06)]">
+              <img
+                src={heroImageUrl}
+                alt={`${coupon.title} preview`}
+                className="h-[220px] w-full object-cover sm:h-[320px] lg:h-[360px]"
+                onError={() => setHeroImageFailed(true)}
+              />
+            </div>
+          ) : logoPath ? (
+            <div className="relative mb-6 flex h-[220px] items-center justify-center overflow-hidden rounded-[26px] border border-slate-200 bg-[radial-gradient(circle_at_top_left,rgba(34,197,94,0.14),transparent_28%),linear-gradient(180deg,#ffffff_0%,#f8fffb_100%)] shadow-[0_16px_30px_rgba(15,23,42,0.06)] sm:h-[320px] lg:h-[360px]">
+              <Image src={logoPath} alt={coupon.platformName} width={240} height={92} className="h-auto w-auto max-h-20 max-w-[70%] object-contain sm:max-h-24" />
+            </div>
+          ) : null}
           <div className="grid gap-6 lg:grid-cols-[132px_minmax(0,1fr)_170px] lg:items-start">
             <div className="flex h-[126px] w-[126px] items-center justify-center rounded-[24px] border border-slate-200 bg-white shadow-[0_12px_26px_rgba(15,23,42,0.05)]">
               {logoPath ? (

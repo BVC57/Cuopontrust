@@ -31,11 +31,16 @@ const applyTrustPenalty = async ({ userId, penalty, reason, email }) => {
   });
 
   if (email) {
+    const bannedNotice =
+      user.trustScore < 40
+        ? " Your trust score is below 40, so your account is now banned until admin review."
+        : "";
+
     await createNotification({
       userId,
       type: "trust_score",
       title: "Trust score updated",
-      message: `Your trust score changed from ${oldScore} to ${user.trustScore}. Reason: ${reason}`,
+      message: `Your trust score changed from ${oldScore} to ${user.trustScore}. Reason: ${reason}.${bannedNotice}`,
       email
     });
   }

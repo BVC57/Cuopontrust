@@ -44,6 +44,16 @@ const getSettings = async () =>
     withdrawalFee: 2
   });
 
+const createAdminTrustHistoryEntry = async (user, reason) => {
+  await TrustHistory.create({
+    userId: user._id,
+    oldScore: user.trustScore,
+    newScore: user.trustScore,
+    change: 0,
+    reason
+  });
+};
+
 const getDashboard = asyncHandler(async (req, res) => {
   const todayStart = startOfDay();
   const tomorrowStart = new Date(todayStart.getTime() + DAY_MS);
@@ -256,16 +266,38 @@ const createUser = asyncHandler(async (req, res) => {
 });
 
 const banUser = asyncHandler(async (req, res) => {
-  const user = await User.findByIdAndUpdate(
-    req.params.id,
-    { accountStatus: "banned", bannedAt: new Date() },
-    { new: true }
-  );
+  const user = await User.findById(req.params.id);
+  if (!user) {
+    return sendResponse(res, 404, "User not found");
+  }
+
+  const statusChanged = user.accountStatus !== "banned";
+  user.accountStatus = "banned";
+  user.bannedAt = new Date();
+  await user.save();
+
+  if (statusChanged) {
+    await createAdminTrustHistoryEntry(user, "Account banned after admin review");
+  }
+
   return sendResponse(res, 200, "User banned", { user });
 });
 
 const unbanUser = asyncHandler(async (req, res) => {
-  const user = await User.findByIdAndUpdate(req.params.id, { accountStatus: "active" }, { new: true });
+  const user = await User.findById(req.params.id);
+  if (!user) {
+    return sendResponse(res, 404, "User not found");
+  }
+
+  const statusChanged = user.accountStatus !== "active";
+  user.accountStatus = "active";
+  user.bannedAt = null;
+  await user.save();
+
+  if (statusChanged) {
+    await createAdminTrustHistoryEntry(user, "Account unbanned after admin review");
+  }
+
   return sendResponse(res, 200, "User unbanned", { user });
 });
 

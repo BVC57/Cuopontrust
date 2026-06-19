@@ -57,6 +57,11 @@ const countByTab = (tab, coupons) => {
   return coupons.length;
 };
 
+const sanitizeCoupons = (items) =>
+  Array.isArray(items)
+    ? items.filter((item) => item && typeof item === "object" && item._id)
+    : [];
+
 export default function MarketplacePage() {
   const [coupons, setCoupons] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -79,7 +84,7 @@ export default function MarketplacePage() {
           sort: getSortValue(sortBy)
         }
       })
-        .then(({ data }) => setCoupons(data.coupons || []))
+        .then(({ data }) => setCoupons(sanitizeCoupons(data.coupons)))
         .catch(() => setCoupons([]))
         .finally(() => setLoading(false));
     }, 250);
@@ -138,7 +143,7 @@ export default function MarketplacePage() {
     return { categoryCounts, storeCounts };
   }, [categories, stores, coupons]);
 
-  const FiltersPanel = (
+  const renderFiltersPanel = () => (
     <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-[0_18px_34px_rgba(15,23,42,0.04)]">
       <div className="flex items-center justify-between">
         <p className="text-2xl font-black text-slate-950">Filters</p>
@@ -360,7 +365,7 @@ export default function MarketplacePage() {
       </section>
 
       <div className="mt-8 grid gap-6 xl:grid-cols-[270px_minmax(0,1fr)]">
-        <aside className="hidden xl:block">{FiltersPanel}</aside>
+        <aside className="hidden xl:block">{renderFiltersPanel()}</aside>
 
         {mobileFiltersOpen ? (
           <div className="fixed inset-0 z-40 bg-slate-950/35 xl:hidden">
@@ -371,7 +376,7 @@ export default function MarketplacePage() {
                   <X className="h-4 w-4" />
                 </button>
               </div>
-              {FiltersPanel}
+              {renderFiltersPanel()}
             </div>
           </div>
         ) : null}

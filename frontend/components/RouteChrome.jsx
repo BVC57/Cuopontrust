@@ -21,10 +21,10 @@ function TrustLockedPage() {
         </div>
         <h1 className="app-main-heading mt-6 font-black text-slate-950">Account banned</h1>
         <p className="mx-auto mt-4 max-w-md text-sm font-semibold leading-7 text-slate-600">
-          Your account is banned for violating our policy. Please contact our admin to recover the account.
+          Your account is banned. When a trust score falls below 40, account access is blocked until admin reviews the case.
         </p>
         <div className="mt-7 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">
-          Access is limited because your trust score is below 40.
+          Access is limited because your trust score is below 40 and the account is banned.
         </div>
         <button
           type="button"

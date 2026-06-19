@@ -18,6 +18,9 @@ const couponSchema = new mongoose.Schema(
     expiryDate: { type: Date, required: true, index: true },
     terms: String,
     proofImagePath: { type: String, required: true },
+    proofImageUploadId: { type: String, default: "" },
+    coverImagePath: { type: String, default: "" },
+    coverImageUploadId: { type: String, default: "" },
     aiExtractedData: {
       platformName: String,
       couponCode: String,

@@ -15,7 +15,7 @@ export default function TrustScoreCard({ trustScore = 100, accountStatus = "acti
           <StatusBadge status={accountStatus} />
         </div>
         <p className="mt-4 text-sm text-slate-600">
-          Excellent sellers keep verification clean, avoid disputes, and maintain working coupons.
+          Excellent sellers keep verification clean, avoid disputes, and maintain working coupons. If trust score falls below 40, the account is banned.
         </p>
       </div>
     </div>

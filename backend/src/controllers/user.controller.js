@@ -29,7 +29,7 @@ const updateProfile = asyncHandler(async (req, res) => {
 });
 
 const getTrustScore = asyncHandler(async (req, res) => {
-  const history = await TrustHistory.find({ userId: req.user._id }).sort({ createdAt: -1 }).limit(20);
+  const history = await TrustHistory.find({ userId: req.user._id }).sort({ createdAt: -1 });
   return sendResponse(res, 200, "Trust score fetched", {
     trustScore: req.user.trustScore,
     accountStatus: req.user.accountStatus,

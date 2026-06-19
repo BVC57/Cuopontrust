@@ -26,20 +26,31 @@ const resolveAvatarUrl = (avatar) => {
   return `${origin}${avatar.startsWith("/") ? avatar : `/${avatar}`}`;
 };
 
+const formatHistoryDate = (value) =>
+  new Date(value).toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+
 export default function ProfilePage() {
   const [user, setUser] = useState(null);
   const [wallet, setWallet] = useState(null);
+  const [trustSnapshot, setTrustSnapshot] = useState(null);
   const [form, setForm] = useState(initialForm);
   const [avatarFile, setAvatarFile] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    Promise.all([api.get("/users/profile"), api.get("/wallet")])
-      .then(([profileResponse, walletResponse]) => {
+    Promise.all([api.get("/users/profile"), api.get("/wallet"), api.get("/users/trust-score")])
+      .then(([profileResponse, walletResponse, trustResponse]) => {
         const profileUser = profileResponse.data.user;
         setUser(profileUser);
         setWallet(walletResponse.data.wallet);
+        setTrustSnapshot(trustResponse.data);
         setForm({
           name: profileUser?.name || "",
           country: profileUser?.country || "India",
@@ -129,12 +140,40 @@ export default function ProfilePage() {
             <div className="grid gap-6 xl:grid-cols-[320px_1fr]">
               <div className="space-y-4">
                 <TrustScoreCard trustScore={user.trustScore} accountStatus={user.accountStatus} />
+                <div className="rounded-[28px] border border-emerald-100 bg-white p-5 shadow-[0_14px_34px_rgba(15,23,42,0.05)]">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <h3 className="text-base font-black text-slate-900">Trust score history</h3>
+                      <p className="mt-1 text-xs leading-5 text-slate-500">All trust events remain visible here, including admin ban and unban review updates.</p>
+                    </div>
+                    <Link href="/trust-score" className="text-xs font-bold text-emerald-700">
+                      View all
+                    </Link>
+                  </div>
+                  <div className="mt-4 max-h-[360px] space-y-3 overflow-y-auto pr-2">
+                    {trustSnapshot?.history?.length ? (
+                      trustSnapshot.history.map((item) => (
+                        <div key={item._id} className="rounded-2xl bg-slate-50 px-4 py-3">
+                          <div className="flex items-start justify-between gap-3">
+                            <p className="text-sm font-semibold text-slate-900">{item.reason}</p>
+                            <span className={`shrink-0 text-sm font-bold ${item.change < 0 ? "text-rose-600" : item.change > 0 ? "text-emerald-600" : "text-slate-500"}`}>
+                              {item.change > 0 ? `+${item.change}` : item.change}
+                            </span>
+                          </div>
+                          <p className="mt-1 text-xs text-slate-500">{formatHistoryDate(item.createdAt)}</p>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="rounded-2xl bg-slate-50 px-4 py-5 text-sm text-slate-500">No trust score history available yet.</div>
+                    )}
+                  </div>
+                </div>
                 {isLowTrust ? (
                   <div className="rounded-[28px] border border-rose-200 bg-rose-50 p-5 shadow-[0_14px_34px_rgba(15,23,42,0.05)]">
                     <p className="text-xs font-black uppercase tracking-[0.18em] text-rose-600">Low trust alert</p>
                     <h3 className="mt-2 text-xl font-black text-slate-900">Contact admin for account review</h3>
                     <p className="mt-3 text-sm leading-7 text-slate-600">
-                      Your trust score is below 40. Contact admin to review your account status and recovery options.
+                      Your trust score is below 40, so your account is banned. Contact admin to review your account status and recovery options.
                     </p>
                     <div className="mt-4 space-y-3">
                       <a href={`mailto:${adminEmail}`} className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-rose-600 px-4 py-3 text-sm font-bold text-white">
