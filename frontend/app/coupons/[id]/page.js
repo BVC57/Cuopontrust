@@ -65,6 +65,9 @@ export default function CouponDetailsPage() {
   const [buying, setBuying] = useState(false);
   const [revealedCoupon, setRevealedCoupon] = useState(null);
   const [ownedCoupon, setOwnedCoupon] = useState(false);
+  const [purchaseTransactionId, setPurchaseTransactionId] = useState("");
+  const [feedbackStatus, setFeedbackStatus] = useState("");
+  const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
   const [heroImageFailed, setHeroImageFailed] = useState(false);
 
   useEffect(() => {
@@ -83,6 +86,8 @@ export default function CouponDetailsPage() {
 
           if (purchasedCoupon) {
             setOwnedCoupon(true);
+            setPurchaseTransactionId(purchasedCoupon.transactionId || "");
+            setFeedbackStatus(purchasedCoupon.buyerFeedbackStatus || "pending");
             if (purchasedCoupon.revealedCouponCode) {
               setRevealedCoupon({
                 couponCode: purchasedCoupon.revealedCouponCode,
@@ -139,26 +144,39 @@ export default function CouponDetailsPage() {
             razorpaySignature: response.razorpay_signature
           });
 
-          try {
-            await api.post(`/payments/confirm-worked/${data.transaction._id}`);
-          } catch (error) {
-            const message = String(error?.response?.data?.message || error?.message || "").toLowerCase();
-            if (!message.includes("already captured") && !message.includes("already been captured")) {
-              throw error;
-            }
-          }
-
           const revealed = await api.post(`/payments/reveal-coupon/${data.transaction._id}`);
           setOwnedCoupon(true);
+          setPurchaseTransactionId(revealed.data.transaction?._id || data.transaction._id);
+          setFeedbackStatus(revealed.data.transaction?.buyerFeedbackStatus || "pending");
           setCoupon((current) => (current ? { ...current, status: "sold" } : current));
           setRevealedCoupon(revealed.data.revealedCoupon);
-          toast.success("Payment confirmed. Coupon details have been emailed to you.");
+          toast.success("Coupon unlocked. Please tell us whether it worked after you try it.");
         }
       });
     } catch (error) {
       toast.error(extractError(error));
     } finally {
       setBuying(false);
+    }
+  };
+
+  const submitCouponFeedback = async (worked) => {
+    if (!purchaseTransactionId) {
+      toast.error("Transaction not found for this purchase");
+      return;
+    }
+
+    try {
+      setFeedbackSubmitting(true);
+      const endpoint = worked ? "confirm-worked" : "report-not-working";
+      const { data } = await api.post(`/payments/${endpoint}/${purchaseTransactionId}`);
+      const nextStatus = data.transaction?.buyerFeedbackStatus || (worked ? "worked" : "not_working");
+      setFeedbackStatus(nextStatus);
+      toast.success(worked ? "Thanks. Seller payout has been released." : "Issue reported. Seller review is now pending.");
+    } catch (error) {
+      toast.error(extractError(error));
+    } finally {
+      setFeedbackSubmitting(false);
     }
   };
 
@@ -184,6 +202,7 @@ export default function CouponDetailsPage() {
     : 0;
   const redeemSteps = buildRedeemSteps(coupon?.platformName || "the store");
   const heroImageUrl = !heroImageFailed ? resolveUploadUrl(coupon?.coverImagePath) : "";
+  const shouldShowFeedbackBanner = ownedCoupon && revealedCoupon?.couponCode && purchaseTransactionId;
 
   if (loading) {
     return (
@@ -528,21 +547,35 @@ export default function CouponDetailsPage() {
           </div>
         </div>
 
-        <section className="flex flex-col gap-4 rounded-[30px] border border-slate-200 bg-[linear-gradient(90deg,#f5fff7_0%,#ffffff_45%,#fff8f8_100%)] p-5 shadow-[0_18px_40px_rgba(15,23,42,0.04)] lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <p className="text-2xl font-black text-slate-950 sm:text-3xl">Did this offer work for you?</p>
-            <p className="mt-2 text-base text-slate-500 sm:text-lg">Help others by sharing your experience.</p>
-          </div>
+        {shouldShowFeedbackBanner ? (
+          <section className="flex flex-col gap-4 rounded-[30px] border border-slate-200 bg-[linear-gradient(90deg,#f5fff7_0%,#ffffff_45%,#fff8f8_100%)] p-5 shadow-[0_18px_40px_rgba(15,23,42,0.04)] lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-2xl font-black text-slate-950 sm:text-3xl">Did this offer work for you?</p>
+              <p className="mt-2 text-base text-slate-500 sm:text-lg">
+                {feedbackStatus === "pending"
+                  ? "Help others by sharing your experience. Your response also updates the seller record."
+                  : feedbackStatus === "worked"
+                    ? "Thanks for confirming this coupon worked for you."
+                    : "You reported that this coupon did not work. Seller review and trust checks are in progress."}
+              </p>
+            </div>
 
-          <div className="flex flex-wrap gap-3">
-            <button type="button" className="rounded-[18px] bg-gradient-to-r from-[#16a34a] to-[#22c55e] px-6 py-4 text-base font-black text-white sm:text-lg">
-              Yes, It Worked!
-            </button>
-            <button type="button" className="rounded-[18px] border border-rose-300 bg-white px-6 py-4 text-base font-black text-rose-500 sm:text-lg">
-              No, It Didn&apos;t
-            </button>
-          </div>
-        </section>
+            {feedbackStatus === "pending" ? (
+              <div className="flex flex-wrap gap-3">
+                <button type="button" onClick={() => submitCouponFeedback(true)} disabled={feedbackSubmitting} className="rounded-[18px] bg-gradient-to-r from-[#16a34a] to-[#22c55e] px-6 py-4 text-base font-black text-white sm:text-lg">
+                  {feedbackSubmitting ? "Saving..." : "Yes, It Worked!"}
+                </button>
+                <button type="button" onClick={() => submitCouponFeedback(false)} disabled={feedbackSubmitting} className="rounded-[18px] border border-rose-300 bg-white px-6 py-4 text-base font-black text-rose-500 sm:text-lg">
+                  No, It Didn&apos;t
+                </button>
+              </div>
+            ) : (
+              <div className={`rounded-[18px] px-5 py-3 text-sm font-black ${feedbackStatus === "worked" ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-600"}`}>
+                {feedbackStatus === "worked" ? "Marked as working" : "Reported as not working"}
+              </div>
+            )}
+          </section>
+        ) : null}
       </div>
     </div>
   );

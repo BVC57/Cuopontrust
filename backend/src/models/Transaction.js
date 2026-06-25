@@ -48,7 +48,15 @@ const transactionSchema = new mongoose.Schema(
     refundedAt: Date,
     couponRevealedAt: Date,
     releasedAt: Date,
-    couponEmailSentAt: Date
+    couponEmailSentAt: Date,
+    buyerFeedbackStatus: {
+      type: String,
+      enum: ["pending", "worked", "not_working"],
+      default: "pending"
+    },
+    buyerFeedbackAt: Date,
+    buyerFeedbackNote: { type: String, default: "" },
+    sellerTrustPenaltyApplied: { type: Boolean, default: false }
   },
   { timestamps: true }
 );

@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   BarChart3,
@@ -16,6 +15,7 @@ import {
   Users,
   Wallet
 } from "lucide-react";
+import useCurrentPath from "../hooks/useCurrentPath";
 
 const sections = [
   { type: "link", label: "Dashboard", href: "/admin/dashboard", icon: Gauge },
@@ -49,7 +49,7 @@ const sections = [
 const isPathActive = (pathname, href) => pathname === href || pathname.startsWith(`${href}/`);
 
 export default function AdminSidebar() {
-  const pathname = usePathname();
+  const pathname = useCurrentPath();
   const [openGroups, setOpenGroups] = useState({});
   const isLightTheme =
     typeof document !== "undefined" && document.documentElement.getAttribute("data-admin-theme") === "light";

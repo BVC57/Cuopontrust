@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { Copy, ExternalLink, Heart, LockKeyhole, ShieldCheck, Star } from "lucide-react";
 import { isAuthenticated } from "../lib/auth";
+import { resolveUploadUrl } from "../lib/api";
 import { formatDate, formatMoney } from "../lib/format";
 import { resolveBrand } from "../lib/brandCatalog";
 
@@ -57,6 +58,7 @@ const normalizeCategory = (value = "") =>
 export default function CouponCard({ coupon }) {
   const safeCoupon = coupon && typeof coupon === "object" ? coupon : null;
   const [loggedIn, setLoggedIn] = useState(false);
+  const [coverImageFailed, setCoverImageFailed] = useState(false);
   const brand = safeCoupon?.platformBrandKey ? resolveBrand(safeCoupon.platformBrandKey) : resolveBrand(safeCoupon?.platformName);
   const logoPath = safeCoupon?.platformLogoPath || brand?.logoPath || "";
 
@@ -89,6 +91,7 @@ export default function CouponCard({ coupon }) {
   const categoryLabels = (safeCoupon.categories || []).slice(0, 2).map(normalizeCategory);
   const expiryLabel = safeCoupon.expiryDate ? formatDate(safeCoupon.expiryDate) : "Limited time";
   const totalSavings = Math.max(0, Number(safeCoupon.couponAmount || 0) - Number(safeCoupon.sellingPrice || 0));
+  const coverImageUrl = !coverImageFailed ? resolveUploadUrl(safeCoupon.coverImagePath) : "";
 
   return (
     <div className={`group flex h-full min-h-[352px] flex-col rounded-[24px] border p-4 shadow-[0_18px_34px_rgba(15,23,42,0.05)] transition hover:-translate-y-1 hover:shadow-[0_24px_44px_rgba(15,23,42,0.10)] ${theme.shell}`}>
@@ -105,15 +108,26 @@ export default function CouponCard({ coupon }) {
       </div>
 
       <div className="mt-5 flex flex-1 flex-col">
-        <div className="flex min-h-[58px] items-center justify-center">
-          {logoPath ? (
-            <Image src={logoPath} alt={safeCoupon.platformName} width={140} height={40} className="h-10 w-auto object-contain" />
+        <div className="overflow-hidden rounded-[20px] border border-white/80 bg-white/80 shadow-[0_10px_24px_rgba(15,23,42,0.05)]">
+          {coverImageUrl ? (
+            <img
+              src={coverImageUrl}
+              alt={safeCoupon.title || safeCoupon.platformName}
+              className="h-32 w-full object-cover"
+              onError={() => setCoverImageFailed(true)}
+            />
           ) : (
-            <p className="text-2xl font-black uppercase tracking-tight text-slate-900">{safeCoupon.platformName}</p>
+            <div className="flex min-h-[128px] items-center justify-center px-4">
+              {logoPath ? (
+                <Image src={logoPath} alt={safeCoupon.platformName} width={140} height={40} className="h-10 w-auto object-contain" />
+              ) : (
+                <p className="text-2xl font-black uppercase tracking-tight text-slate-900">{safeCoupon.platformName}</p>
+              )}
+            </div>
           )}
         </div>
 
-        <div className="mt-6 text-center">
+        <div className="mt-5 text-center">
           <h3 className="line-clamp-2 text-[1.05rem] font-black uppercase leading-tight text-slate-950 sm:text-[1.85rem]">
             {title}
           </h3>

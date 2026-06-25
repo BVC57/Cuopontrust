@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Bell, CircleUserRound, CreditCard, HandCoins, ListChecks, LogOut, Menu, Package, Settings, UserCircle2, X } from "lucide-react";
 import api from "../lib/api";
 import { AUTH_EVENT, clearSession, getStoredUser, isAuthenticated } from "../lib/auth";
+import useCurrentPath from "../hooks/useCurrentPath";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -33,7 +34,7 @@ const resolveAvatarUrl = (avatar) => {
 const formatUnreadCount = (count) => (count > 99 ? "99+" : String(count));
 
 export default function Navbar() {
-  const pathname = usePathname();
+  const pathname = useCurrentPath();
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [open, setOpen] = useState(false);

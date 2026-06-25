@@ -1,11 +1,11 @@
 "use client";
 
-import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { LogOut, ShieldAlert } from "lucide-react";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import { AUTH_EVENT, clearSession, getStoredUser, isAuthenticated, isTrustLockedUser } from "../lib/auth";
+import useCurrentPath from "../hooks/useCurrentPath";
 
 function TrustLockedPage() {
   const handleLogout = () => {
@@ -40,7 +40,7 @@ function TrustLockedPage() {
 }
 
 export default function RouteChrome({ children }) {
-  const pathname = usePathname();
+  const pathname = useCurrentPath();
   const [user, setUser] = useState(null);
   const isAuthPage = pathname === "/login" || pathname === "/register";
   const isAdminPage = pathname?.startsWith("/admin");

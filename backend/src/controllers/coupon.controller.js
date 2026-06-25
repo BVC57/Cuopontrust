@@ -402,8 +402,8 @@ const getMyListedCoupons = asyncHandler(async (req, res) => {
 const getMyPurchasedCoupons = asyncHandler(async (req, res) => {
   const purchasedTransactions = await Transaction.find({
     buyerId: req.user._id,
-    paymentStatus: "captured",
-    transactionStatus: { $in: ["completed", "coupon_revealed"] }
+    paymentStatus: { $in: ["authorized", "captured"] },
+    transactionStatus: { $in: ["created", "coupon_revealed", "completed", "disputed"] }
   })
     .populate("couponId")
     .sort({ createdAt: -1 });
@@ -417,11 +417,14 @@ const getMyPurchasedCoupons = asyncHandler(async (req, res) => {
       const coupon = transaction.couponId.toObject ? transaction.couponId.toObject() : transaction.couponId;
       return {
         ...coupon,
+        transactionId: transaction._id,
         purchaseStatus: transaction.paymentStatus,
         transactionStatus: transaction.transactionStatus,
+        buyerFeedbackStatus: transaction.buyerFeedbackStatus,
+        buyerFeedbackAt: transaction.buyerFeedbackAt,
         purchasedAt: transaction.createdAt,
         revealedCouponCode:
-          transaction.couponRevealedAt || transaction.transactionStatus === "coupon_revealed"
+          transaction.couponRevealedAt || ["coupon_revealed", "completed", "disputed"].includes(transaction.transactionStatus)
             ? decryptCouponCode(coupon.couponCodeEncrypted)
             : undefined
       };

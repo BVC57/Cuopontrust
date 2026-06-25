@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import Script from "next/script";
 import { useEffect, useMemo, useState } from "react";
 import {
   Award,
@@ -26,6 +27,7 @@ import {
 import { getStoredUser } from "../lib/auth";
 import { brandCatalog } from "../lib/brandCatalog";
 import { marketingContent } from "../lib/marketingContent";
+import { popularCouponCategories } from "../lib/couponCategories";
 
 const featuredBrands = ["amazon", "Flipkart", "zomato", "swiggy"];
 
@@ -176,11 +178,63 @@ const heroFeatures = [
   { title: "Fast Payouts", subtitle: "For Sellers", icon: Wallet, tone: "bg-[#fff7ed] text-[#ea580c]" }
 ];
 
-function SectionHeading({ title, subtitle }) {
+const homePageStructuredData = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      name: "CouponX",
+      alternateName: "CouponX India",
+      url: "https://couponx.in",
+      description: marketingContent.heroSubheading,
+      inLanguage: "en-IN"
+    },
+    {
+      "@type": "Organization",
+      name: "CouponX",
+      url: "https://couponx.in",
+      description: marketingContent.shortDescription,
+      contactPoint: [
+        {
+          "@type": "ContactPoint",
+          contactType: "customer support",
+          telephone: "+91-9898394548",
+          email: "chauhanbhadresh57@gmail.com",
+          areaServed: "IN",
+          availableLanguage: ["English", "Hindi", "Gujarati"]
+        }
+      ],
+      address: {
+        "@type": "PostalAddress",
+        addressLocality: "Vallbhipur",
+        addressRegion: "Bhavnagar",
+        postalCode: "364310",
+        addressCountry: "IN"
+      }
+    },
+    {
+      "@type": "FAQPage",
+      mainEntity: faqs.map((question) => ({
+        "@type": "Question",
+        name: question,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "CouponX helps buyers and sellers with verified coupon listings, secure payments, trust scoring, and dispute support."
+        }
+      }))
+    }
+  ]
+};
+
+function SectionHeading({ title, subtitle, align = "center" }) {
+  const isLeft = align === "left";
+
   return (
-    <div className="text-center">
+    <div className={isLeft ? "text-left" : "text-center"}>
       <h2 className="app-section-heading font-black text-slate-950">{title}</h2>
-      {subtitle ? <p className="mt-2 text-sm text-slate-500">{subtitle}</p> : null}
+      {subtitle ? (
+        <p className={isLeft ? "mt-2 max-w-2xl text-sm text-slate-500" : "mt-2 text-sm text-slate-500"}>{subtitle}</p>
+      ) : null}
     </div>
   );
 }
@@ -211,6 +265,11 @@ export default function HomePage() {
 
   return (
     <div className="bg-[radial-gradient(circle_at_top_left,rgba(34,197,94,0.18),transparent_26%),radial-gradient(circle_at_top_right,rgba(124,58,237,0.16),transparent_24%),radial-gradient(circle_at_center_top,rgba(251,191,36,0.12),transparent_18%),linear-gradient(180deg,#f1fff5_0%,#f8fffb_16%,#ffffff_46%,#fbfffc_100%)]">
+      <Script
+        id="couponx-home-structured-data"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(homePageStructuredData) }}
+      />
       <section className="mx-auto max-w-7xl px-4 pb-6 pt-8 sm:px-6 lg:pt-10">
         <div className="overflow-hidden rounded-[38px] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.86)_0%,rgba(248,255,251,0.98)_100%)] p-4 shadow-[0_24px_70px_rgba(15,23,42,0.08)] backdrop-blur-sm sm:p-6">
           <div className="relative rounded-[32px] bg-[radial-gradient(circle_at_left_top,rgba(34,197,94,0.24),transparent_18%),radial-gradient(circle_at_right_top,rgba(124,58,237,0.2),transparent_18%),radial-gradient(circle_at_center_bottom,rgba(59,130,246,0.12),transparent_24%),linear-gradient(180deg,#ffffff_0%,#fafffb_100%)] px-4 py-8 sm:px-8">
@@ -313,7 +372,7 @@ export default function HomePage() {
                   </div>
                   <p className="text-xl font-black text-slate-900">Popular Brands</p>
                 </div>
-                <Link href="/marketplace" className="text-sm font-black text-[#16a34a]">
+                <Link href="/categories" className="text-sm font-black text-[#16a34a]">
                   View All Brands
                 </Link>
               </div>
@@ -602,6 +661,60 @@ export default function HomePage() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      <section className="mx-auto mt-16 max-w-7xl px-4 sm:px-6">
+        <div className="flex flex-col items-center gap-4">
+          <SectionHeading title="Most Popular Categories" subtitle="Browse the categories people explore most on CouponX." />
+        </div>
+
+        <div className="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+          {popularCouponCategories.map((category, index) => (
+            <Link
+              key={category.slug}
+              href={`/marketplace?category=${encodeURIComponent(category.name)}`}
+              className="group overflow-hidden rounded-[30px] border border-emerald-100/70 bg-white shadow-[0_18px_34px_rgba(15,23,42,0.05)] transition duration-300 hover:-translate-y-1.5 hover:border-emerald-200 hover:shadow-[0_24px_42px_rgba(22,163,74,0.12)]"
+            >
+              <div className="bg-[radial-gradient(circle_at_top_left,rgba(34,197,94,0.16),transparent_36%),linear-gradient(135deg,#f7fff9_0%,#ffffff_72%)] p-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-[#16a34a] shadow-[0_12px_24px_rgba(34,197,94,0.16)] transition duration-300 group-hover:scale-110">
+                    <Tag className="h-6 w-6" />
+                  </div>
+                  <span className="rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1 text-[11px] font-black uppercase tracking-[0.14em] text-emerald-700">
+                    Top {String(index + 1).padStart(2, "0")}
+                  </span>
+                </div>
+
+                <h3 className="mt-5 text-[1.75rem] font-black leading-tight tracking-[-0.03em] text-slate-950">{category.name}</h3>
+                <p className="mt-3 min-h-[84px] text-sm leading-7 text-slate-500">{category.description}</p>
+              </div>
+
+              <div className="border-t border-emerald-100/80 bg-[linear-gradient(180deg,#ffffff_0%,#fbfffc_100%)] px-6 py-5">
+                <p className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-400">Featured Brands</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {category.examples.slice(0, 3).map((example) => (
+                    <span
+                      key={example}
+                      className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-slate-700"
+                    >
+                      {example}
+                    </span>
+                  ))}
+                </div>
+
+                <div className="mt-5 inline-flex items-center text-sm font-black text-[#16a34a]">
+                  Explore category
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+
+        <div className="mt-8 flex justify-center">
+          <Link href="/categories" className="inline-flex rounded-2xl border border-emerald-200 bg-white px-5 py-3 text-sm font-black text-[#16a34a] shadow-[0_12px_24px_rgba(15,23,42,0.05)]">
+            View All Categories
+          </Link>
         </div>
       </section>
 

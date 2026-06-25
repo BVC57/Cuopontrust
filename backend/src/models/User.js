@@ -29,6 +29,8 @@ const userSchema = new mongoose.Schema(
     duplicateCouponCount: { type: Number, default: 0 },
     expiredCouponCount: { type: Number, default: 0 },
     disputeCount: { type: Number, default: 0 },
+    nonWorkingCouponReportCount: { type: Number, default: 0 },
+    successfulCouponFeedbackCount: { type: Number, default: 0 },
     walletBalance: { type: Number, default: 0 },
     pendingBalance: { type: Number, default: 0 },
     totalSales: { type: Number, default: 0 },

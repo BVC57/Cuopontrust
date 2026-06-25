@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { Bell, CircleUserRound, CreditCard, Flame, HandCoins, ListChecks, Package, Settings } from "lucide-react";
+import useCurrentPath from "../hooks/useCurrentPath";
 
 const accountLinks = [
   { href: "/profile", label: "My Profile", icon: CircleUserRound },
@@ -15,7 +15,7 @@ const accountLinks = [
 ];
 
 export default function AccountShell({ title, subtitle, children, aside }) {
-  const pathname = usePathname();
+  const pathname = useCurrentPath();
 
   return (
     <div className="rgb-shell mx-auto max-w-7xl px-4 py-10 sm:px-6">

@@ -1,18 +1,8 @@
 {
-  "/page": "app/page.js",
-  "/about-us/page": "app/about-us/page.js",
-  "/login/page": "app/login/page.js",
-  "/profile/page": "app/profile/page.js",
-  "/orders/page": "app/orders/page.js",
-  "/listed-coupons/page": "app/listed-coupons/page.js",
-  "/payments/page": "app/payments/page.js",
-  "/withdraw/page": "app/withdraw/page.js",
-  "/settings/page": "app/settings/page.js",
-  "/sell/page": "app/sell/page.js",
-  "/marketplace/page": "app/marketplace/page.js",
+  "/admin/users/page": "app/admin/users/page.js",
   "/coupons/[id]/page": "app/coupons/[id]/page.js",
-  "/help-support/page": "app/help-support/page.js",
-  "/contact-us/page": "app/contact-us/page.js",
-  "/blog/page": "app/blog/page.js",
-  "/trust-score/page": "app/trust-score/page.js"
+  "/orders/page": "app/orders/page.js",
+  "/payments/page": "app/payments/page.js",
+  "/admin/transactions/page": "app/admin/transactions/page.js",
+  "/admin/payments/page": "app/admin/payments/page.js"
 }

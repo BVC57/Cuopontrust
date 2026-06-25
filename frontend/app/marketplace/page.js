@@ -3,44 +3,83 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
+  Armchair,
   BadgeCheck,
+  BookOpen,
+  Car,
   ChevronDown,
+  Clapperboard,
+  Cpu,
   Filter,
+  Gamepad2,
+  Gift,
+  Globe2,
   Headphones,
+  HeartPulse,
   Home,
+  Hotel,
+  Landmark,
   Lock,
+  MapPinned,
+  Plane,
+  Popcorn,
+  Receipt,
+  Rocket,
   Search,
   ShieldCheck,
-  Star,
+  ShoppingBag,
   Shirt,
   Smartphone,
+  Sparkles,
+  Sprout,
+  Star,
+  Tag,
+  Ticket,
+  Trophy,
+  Tv,
   Users,
   UtensilsCrossed,
-  Plane,
-  Sparkles,
-  Ticket,
-  Tag,
   X
 } from "lucide-react";
 import api from "../../lib/api";
 import CouponCard from "../../components/CouponCard";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import { brandCatalog } from "../../lib/brandCatalog";
+import { couponCategories, normalizeCouponCategory } from "../../lib/couponCategories";
 
 const topTabs = ["All", "Coupons", "Deals", "Exclusive"];
 const categoryIcons = {
+  Shopping: ShoppingBag,
   Fashion: Shirt,
   Electronics: Smartphone,
+  "Food & Dining": UtensilsCrossed,
+  Travel: Plane,
+  Grocery: Sprout,
+  Beauty: Sparkles,
+  Healthcare: HeartPulse,
+  Entertainment: Tv,
+  Gaming: Gamepad2,
+  Recharge: Rocket,
+  Finance: Landmark,
+  Education: BookOpen,
+  "Software & SaaS": Cpu,
+  "Gift Cards": Gift,
+  Hotels: Hotel,
+  Flights: Plane,
+  Automotive: Car,
+  "Home & Furniture": Armchair,
+  Sports: Trophy,
+  Pets: HeartPulse,
+  Kids: Popcorn,
+  Events: Ticket,
+  Subscription: Receipt,
+  "Local Deals": MapPinned,
+  "Luxury Brands": Star,
+  "International Offers": Globe2,
   Food: UtensilsCrossed,
-  Travel: Plane
-};
-
-const normalizeCategory = (category) => {
-  const value = String(category || "").trim();
-  if (!value) return "";
-  if (value.toLowerCase() === "food & dining") return "Food";
-  return value;
+  Streaming: Clapperboard
 };
 
 const getSortValue = (value) => {
@@ -63,15 +102,21 @@ const sanitizeCoupons = (items) =>
     : [];
 
 export default function MarketplacePage() {
+  const searchParams = useSearchParams();
+  const initialCategory = normalizeCouponCategory(searchParams.get("category") || "All");
   const [coupons, setCoupons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedCategory, setSelectedCategory] = useState(initialCategory || "All");
   const [selectedStore, setSelectedStore] = useState("");
   const [activeTab, setActiveTab] = useState("All");
   const [sortBy, setSortBy] = useState("Popular");
   const [validity, setValidity] = useState("All Time");
+
+  useEffect(() => {
+    setSelectedCategory(initialCategory || "All");
+  }, [initialCategory]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -93,8 +138,8 @@ export default function MarketplacePage() {
   }, [search, selectedCategory, selectedStore, sortBy]);
 
   const categories = useMemo(() => {
-    const mapped = coupons.flatMap((coupon) => (coupon.categories || []).map(normalizeCategory));
-    const base = ["Fashion", "Electronics", "Food", "Travel"];
+    const mapped = coupons.flatMap((coupon) => (coupon.categories || []).map(normalizeCouponCategory));
+    const base = couponCategories.map((category) => category.name);
     return ["All", ...new Set([...base, ...mapped.filter(Boolean)])];
   }, [coupons]);
 
@@ -132,7 +177,7 @@ export default function MarketplacePage() {
     categories.forEach((category) => {
       categoryCounts[category] = category === "All"
         ? coupons.length
-        : coupons.filter((coupon) => (coupon.categories || []).map(normalizeCategory).includes(category)).length;
+        : coupons.filter((coupon) => (coupon.categories || []).map(normalizeCouponCategory).includes(category)).length;
     });
 
     const storeCounts = {};
@@ -186,9 +231,9 @@ export default function MarketplacePage() {
               </button>
             );
           })}
-          <button type="button" onClick={() => setSelectedCategory("All")} className="pt-2 text-sm font-bold text-[#16a34a]">
+          <Link href="/categories" className="inline-block pt-2 text-sm font-bold text-[#16a34a]">
             View All Categories
-          </button>
+          </Link>
         </div>
       </div>
 

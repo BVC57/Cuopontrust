@@ -9,7 +9,37 @@ const spaceGrotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-space
 
 export const metadata = {
   title: "CouponX - India's Trusted Coupon Buy & Sell Marketplace",
-  description: marketingContent.heroSubheading
+  description: marketingContent.heroSubheading,
+  keywords: [
+    "coupon marketplace India",
+    "buy coupons online India",
+    "sell unused coupons online",
+    "verified coupons India",
+    "discount coupon marketplace",
+    "promo code marketplace",
+    "gift voucher marketplace India",
+    "buy discount vouchers",
+    "sell gift vouchers",
+    "Flipkart coupons",
+    "Amazon coupons",
+    "Zomato coupons",
+    "Swiggy coupons",
+    "best coupon website India",
+    "CouponX"
+  ],
+  openGraph: {
+    title: "CouponX - India's Trusted Coupon Buy & Sell Marketplace",
+    description: marketingContent.heroSubheading,
+    type: "website",
+    locale: "en_IN",
+    siteName: "CouponX"
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "CouponX - India's Trusted Coupon Buy & Sell Marketplace",
+    description: marketingContent.heroSubheading
+  },
+  category: "shopping"
 };
 
 const adminThemeBootstrap = `

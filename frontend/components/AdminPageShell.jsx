@@ -209,17 +209,19 @@ export default function AdminPageShell({
                     </div>
 
                     <button type="button" onClick={() => setTheme((prev) => (prev === "dark" ? "light" : "dark"))} className="admin-input-surface inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-[0_10px_22px_rgba(15,23,42,0.03)]">
-                      {theme === "dark" ? <SunMedium className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                      {theme === "dark" ? <SunMedium className="h-[18px] w-[18px]" /> : <Moon className="h-5 w-5" />}
                     </button>
 
                     <div ref={notificationRef} className="relative flex-none">
-                      <button type="button" onClick={() => setNotificationOpen((prev) => !prev)} className="admin-input-surface relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-[0_10px_22px_rgba(15,23,42,0.03)]">
-                        <Bell className="h-5 w-5" />
-                        {hasUnreadNotifications ? (
-                          <span className="absolute -right-1.5 -top-1.5 inline-flex min-h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#22c55e] px-1 text-[9px] font-black leading-none text-white shadow-[0_0_0_3px_rgba(255,255,255,0.96)]">
-                            {unreadBadgeLabel}
-                          </span>
-                        ) : null}
+                      <button type="button" onClick={() => setNotificationOpen((prev) => !prev)} className="admin-input-surface inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-[0_10px_22px_rgba(15,23,42,0.03)] transition hover:border-emerald-200 hover:text-emerald-600">
+                        <span className="relative inline-flex h-6 w-6 items-center justify-center">
+                          <Bell className="h-5 w-5" />
+                          {hasUnreadNotifications ? (
+                            <span className="absolute right-0 top-0 inline-flex h-[14px] min-w-[14px] translate-x-[18%] -translate-y-[6%] items-center justify-center rounded-full bg-[#22c55e] px-[3px] text-[8px] font-black leading-none text-white shadow-[0_6px_14px_rgba(34,197,94,0.28)]">
+                              {unreadBadgeLabel}
+                            </span>
+                          ) : null}
+                        </span>
                       </button>
                       {notificationOpen ? (
                         <div className="admin-content-surface absolute right-0 top-[calc(100%+10px)] z-[70] min-w-[320px] max-w-[360px] rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_18px_44px_rgba(15,23,42,0.08)]">
