@@ -64,6 +64,14 @@ const removeUploadedFile = async (filePath) => {
   }
 };
 
+const resolveLocalUploadPath = (storedPath) => {
+  if (!storedPath || typeof storedPath !== "string" || !storedPath.startsWith("/uploads/")) {
+    return "";
+  }
+
+  return path.join(process.cwd(), storedPath.replace(/^\/+/, ""));
+};
+
 const verificationStageTemplate = [
   { id: "upload", title: "Uploading screenshot", detail: "Screenshot uploaded to secure verification" },
   { id: "expired", title: "Checking expiry window", detail: "Validating that the coupon is not already expired" },
@@ -331,22 +339,24 @@ const sellCoupon = asyncHandler(async (req, res) => {
     });
   }
 
+  const couponId = new Coupon()._id;
   let couponCoverImage = null;
 
   try {
     couponCoverImage = await createCouponCoverImage({
       sourcePath: req.file.path,
-      proofUploadId: req.file.filename
+      couponId: couponId.toString()
     });
   } catch {
-    // Use brand fallback on the client if banner extraction fails.
+    // Use brand fallback on the client if image normalization fails.
   }
 
   const coupon = await Coupon.create({
+    _id: couponId,
     sellerId: req.user._id,
-    platformName: req.body.platformName,
-    platformBrandKey: resolveBrand(req.body.platformName)?.key || "",
-    platformLogoPath: resolveBrand(req.body.platformName)?.logoPath || "",
+    platformName: aiResult.extractedData?.platformName || "",
+    platformBrandKey: aiResult.extractedData?.platformBrandKey || "",
+    platformLogoPath: resolveBrand(aiResult.extractedData?.platformBrandKey || aiResult.extractedData?.platformName)?.logoPath || "",
     title: req.body.title,
     categories: parseCategories(req.body.categories, req.body.customCategory),
     couponCodeEncrypted: encryptCouponCode(req.body.couponCode),
@@ -443,12 +453,8 @@ const deleteCoupon = asyncHandler(async (req, res) => {
     return sendResponse(res, 400, "Sold coupons cannot be deleted");
   }
 
-  const proofFilePath = coupon.proofImagePath
-    ? path.join(process.cwd(), String(coupon.proofImagePath).replace(/^\/+/, ""))
-    : "";
-  const coverFilePath = coupon.coverImagePath
-    ? path.join(process.cwd(), String(coupon.coverImagePath).replace(/^\/+/, ""))
-    : "";
+  const proofFilePath = resolveLocalUploadPath(coupon.proofImagePath);
+  const coverFilePath = resolveLocalUploadPath(coupon.coverImagePath);
 
   await removeUploadedFile(proofFilePath);
   if (coverFilePath && coverFilePath !== proofFilePath) {

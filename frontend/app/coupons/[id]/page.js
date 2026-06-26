@@ -56,6 +56,19 @@ const buildSupportData = (platformName) => ({
   phone: "1800-3000-9000"
 });
 
+const brandThemes = {
+  amazon: { accent: "#f59e0b", accentSoft: "#fff7e6", accentBorder: "#f8dfb0", accentText: "#b45309", buttonStart: "#f59e0b", buttonEnd: "#fbbf24", glow: "rgba(245,158,11,0.18)" },
+  flipkart: { accent: "#2563eb", accentSoft: "#eff6ff", accentBorder: "#bfdbfe", accentText: "#1d4ed8", buttonStart: "#2563eb", buttonEnd: "#3b82f6", glow: "rgba(37,99,235,0.18)" },
+  myntra: { accent: "#ec4899", accentSoft: "#fdf2f8", accentBorder: "#fbcfe8", accentText: "#db2777", buttonStart: "#ec4899", buttonEnd: "#f43f5e", glow: "rgba(236,72,153,0.18)" },
+  mcdonalds: { accent: "#db0007", accentSoft: "#fff7ed", accentBorder: "#fdba74", accentText: "#b45309", buttonStart: "#db0007", buttonEnd: "#f59e0b", glow: "rgba(219,0,7,0.16)" },
+  zomato: { accent: "#ef4444", accentSoft: "#fff1f2", accentBorder: "#fecdd3", accentText: "#dc2626", buttonStart: "#ef4444", buttonEnd: "#f97316", glow: "rgba(239,68,68,0.18)" },
+  swiggy: { accent: "#f97316", accentSoft: "#fff7ed", accentBorder: "#fed7aa", accentText: "#ea580c", buttonStart: "#f97316", buttonEnd: "#fb923c", glow: "rgba(249,115,22,0.18)" },
+  netflix: { accent: "#e11d48", accentSoft: "#fff1f2", accentBorder: "#fecdd3", accentText: "#be123c", buttonStart: "#e11d48", buttonEnd: "#fb7185", glow: "rgba(225,29,72,0.18)" },
+  spotify: { accent: "#16a34a", accentSoft: "#f0fdf4", accentBorder: "#bbf7d0", accentText: "#15803d", buttonStart: "#16a34a", buttonEnd: "#22c55e", glow: "rgba(22,163,74,0.18)" },
+  playstation: { accent: "#4338ca", accentSoft: "#eef2ff", accentBorder: "#c7d2fe", accentText: "#3730a3", buttonStart: "#4338ca", buttonEnd: "#6366f1", glow: "rgba(67,56,202,0.18)" },
+  default: { accent: "#16a34a", accentSoft: "#f0fdf4", accentBorder: "#bbf7d0", accentText: "#15803d", buttonStart: "#16a34a", buttonEnd: "#22c55e", glow: "rgba(22,163,74,0.18)" }
+};
+
 export default function CouponDetailsPage() {
   const params = useParams();
   const router = useRouter();
@@ -184,6 +197,7 @@ export default function CouponDetailsPage() {
     () => (coupon ? (coupon.platformBrandKey ? resolveBrand(coupon.platformBrandKey) : resolveBrand(coupon.platformName)) : null),
     [coupon]
   );
+  const brandTheme = useMemo(() => brandThemes[brand?.key] || brandThemes.default, [brand]);
 
   const logoPath = coupon?.platformLogoPath || brand?.logoPath || "";
   const isSold = coupon?.status === "sold";
@@ -253,7 +267,7 @@ export default function CouponDetailsPage() {
               <img
                 src={heroImageUrl}
                 alt={`${coupon.title} preview`}
-                className="h-[220px] w-full object-cover sm:h-[320px] lg:h-[360px]"
+                className="h-[220px] w-full bg-slate-50 p-3 object-contain sm:h-[320px] lg:h-[360px]"
                 onError={() => setHeroImageFailed(true)}
               />
             </div>
@@ -272,7 +286,7 @@ export default function CouponDetailsPage() {
             </div>
 
             <div className="min-w-0">
-              <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-black uppercase tracking-[0.08em] text-emerald-700 sm:text-sm">
+              <span className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-black uppercase tracking-[0.08em] sm:text-sm" style={{ backgroundColor: brandTheme.accentSoft, color: brandTheme.accentText }}>
                 <ShieldCheck className="h-4 w-4" />
                 Verified
               </span>
@@ -284,7 +298,7 @@ export default function CouponDetailsPage() {
 
               <div className="mt-4 flex flex-wrap items-center gap-3">
                 {(coupon.categories || []).slice(0, 1).map((category) => (
-                  <span key={category} className="rounded-full bg-emerald-50 px-4 py-1.5 text-xs font-black uppercase tracking-[0.08em] text-emerald-700 sm:text-sm">
+                  <span key={category} className="rounded-full px-4 py-1.5 text-xs font-black uppercase tracking-[0.08em] sm:text-sm" style={{ backgroundColor: brandTheme.accentSoft, color: brandTheme.accentText }}>
                     {category}
                   </span>
                 ))}
@@ -328,14 +342,14 @@ export default function CouponDetailsPage() {
             <section className="rounded-[30px] border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.04)] sm:p-7">
               <p className="text-base font-black uppercase tracking-[0.08em] text-slate-500">Offer Price</p>
               <div className="mt-4 flex flex-wrap items-center gap-5">
-                <p className="text-5xl font-black leading-none text-emerald-600 sm:text-[58px]">
+                <p className="text-5xl font-black leading-none sm:text-[58px]" style={{ color: brandTheme.accent }}>
                   {formatMoney(coupon.sellingPrice, coupon.currency)}
                 </p>
                 <p className="text-3xl font-bold text-slate-400 line-through sm:text-[40px]">
                   {formatMoney(coupon.couponAmount, coupon.currency)}
                 </p>
                 {savingsPercent > 0 ? (
-                  <span className="rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-lg font-black text-emerald-700">
+                  <span className="rounded-full border px-4 py-2 text-lg font-black" style={{ borderColor: brandTheme.accentBorder, backgroundColor: brandTheme.accentSoft, color: brandTheme.accentText }}>
                     {savingsPercent}% OFF
                   </span>
                 ) : null}
@@ -344,10 +358,10 @@ export default function CouponDetailsPage() {
               <div className="mt-6 border-t border-dashed border-slate-300 pt-6">
                 <p className="text-base font-black uppercase tracking-[0.08em] text-slate-500">Coupon Code</p>
                 <div className="mt-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_220px]">
-                  <div className="flex min-h-[62px] items-center rounded-[18px] border border-emerald-200 bg-white px-5 text-lg font-bold text-slate-600">
+                  <div className="flex min-h-[62px] items-center rounded-[18px] border bg-white px-5 text-lg font-bold text-slate-600" style={{ borderColor: brandTheme.accentBorder }}>
                     {revealedCoupon?.couponCode ? (
                       <span className="inline-flex items-center gap-3">
-                        <Copy className="h-5 w-5 text-emerald-600" />
+                        <Copy className="h-5 w-5" style={{ color: brandTheme.accent }} />
                         {revealedCoupon.couponCode}
                       </span>
                     ) : (
@@ -362,7 +376,7 @@ export default function CouponDetailsPage() {
                     <button
                       type="button"
                       onClick={copyCouponCode}
-                      className="inline-flex min-h-[62px] items-center justify-center gap-3 rounded-[18px] bg-gradient-to-r from-[#16a34a] to-[#22c55e] px-5 text-lg font-black text-white shadow-[0_16px_28px_rgba(34,197,94,0.18)]"
+                      className="inline-flex min-h-[62px] items-center justify-center gap-3 rounded-[18px] px-5 text-lg font-black text-white" style={{ backgroundImage: `linear-gradient(90deg, ${brandTheme.buttonStart} 0%, ${brandTheme.buttonEnd} 100%)`, boxShadow: `0 16px 28px ${brandTheme.glow}` }}
                     >
                       <Copy className="h-5 w-5" />
                       Copy Code
@@ -372,11 +386,11 @@ export default function CouponDetailsPage() {
                       type="button"
                       onClick={ownedCoupon || isSold ? undefined : handleBuy}
                       disabled={buying || ownedCoupon || isSold}
-                      className={`inline-flex min-h-[62px] items-center justify-center gap-3 rounded-[18px] px-5 text-lg font-black shadow-[0_16px_28px_rgba(34,197,94,0.18)] ${
+                      className={`inline-flex min-h-[62px] items-center justify-center gap-3 rounded-[18px] px-5 text-lg font-black ${
                         ownedCoupon || isSold
                           ? "bg-slate-200 text-slate-600"
                           : "bg-gradient-to-r from-[#16a34a] to-[#22c55e] text-white"
-                      }`}
+                      }`} style={ownedCoupon || isSold ? undefined : { backgroundImage: `linear-gradient(90deg, ${brandTheme.buttonStart} 0%, ${brandTheme.buttonEnd} 100%)`, boxShadow: `0 16px 28px ${brandTheme.glow}` }}
                     >
                       <LockKeyhole className="h-5 w-5" />
                       {ownedCoupon ? "Already Purchased" : isSold ? "Sold" : buying ? "Processing..." : "Unlock & Buy"}
@@ -385,7 +399,7 @@ export default function CouponDetailsPage() {
                 </div>
               </div>
 
-              <div className="mt-6 grid gap-3 rounded-[20px] bg-emerald-50/40 p-4 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="mt-6 grid gap-3 rounded-[20px] p-4 sm:grid-cols-2 xl:grid-cols-4" style={{ backgroundColor: brandTheme.accentSoft }}>
                 {[
                   [ShieldCheck, "Secure Payment"],
                   [Sparkles, "Instant Delivery"],
@@ -393,7 +407,7 @@ export default function CouponDetailsPage() {
                   [PackageCheck, "Best Price"]
                 ].map(([Icon, label]) => (
                   <div key={label} className="flex items-center gap-2 rounded-2xl bg-white/80 px-3 py-3 text-sm font-bold text-slate-600">
-                    <Icon className="h-4 w-4 text-emerald-600" />
+                    <Icon className="h-4 w-4" style={{ color: brandTheme.accent }} />
                     <span>{label}</span>
                   </div>
                 ))}
@@ -426,7 +440,7 @@ export default function CouponDetailsPage() {
                 <ol className="space-y-4">
                   {redeemSteps.map((step, index) => (
                     <li key={step} className="flex items-start gap-3 text-base leading-8 text-slate-600 sm:text-lg">
-                      <span className="mt-1 inline-flex h-7 w-7 items-center justify-center rounded-full bg-emerald-600 text-sm font-black text-white">
+                      <span className="mt-1 inline-flex h-7 w-7 items-center justify-center rounded-full text-sm font-black text-white" style={{ backgroundColor: brandTheme.accent }}>
                         {index + 1}
                       </span>
                       <span>{step}</span>
@@ -435,7 +449,7 @@ export default function CouponDetailsPage() {
                 </ol>
 
                 <div className="flex items-center justify-center rounded-[26px] bg-[radial-gradient(circle_at_top_left,rgba(34,197,94,0.14),transparent_30%),linear-gradient(180deg,#fbfffc_0%,#f1fff6_100%)] p-6">
-                  <ShoppingCart className="h-28 w-28 text-emerald-300" />
+                  <ShoppingCart className="h-28 w-28" style={{ color: brandTheme.accentBorder }} />
                 </div>
               </div>
             </section>
@@ -474,14 +488,14 @@ export default function CouponDetailsPage() {
                 {overviewItems.map(([Icon, label, value, extra], index) => (
                   <div key={label} className={index ? "border-t border-slate-100 pt-5" : ""}>
                     <div className="flex items-start gap-4">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-full" style={{ backgroundColor: brandTheme.accentSoft, color: brandTheme.accent }}>
                         <Icon className="h-5 w-5" />
                       </div>
                       <div>
                         <p className="text-sm font-medium text-slate-500">{label}</p>
                         <p className="mt-1 text-xl font-black text-slate-900">{value}</p>
                         {extra ? (
-                          <span className="mt-2 inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700 sm:text-sm">
+                          <span className="mt-2 inline-flex rounded-full px-3 py-1 text-xs font-black sm:text-sm" style={{ backgroundColor: brandTheme.accentSoft, color: brandTheme.accentText }}>
                             {extra}
                           </span>
                         ) : null}
@@ -493,7 +507,7 @@ export default function CouponDetailsPage() {
 
               <a
                 href="#"
-                className="mt-8 inline-flex w-full items-center justify-center gap-3 rounded-[18px] border border-emerald-300 px-5 py-4 text-lg font-black text-emerald-700 sm:text-xl"
+                className="mt-8 inline-flex w-full items-center justify-center gap-3 rounded-[18px] border px-5 py-4 text-lg font-black sm:text-xl" style={{ borderColor: brandTheme.accentBorder, color: brandTheme.accentText }}
               >
                 Visit {coupon.platformName}
                 <ArrowUpRight className="h-5 w-5" />
@@ -506,7 +520,7 @@ export default function CouponDetailsPage() {
                 If you face any issues while applying the coupon or with your order, our support team is available.
               </p>
 
-              <button type="button" className="mt-6 inline-flex w-full items-center justify-center gap-3 rounded-[18px] bg-emerald-50 px-5 py-4 text-lg font-black text-emerald-700 sm:text-xl">
+              <button type="button" className="mt-6 inline-flex w-full items-center justify-center gap-3 rounded-[18px] px-5 py-4 text-lg font-black sm:text-xl" style={{ backgroundColor: brandTheme.accentSoft, color: brandTheme.accentText }}>
                 <ShieldCheck className="h-5 w-5" />
                 Contact Support
               </button>
@@ -514,7 +528,7 @@ export default function CouponDetailsPage() {
               <div className="mt-6 space-y-6">
                 <div className="border-t border-slate-100 pt-6">
                   <div className="flex items-start gap-3">
-                    <div className="mt-1 flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                    <div className="mt-1 flex h-10 w-10 items-center justify-center rounded-full" style={{ backgroundColor: brandTheme.accentSoft, color: brandTheme.accent }}>
                       <Mail className="h-4 w-4" />
                     </div>
                     <div>
@@ -562,7 +576,7 @@ export default function CouponDetailsPage() {
 
             {feedbackStatus === "pending" ? (
               <div className="flex flex-wrap gap-3">
-                <button type="button" onClick={() => submitCouponFeedback(true)} disabled={feedbackSubmitting} className="rounded-[18px] bg-gradient-to-r from-[#16a34a] to-[#22c55e] px-6 py-4 text-base font-black text-white sm:text-lg">
+                <button type="button" onClick={() => submitCouponFeedback(true)} disabled={feedbackSubmitting} className="rounded-[18px] px-6 py-4 text-base font-black text-white sm:text-lg" style={{ backgroundImage: `linear-gradient(90deg, ${brandTheme.buttonStart} 0%, ${brandTheme.buttonEnd} 100%)` }}>
                   {feedbackSubmitting ? "Saving..." : "Yes, It Worked!"}
                 </button>
                 <button type="button" onClick={() => submitCouponFeedback(false)} disabled={feedbackSubmitting} className="rounded-[18px] border border-rose-300 bg-white px-6 py-4 text-base font-black text-rose-500 sm:text-lg">
@@ -570,7 +584,7 @@ export default function CouponDetailsPage() {
                 </button>
               </div>
             ) : (
-              <div className={`rounded-[18px] px-5 py-3 text-sm font-black ${feedbackStatus === "worked" ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-600"}`}>
+              <div className={`rounded-[18px] px-5 py-3 text-sm font-black ${feedbackStatus === "worked" ? "" : "bg-rose-50 text-rose-600"}`} style={feedbackStatus === "worked" ? { backgroundColor: brandTheme.accentSoft, color: brandTheme.accentText } : undefined}>
                 {feedbackStatus === "worked" ? "Marked as working" : "Reported as not working"}
               </div>
             )}

@@ -39,6 +39,12 @@ const themeByBrand = {
     tag: "bg-orange-50 text-orange-700",
     code: "border-orange-200 text-orange-700",
     button: "bg-gradient-to-r from-[#ea580c] to-[#fb923c] text-white"
+  },
+  mcdonalds: {
+    shell: "border-amber-100 bg-[radial-gradient(circle_at_top_left,rgba(251,191,36,0.14),transparent_28%),linear-gradient(180deg,#ffffff_0%,#fffdf7_100%)]",
+    tag: "bg-amber-50 text-amber-700",
+    code: "border-amber-200 text-amber-700",
+    button: "bg-gradient-to-r from-[#db0007] to-[#ff6b35] text-white"
   }
 };
 
@@ -113,7 +119,7 @@ export default function CouponCard({ coupon }) {
             <img
               src={coverImageUrl}
               alt={safeCoupon.title || safeCoupon.platformName}
-              className="h-32 w-full object-cover"
+              className="h-32 w-full bg-slate-50 p-2 object-contain"
               onError={() => setCoverImageFailed(true)}
             />
           ) : (

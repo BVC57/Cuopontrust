@@ -25,7 +25,6 @@ import ProtectedRoute from "../../components/ProtectedRoute";
 import SafetyPopup from "../../components/SafetyPopup";
 import UploadBox from "../../components/UploadBox";
 import api, { extractError } from "../../lib/api";
-import { brandCatalog } from "../../lib/brandCatalog";
 
 const defaultCategories = [
   "Electronics",
@@ -79,7 +78,6 @@ export default function SellPage() {
   const [previewUrl, setPreviewUrl] = useState("");
   
   // Controlled form states
-  const [platformName, setPlatformName] = useState("");
   const [title, setTitle] = useState("");
   const [couponCode, setCouponCode] = useState("");
   const [couponAmount, setCouponAmount] = useState("");
@@ -172,7 +170,6 @@ export default function SellPage() {
 
     // Create form data
     const formData = new FormData();
-    formData.append("platformName", platformName);
     formData.append("title", title);
     formData.append("couponCode", couponCode);
     formData.append("couponAmount", couponAmount);
@@ -252,27 +249,10 @@ export default function SellPage() {
             <form onSubmit={onSubmit} className="space-y-5">
               
               <div className="grid gap-4 sm:grid-cols-2">
-                {/* Platform Name */}
-                <label className="block">
-                  <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">Platform Name</span>
-                  <div className="flex items-center gap-3 bg-[#fafcfa] border border-slate-200 rounded-[16px] px-4 py-3.5 focus-within:border-[#16a34a] focus-within:ring-2 focus-within:ring-emerald-500/20 transition-all">
-                    <Tag className="h-5 w-5 text-slate-400 flex-shrink-0" />
-                    <select
-                      value={platformName}
-                      onChange={(e) => setPlatformName(e.target.value)}
-                      className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-slate-800 outline-none"
-                      required
-                      disabled={checking}
-                    >
-                      <option value="">Select company</option>
-                      {brandCatalog.map((brand) => (
-                        <option key={brand.key} value={brand.label}>
-                          {brand.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </label>
+                <div className="rounded-[16px] border border-emerald-100 bg-emerald-50/70 px-4 py-3.5 sm:col-span-2">
+                  <span className="mb-1 block text-xs font-bold uppercase tracking-wider text-emerald-700">Brand Detection</span>
+                  <p className="text-sm font-semibold text-emerald-900">Brand name is auto-detected from the uploaded coupon screenshot. You do not need to select the company manually.</p>
+                </div>
 
                 {/* Coupon Title */}
                 <label className="block">

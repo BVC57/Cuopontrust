@@ -11,7 +11,6 @@ const otpValidator = body("otp")
 const objectIdParam = (field) => param(field).isMongoId().withMessage(`${field} is invalid`);
 
 const sellCouponValidator = [
-  body("platformName").trim().notEmpty().withMessage("Platform name is required"),
   body("title").trim().notEmpty().withMessage("Title is required"),
   body("couponCode").trim().notEmpty().withMessage("Coupon code is required"),
   body("couponAmount").isFloat({ min: 0 }).withMessage("Coupon amount must be positive"),

@@ -103,29 +103,131 @@ Thank you for shopping with CouponX.
 
   const safe = Object.fromEntries(Object.entries(values).map(([key, value]) => [key, escapeHtml(value)]));
   const html = 
-`<div style="margin:0;background:#f4f7fb;padding:28px 12px;font-family:Arial,sans-serif;color:#0f172a;line-height:1.6">
-  <div style="max-width:680px;margin:0 auto;border:1px solid #dbe7ef;border-radius:24px;background:#ffffff;overflow:hidden;box-shadow:0 18px 44px rgba(15,23,42,0.08)">
-    <div style="padding:28px 30px;border-bottom:1px solid #e5edf3;background:#f8fffb">
-      <p style="margin:0 0 8px;color:#16a34a;font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase">CouponX</p>
-      <h1 style="margin:0;font-size:26px;line-height:1.25;color:#020617">Coupon Purchased Successfully</h1>
-      <p style="margin:14px 0 0;font-size:15px;color:#475569">Hello ${safe.buyerName}, your coupon purchase has been completed successfully.</p>
-    </div>
-    <div style="padding:26px 30px">
-      <table style="width:100%;border-collapse:collapse;font-size:14px">
-        <tr><td style="padding:9px 0;color:#64748b">Store</td><td style="padding:9px 0;text-align:right;font-weight:700">${safe.brandName}</td></tr>
-        <tr><td style="padding:9px 0;color:#64748b">Offer</td><td style="padding:9px 0;text-align:right;font-weight:700">${safe.offerTitle}</td></tr>
-        <tr><td style="padding:9px 0;color:#64748b">Coupon Value</td><td style="padding:9px 0;text-align:right;font-weight:700">Rs ${safe.couponValue}</td></tr>
-        <tr><td style="padding:9px 0;color:#64748b">Purchase Price</td><td style="padding:9px 0;text-align:right;font-weight:700">Rs ${safe.purchaseAmount}</td></tr>
-        <tr><td style="padding:9px 0;color:#64748b">Order ID</td><td style="padding:9px 0;text-align:right;font-weight:700">${safe.orderId}</td></tr>
-      </table>
-    </div>
-    <div style="margin:0 30px;padding:22px;border:1px dashed #16a34a;border-radius:18px;background:#f0fdf4;text-align:center">
-      <p style="margin:0 0 10px;font-size:13px;font-weight:800;color:#15803d;text-transform:uppercase;letter-spacing:.08em">Your Coupon Code</p>
-      <div style="display:inline-block;padding:12px 18px;border-radius:14px;background:#ffffff;color:#020617;font-size:24px;font-weight:900;letter-spacing:.08em">${safe.couponCode}</div>
-      <p style="margin:12px 0 0;color:#475569;font-size:14px">Valid Until: <strong>${safe.expiryDate}</strong></p>
-    </div>
-  </div>
-</div>`;
+`<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Coupon Purchased Successfully</title>
+    <style>
+      body, table, td, p, a {
+        font-family: Arial, sans-serif;
+      }
+      @media only screen and (max-width: 640px) {
+        .email-shell {
+          padding: 14px !important;
+        }
+        .email-card {
+          border-radius: 18px !important;
+        }
+        .email-section {
+          padding: 20px 16px !important;
+        }
+        .email-title {
+          font-size: 22px !important;
+          line-height: 30px !important;
+        }
+        .detail-row {
+          display: block !important;
+          width: 100% !important;
+          padding: 0 0 14px !important;
+        }
+        .detail-label {
+          display: block !important;
+          width: 100% !important;
+          padding: 0 !important;
+          text-align: left !important;
+          font-size: 13px !important;
+        }
+        .detail-value {
+          display: block !important;
+          width: 100% !important;
+          padding: 4px 0 0 !important;
+          text-align: left !important;
+          font-size: 16px !important;
+          line-height: 24px !important;
+          word-break: break-word !important;
+        }
+        .coupon-wrap {
+          margin: 0 16px 18px !important;
+          padding: 18px 14px !important;
+        }
+        .coupon-code {
+          display: block !important;
+          width: 100% !important;
+          box-sizing: border-box !important;
+          padding: 14px 12px !important;
+          font-size: 18px !important;
+          line-height: 26px !important;
+          letter-spacing: 0.04em !important;
+          word-break: break-all !important;
+        }
+      }
+    </style>
+  </head>
+  <body style="margin:0;background:#f4f7fb;padding:0">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f4f7fb">
+      <tr>
+        <td class="email-shell" style="padding:28px 12px">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:680px;margin:0 auto">
+            <tr>
+              <td class="email-card" style="border:1px solid #dbe7ef;border-radius:24px;background:#ffffff;overflow:hidden;box-shadow:0 18px 44px rgba(15,23,42,0.08)">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                  <tr>
+                    <td class="email-section" style="padding:28px 30px;border-bottom:1px solid #e5edf3;background:#f8fffb">
+                      <p style="margin:0 0 8px;color:#16a34a;font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase">CouponX</p>
+                      <p class="email-title" style="margin:0;font-size:26px;line-height:34px;font-weight:800;color:#020617">Coupon Purchased Successfully</p>
+                      <p style="margin:14px 0 0;font-size:15px;line-height:24px;color:#475569">Hello ${safe.buyerName}, your coupon purchase has been completed successfully.</p>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="email-section" style="padding:26px 30px">
+                      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="font-size:14px">
+                        <tr>
+                          <td class="detail-row detail-label" style="padding:0 0 14px;color:#64748b;vertical-align:top">Store</td>
+                          <td class="detail-row detail-value" style="padding:0 0 14px;text-align:right;font-weight:700;color:#0f172a">${safe.brandName}</td>
+                        </tr>
+                        <tr>
+                          <td class="detail-row detail-label" style="padding:0 0 14px;color:#64748b;vertical-align:top">Offer</td>
+                          <td class="detail-row detail-value" style="padding:0 0 14px;text-align:right;font-weight:700;color:#0f172a">${safe.offerTitle}</td>
+                        </tr>
+                        <tr>
+                          <td class="detail-row detail-label" style="padding:0 0 14px;color:#64748b;vertical-align:top">Coupon Value</td>
+                          <td class="detail-row detail-value" style="padding:0 0 14px;text-align:right;font-weight:700;color:#0f172a">Rs ${safe.couponValue}</td>
+                        </tr>
+                        <tr>
+                          <td class="detail-row detail-label" style="padding:0 0 14px;color:#64748b;vertical-align:top">Purchase Price</td>
+                          <td class="detail-row detail-value" style="padding:0 0 14px;text-align:right;font-weight:700;color:#0f172a">Rs ${safe.purchaseAmount}</td>
+                        </tr>
+                        <tr>
+                          <td class="detail-row detail-label" style="padding:0;color:#64748b;vertical-align:top">Order ID</td>
+                          <td class="detail-row detail-value" style="padding:0;text-align:right;font-weight:700;color:#0f172a;word-break:break-word">${safe.orderId}</td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                        <tr>
+                          <td class="coupon-wrap" style="margin:0 30px 24px;padding:22px;border:1px dashed #16a34a;border-radius:18px;background:#f0fdf4;text-align:center;display:block">
+                            <p style="margin:0 0 10px;font-size:13px;font-weight:800;color:#15803d;text-transform:uppercase;letter-spacing:.08em">Your Coupon Code</p>
+                            <div class="coupon-code" style="display:inline-block;max-width:100%;padding:12px 18px;border-radius:14px;background:#ffffff;color:#020617;font-size:24px;line-height:32px;font-weight:900;letter-spacing:.08em;word-break:break-all;box-sizing:border-box">${safe.couponCode}</div>
+                            <p style="margin:12px 0 0;color:#475569;font-size:14px;line-height:22px">Valid Until: <strong>${safe.expiryDate}</strong></p>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
 
   return { subject: "Coupon Purchased Successfully", text, html };
 };

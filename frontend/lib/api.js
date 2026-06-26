@@ -21,7 +21,7 @@ export const resolveUploadUrl = (filePath) => {
   if (!filePath) {
     return "";
   }
-  if (/^https?:\/\//i.test(filePath)) {
+  if (/^(https?:\/\/|data:|blob:)/i.test(filePath)) {
     return filePath;
   }
 

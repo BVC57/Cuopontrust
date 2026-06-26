@@ -2,6 +2,7 @@ const path = require("path");
 const { recognize } = require("tesseract.js");
 const { normalizeDate } = require("../utils/dateNormalize");
 const { normalizeCouponCode, normalizeText, percentSimilarity } = require("../utils/textNormalize");
+const { detectBrandFromText } = require("../constants/brandCatalog");
 
 const OCR_TEXT_LIMIT = 260;
 
@@ -251,6 +252,7 @@ const verifyCouponWithAI = async ({ imagePath, userInput }) => {
   const amountMatchedValue = buildAmountCandidates(userInput.couponAmount).find((candidate) =>
     collapsedVisibleText.includes(collapseAlphaNumeric(candidate))
   );
+  const detectedBrand = detectBrandFromText(ocrResult.text);
   const verificationPolicy = buildVerificationPolicy(userInput, detectedExpiryDates, amountMatchedValue);
 
   let tamperRisk = computeTamperRisk(imagePath, userInput);
@@ -269,7 +271,8 @@ const verifyCouponWithAI = async ({ imagePath, userInput }) => {
   const ocrReadable = ocrResult.readable;
 
   const extractedData = {
-    platformName: userInput.platformName,
+    platformName: detectedBrand?.label || "",
+    platformBrandKey: detectedBrand?.key || "",
     couponCode: couponCodeMatchedInImage ? userInput.couponCode : couponCodeCheck.extractedCode,
     couponAmount: amountMatchedInImage ? Number(userInput.couponAmount) : null,
     currency: amountMatchedInImage ? userInput.currency : "",
@@ -285,6 +288,9 @@ const verifyCouponWithAI = async ({ imagePath, userInput }) => {
   if (!ocrReadable) {
     failureReasons.push("Screenshot text could not be read clearly. Upload a sharper image.");
   }
+  if (!detectedBrand) {
+    failureReasons.push("Brand name could not be detected from the screenshot. Upload a screenshot from a supported brand.");
+  }
   if (verificationPolicy.requiresCodeMatch && !couponCodeMatchedInImage) {
     failureReasons.push(`Coupon code is not clearly visible in the uploaded screenshot. Expected ${userInput.couponCode}.`);
   }
@@ -296,6 +302,7 @@ const verifyCouponWithAI = async ({ imagePath, userInput }) => {
   }
 
   const weightedChecks = [
+    { required: true, matched: Boolean(detectedBrand), weight: 10 },
     { required: true, matched: ocrReadable, weight: 10 },
     { required: verificationPolicy.requiresCodeMatch, matched: couponCodeMatchedInImage, weight: 40 },
     { required: verificationPolicy.requiresExpiryMatch, matched: expiryDateMatchedInImage, weight: 20 },
@@ -310,6 +317,7 @@ const verifyCouponWithAI = async ({ imagePath, userInput }) => {
   const matchScore = possibleScore > 0 ? Math.round((earnedScore / possibleScore) * 100) : 0;
 
   const passed =
+    Boolean(detectedBrand) &&
     ocrReadable &&
     couponCodeMatch &&
     expiryDateMatch &&
@@ -324,6 +332,9 @@ const verifyCouponWithAI = async ({ imagePath, userInput }) => {
     screenshotTamperRisk: tamperRisk,
     failureReasons,
     checks: {
+      brandDetected: Boolean(detectedBrand),
+      detectedBrandKey: detectedBrand?.key || "",
+      detectedBrandName: detectedBrand?.label || "",
       ocrReadable,
       couponCodeMatch,
       couponCodeMatchedInImage,

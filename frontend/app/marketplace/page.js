@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   Armchair,
@@ -101,7 +101,7 @@ const sanitizeCoupons = (items) =>
     ? items.filter((item) => item && typeof item === "object" && item._id)
     : [];
 
-export default function MarketplacePage() {
+function MarketplacePageContent() {
   const searchParams = useSearchParams();
   const initialCategory = normalizeCouponCategory(searchParams.get("category") || "All");
   const [coupons, setCoupons] = useState([]);
@@ -547,5 +547,20 @@ function GridIcon() {
       <span className="h-1.5 w-1.5 rounded-full bg-current" />
       <span className="h-1.5 w-1.5 rounded-full bg-current" />
     </span>
+  );
+}
+
+
+export default function MarketplacePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="mx-auto max-w-[1440px] px-4 py-8 sm:px-6 lg:px-8">
+          <LoadingSpinner label="Loading marketplace..." />
+        </div>
+      }
+    >
+      <MarketplacePageContent />
+    </Suspense>
   );
 }
