@@ -109,6 +109,7 @@ function MarketplacePageContent() {
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState(initialCategory || "All");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedStore, setSelectedStore] = useState("");
   const [activeTab, setActiveTab] = useState("All");
   const [sortBy, setSortBy] = useState("Popular");
@@ -119,23 +120,42 @@ function MarketplacePageContent() {
   }, [initialCategory]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(true);
-      api.get("/coupons", {
-        params: {
-          search: search || undefined,
-          category: selectedCategory !== "All" ? selectedCategory : undefined,
-          platformName: selectedStore || undefined,
-          sort: getSortValue(sortBy)
+    const timer = setTimeout(() => setDebouncedSearch(search.trim()), 400);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+
+    api.get("/coupons", {
+      params: {
+        search: debouncedSearch || undefined,
+        category: selectedCategory !== "All" ? selectedCategory : undefined,
+        platformName: selectedStore || undefined,
+        sort: getSortValue(sortBy)
+      }
+    })
+      .then(({ data }) => {
+        if (active) {
+          setCoupons(sanitizeCoupons(data.coupons));
         }
       })
-        .then(({ data }) => setCoupons(sanitizeCoupons(data.coupons)))
-        .catch(() => setCoupons([]))
-        .finally(() => setLoading(false));
-    }, 250);
+      .catch(() => {
+        if (active) {
+          setCoupons([]);
+        }
+      })
+      .finally(() => {
+        if (active) {
+          setLoading(false);
+        }
+      });
 
-    return () => clearTimeout(timer);
-  }, [search, selectedCategory, selectedStore, sortBy]);
+    return () => {
+      active = false;
+    };
+  }, [debouncedSearch, selectedCategory, selectedStore, sortBy]);
 
   const categories = useMemo(() => {
     const mapped = coupons.flatMap((coupon) => (coupon.categories || []).map(normalizeCouponCategory));
@@ -372,6 +392,13 @@ function MarketplacePageContent() {
 
             
 
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+              <Link href="/sellers" className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-white px-5 py-3 text-sm font-black text-emerald-700 shadow-[0_12px_24px_rgba(15,23,42,0.05)]">
+                <Users className="h-4 w-4" />
+                Search Seller Profiles
+              </Link>
+            </div>
+
             <div className="mt-5 rounded-[30px] border border-white bg-white p-5 shadow-[0_16px_30px_rgba(15,23,42,0.06)]">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
@@ -564,3 +591,6 @@ export default function MarketplacePage() {
     </Suspense>
   );
 }
+
+
+

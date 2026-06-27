@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowUpRight,
@@ -216,6 +217,8 @@ export default function CouponDetailsPage() {
     : 0;
   const redeemSteps = buildRedeemSteps(coupon?.platformName || "the store");
   const heroImageUrl = !heroImageFailed ? resolveUploadUrl(coupon?.coverImagePath) : "";
+  const sellerName = coupon?.sellerId?.name || "Unknown Seller";
+  const sellerProfileHref = coupon?.sellerId?._id ? `/sellers/${coupon.sellerId._id}` : "/sellers";
   const shouldShowFeedbackBanner = ownedCoupon && revealedCoupon?.couponCode && purchaseTransactionId;
 
   if (loading) {
@@ -294,9 +297,7 @@ export default function CouponDetailsPage() {
               <h1 className="app-main-heading mt-4 uppercase text-slate-950">
                 {coupon.title}
               </h1>
-              <p className="mt-2 text-xl font-medium text-slate-500 sm:text-[30px] sm:leading-[1.2]">On {coupon.platformName} purchases</p>
-
-              <div className="mt-4 flex flex-wrap items-center gap-3">
+              <p className="mt-2 text-xl font-medium text-slate-500 sm:text-[30px] sm:leading-[1.2]">On {coupon.platformName} purchases</p>              <div className="mt-4 flex flex-wrap items-center gap-3">
                 {(coupon.categories || []).slice(0, 1).map((category) => (
                   <span key={category} className="rounded-full px-4 py-1.5 text-xs font-black uppercase tracking-[0.08em] sm:text-sm" style={{ backgroundColor: brandTheme.accentSoft, color: brandTheme.accentText }}>
                     {category}
@@ -306,6 +307,13 @@ export default function CouponDetailsPage() {
                   <MapPin className="h-4 w-4" />
                   {coupon.country}
                 </span>
+              </div>
+
+              <div className="mt-4 flex flex-wrap items-center gap-3 text-sm font-semibold text-slate-500">
+                <span>Sold by {sellerName}</span>
+                <Link href={sellerProfileHref} className="text-emerald-700 hover:text-emerald-800">
+                  View seller profile
+                </Link>
               </div>
             </div>
 
@@ -594,3 +602,7 @@ export default function CouponDetailsPage() {
     </div>
   );
 }
+
+
+
+

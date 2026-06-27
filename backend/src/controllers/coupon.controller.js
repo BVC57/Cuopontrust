@@ -186,7 +186,7 @@ const listCoupons = asyncHandler(async (req, res) => {
   }
 
   let query = Coupon.find(filters)
-    .populate("sellerId", "name trustScore country")
+    .populate("sellerId", "name trustScore country avatar accountStatus totalSales createdAt successfulCouponFeedbackCount")
     .sort({ createdAt: -1 });
 
   const sort = req.query.sort || "latest";
@@ -213,7 +213,7 @@ const listCoupons = asyncHandler(async (req, res) => {
 });
 
 const getCouponById = asyncHandler(async (req, res) => {
-  const coupon = await Coupon.findById(req.params.id).populate("sellerId", "name trustScore country");
+  const coupon = await Coupon.findById(req.params.id).populate("sellerId", "name trustScore country avatar accountStatus totalSales createdAt successfulCouponFeedbackCount");
   if (!coupon) {
     return sendResponse(res, 404, "Coupon not found");
   }
@@ -490,3 +490,4 @@ module.exports = {
   deleteCoupon,
   revealCouponCodeForTransaction
 };
+

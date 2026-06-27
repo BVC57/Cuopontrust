@@ -7,6 +7,7 @@ const {
   createUser,
   banUser,
   unbanUser,
+  resetUserAccount,
   deleteUser,
   getCoupons,
   deleteCoupon,
@@ -29,6 +30,7 @@ const {
   updateContactIssue,
   deleteContactIssue,
   getRevenue,
+  getAdminSettings,
   updateSettings
 } = require("../controllers/admin.controller");
 const { listBlogs, createBlog, updateBlog, deleteBlog } = require("../controllers/blog.controller");
@@ -41,6 +43,7 @@ router.get("/users", getUsers);
 router.post("/users", createUser);
 router.put("/users/:id/ban", banUser);
 router.put("/users/:id/unban", unbanUser);
+router.put("/users/:id/reset-account", resetUserAccount);
 router.delete("/users/:id", deleteUser);
 router.get("/coupons", getCoupons);
 router.delete("/coupons/:id", deleteCoupon);
@@ -63,6 +66,7 @@ router.get("/contact-issues", getContactIssues);
 router.put("/contact-issues/:id", updateContactIssue);
 router.delete("/contact-issues/:id", deleteContactIssue);
 router.get("/revenue", getRevenue);
+router.get("/settings", getAdminSettings);
 router.put("/settings", updateSettings);
 router.get("/blogs", listBlogs);
 router.post("/blogs", createBlog);
@@ -70,3 +74,6 @@ router.put("/blogs/:id", updateBlog);
 router.delete("/blogs/:id", deleteBlog);
 
 module.exports = router;
+
+
+

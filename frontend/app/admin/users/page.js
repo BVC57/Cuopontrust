@@ -101,6 +101,16 @@ export default function AdminUsersPage() {
     }
   };
 
+  const resetUserAccount = async (id) => {
+    try {
+      await api.put(`/super-admin/users/${id}/reset-account`);
+      toast.success("User trust score reset to 100 and account unbanned");
+      loadUsers();
+    } catch (error) {
+      toast.error(extractError(error));
+    }
+  };
+
   const deleteUser = async (id) => {
     try {
       await api.delete(`/super-admin/users/${id}`);
@@ -232,6 +242,7 @@ export default function AdminUsersPage() {
               <div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Role</p><p className="mt-2 text-sm font-bold text-slate-900">{selectedUser.role || (selectedUser.totalSales > 0 ? "seller" : "buyer")}</p></div>
               <div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Status</p><div className="mt-2"><AdminStatusChip status={selectedUser.accountStatus || "active"} /></div></div>
               <div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Trust Score</p><p className="mt-2 text-sm font-bold text-slate-900">{formatCompactNumber(selectedUser.trustScore || 0)}</p></div>
+              <div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Admin Reset</p><button onClick={() => resetUserAccount(selectedUser._id)} className="mt-2 rounded-2xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white">Reset trust to 100 and unban</button></div>
               <div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Last Active</p><p className="mt-2 text-sm font-bold text-slate-900">{formatDateTime(selectedUser.lastLogin)}</p></div>
               <div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Country</p><p className="mt-2 text-sm font-bold text-slate-900">{selectedUser.country || "India"}</p></div>
               <div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Currency</p><p className="mt-2 text-sm font-bold text-slate-900">{selectedUser.currency || "INR"}</p></div>
@@ -244,3 +255,5 @@ export default function AdminUsersPage() {
     </AdminPageShell>
   );
 }
+
+

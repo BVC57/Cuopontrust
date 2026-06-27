@@ -9,12 +9,7 @@ import { AdminDetailModal, AdminEmptyState, AdminGhostButton, AdminMetricCard, A
 import api from "../../../lib/api";
 import { resolveBrand } from "../../../lib/brandCatalog";
 
-const reasonLabel = (coupon) => {
-  if (coupon.status === "expired") return "Expired Coupon";
-  if (coupon.screenshotTamperRisk === "critical") return "Terms Violation";
-  if ((coupon.aiMatchScore || 0) < 50) return "AI Confidence Low";
-  return "Invalid Code Format";
-};
+const reasonLabel = (coupon) => coupon.failureReason || "Coupon failed AI verification";
 
 export default function AdminAiFailedPage() {
   const [coupons, setCoupons] = useState([]);
@@ -82,7 +77,7 @@ export default function AdminAiFailedPage() {
             <table className="min-w-full">
               <thead className="bg-slate-50">
                 <tr>
-                  {["S.No", "Title", "Brand", "Category", "Failure Reason", "Detected On", "Status", "Actions"].map((label) => (
+                  {["S.No", "Title", "Brand", "Category", "Failure Reason", "Seller", "Detected On", "Status", "Actions"].map((label) => (
                     <th key={label} className="px-5 py-4 text-left text-xs font-black uppercase tracking-[0.18em] text-slate-400">{label}</th>
                   ))}
                 </tr>
@@ -109,6 +104,10 @@ export default function AdminAiFailedPage() {
                       <td className="px-5 py-4">
                         <p className="text-sm font-bold text-slate-900">{reasonLabel(coupon)}</p>
                         <p className="text-xs text-slate-400">Risk: {coupon.screenshotTamperRisk}</p>
+                      </td>
+                      <td className="px-5 py-4 text-sm font-medium text-slate-600">
+                        <p className="font-bold text-slate-900">{coupon.sellerName || "Unknown Seller"}</p>
+                        <p className="text-xs text-slate-400">{coupon.sellerEmail || ""}</p>
                       </td>
                       <td className="px-5 py-4 text-sm font-medium text-slate-600">{formatDate(coupon.createdAt)}</td>
                       <td className="px-5 py-4"><AdminStatusChip status={coupon.screenshotTamperRisk === "critical" ? "auto_removed" : "needs_review"} /></td>
@@ -163,6 +162,7 @@ export default function AdminAiFailedPage() {
               <div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Code</p><p className="mt-2 text-sm font-bold text-slate-900">{selectedCoupon.code || "N/A"}</p></div>
               <div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Category</p><p className="mt-2 text-sm font-bold text-slate-900">{selectedCoupon.categories?.join(", ") || "General"}</p></div>
               <div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Failure Reason</p><p className="mt-2 text-sm font-bold text-slate-900">{reasonLabel(selectedCoupon)}</p></div>
+              <div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Seller</p><p className="mt-2 text-sm font-bold text-slate-900">{selectedCoupon.sellerName || "Unknown Seller"}</p><p className="mt-1 text-xs text-slate-400">{selectedCoupon.sellerEmail || ""}</p></div>
               <div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Risk</p><p className="mt-2 text-sm font-bold capitalize text-slate-900">{selectedCoupon.screenshotTamperRisk || "unknown"}</p></div>
               <div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Status</p><div className="mt-2"><AdminStatusChip status={selectedCoupon.screenshotTamperRisk === "critical" ? "auto_removed" : "needs_review"} /></div></div>
               <div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Detected On</p><p className="mt-2 text-sm font-bold text-slate-900">{formatDate(selectedCoupon.createdAt)}</p></div>
@@ -173,3 +173,6 @@ export default function AdminAiFailedPage() {
     </AdminPageShell>
   );
 }
+
+
+

@@ -8,10 +8,15 @@ const {
   getTrustScore,
   getNotifications,
   markNotificationRead,
-  markAllNotificationsRead
+  markAllNotificationsRead,
+  searchPublicSellers,
+  getPublicSellerProfile
 } = require("../controllers/user.controller");
 
 const router = express.Router();
+
+router.get("/public/sellers", searchPublicSellers);
+router.get("/public/sellers/:id", getPublicSellerProfile);
 
 router.use(authMiddleware);
 router.get("/profile", getProfile);

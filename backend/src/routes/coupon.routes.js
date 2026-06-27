@@ -15,11 +15,10 @@ const {
 const router = express.Router();
 
 router.get("/", listCoupons);
+router.get("/my/listed", authMiddleware, getMyListedCoupons);
+router.get("/my/purchased", authMiddleware, getMyPurchasedCoupons);
+router.post("/sell", authMiddleware, bannedMiddleware, couponUpload, sellCouponValidator, sellCoupon);
+router.delete("/:id", authMiddleware, bannedMiddleware, deleteCoupon);
 router.get("/:id", getCouponById);
-router.use(authMiddleware);
-router.post("/sell", bannedMiddleware, couponUpload, sellCouponValidator, sellCoupon);
-router.get("/my/listed", getMyListedCoupons);
-router.get("/my/purchased", getMyPurchasedCoupons);
-router.delete("/:id", bannedMiddleware, deleteCoupon);
 
 module.exports = router;

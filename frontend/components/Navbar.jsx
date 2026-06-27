@@ -11,6 +11,7 @@ import useCurrentPath from "../hooks/useCurrentPath";
 const navLinks = [
   { href: "/", label: "Home" },
   { href: "/marketplace", label: "Marketplace" },
+  { href: "/sellers", label: "Search Sellers" },
   { href: "/how-it-works", label: "How It Works" },
   { href: "/about-us", label: "About Us" },
   { href: "/blog", label: "Blog" }
@@ -103,7 +104,7 @@ export default function Navbar() {
   }, [user]);
 
   const profileLinks = [
-    { href: user?.role === "super_admin" ? "/admin/dashboard" : "/profile", label: "My Profile", icon: UserCircle2 },
+    { href: user?.role === "super_admin" ? "/admin/dashboard" : "/profile/details", label: "My Profile", icon: UserCircle2 },
     { href: "/orders", label: "My Orders", icon: Package },
     { href: "/listed-coupons", label: "Listed Coupons", icon: ListChecks },
     { href: "/payments", label: "Payments", icon: CreditCard },
@@ -346,3 +347,6 @@ export default function Navbar() {
     </header>
   );
 }
+
+
+

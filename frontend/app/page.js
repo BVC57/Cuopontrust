@@ -847,9 +847,14 @@ export default function HomePage() {
         <div className="text-center">
           <p className="text-4xl font-black tracking-tight sm:text-5xl">{marketingContent.footerTagline}</p>
           <p className="mt-3 max-w-3xl text-sm text-emerald-50">{marketingContent.mission}</p>
-          <div className="mt-6 inline-flex rounded-2xl bg-white px-6 py-3 text-sm font-black text-slate-900">
+          <a
+            href="https://expo.dev/accounts/bvc57/projects/couponx-mobile/builds/baeb8787-f15b-45f9-a1e3-d6d7e5768615"
+            target="_blank"
+            rel="noreferrer"
+            className="mt-6 inline-flex rounded-2xl bg-white px-6 py-3 text-sm font-black text-slate-900 transition-transform duration-200 hover:-translate-y-0.5 hover:bg-slate-100"
+          >
             Get it on Google Play
-          </div>
+          </a>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-6 text-sm font-semibold text-emerald-50">
             <span>Easy to Use</span>
             <span>100% Secure</span>

@@ -34,15 +34,59 @@ const buildLastNDays = (days) =>
     };
   });
 
+const defaultAdminSettings = {
+  siteName: "CouponX",
+  siteTagline: "Save More, Shop More!",
+  siteUrl: "https://www.couponx.com",
+  adminEmail: "superadmin@couponx.com",
+  businessName: "CouponX Private Limited",
+  businessEmail: "support@couponx.com",
+  businessPhone: "+91 98765 43210",
+  businessAddress: "123, Business Street, Sector 62, Noida, Uttar Pradesh - 201301, India",
+  supportEmail: "help@couponx.com",
+  supportPhone: "+91 98765 00000",
+  emailProvider: "smtp",
+  smtpHost: "smtp.gmail.com",
+  smtpPort: 587,
+  smtpUsername: "",
+  smtpPassword: "",
+  smtpFromName: "CouponX",
+  smtpFromEmail: "noreply@couponx.com",
+  enableEmailNotifications: true,
+  enableOrderEmails: true,
+  enableMarketingEmails: false,
+  paymentGateway: "razorpay",
+  currencyCode: "INR",
+  razorpayKeyId: "",
+  razorpayKeySecret: "",
+  taxPercent: 18,
+  minimumWithdrawalAmount: 100,
+  autoReleasePayouts: false,
+  commissionPercent: 10,
+  minimumTrustScore: 40,
+  aiMatchThreshold: 90,
+  maxFreeListings: 10,
+  withdrawalFee: 2,
+  allowRegistration: true,
+  enableRecaptcha: true,
+  requireEmailVerification: true,
+  passwordMinLength: 8,
+  maxLoginAttempts: 5,
+  sessionTimeoutMinutes: 120,
+  adminNewUserAlerts: true,
+  adminCouponAlerts: true,
+  adminDisputeAlerts: true,
+  adminWithdrawalAlerts: true,
+  sendPushNotifications: false,
+  sendEmailSummaries: true,
+  summaryFrequency: "daily"
+};
+
+const settingsFields = Object.keys(defaultAdminSettings);
+
 const getSettings = async () =>
   (await AdminSetting.findOne()) ||
-  AdminSetting.create({
-    commissionPercent: 10,
-    minimumTrustScore: 40,
-    aiMatchThreshold: 90,
-    maxFreeListings: 10,
-    withdrawalFee: 2
-  });
+  AdminSetting.create(defaultAdminSettings);
 
 const createAdminTrustHistoryEntry = async (user, reason) => {
   await TrustHistory.create({
@@ -52,6 +96,56 @@ const createAdminTrustHistoryEntry = async (user, reason) => {
     change: 0,
     reason
   });
+};
+
+const normalizeReportCategories = (input) => {
+  if (Array.isArray(input)) {
+    return input.filter(Boolean);
+  }
+
+  if (typeof input === "string" && input.trim()) {
+    try {
+      const parsed = JSON.parse(input);
+      if (Array.isArray(parsed)) {
+        return parsed.filter(Boolean);
+      }
+    } catch {
+      return input
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean);
+    }
+  }
+
+  return [];
+};
+
+const buildAiFailedReport = (report) => {
+  const input = report.userInputData && typeof report.userInputData === "object" ? report.userInputData : {};
+  const aiData = report.aiData && typeof report.aiData === "object" ? report.aiData : {};
+  const extractedData = aiData.extractedData && typeof aiData.extractedData === "object" ? aiData.extractedData : {};
+  const failureReasons = Array.isArray(aiData.failureReasons) ? aiData.failureReasons.filter(Boolean) : [];
+  const coupon = report.couponId && typeof report.couponId === "object" ? report.couponId : null;
+  const seller = report.userId && typeof report.userId === "object" ? report.userId : null;
+
+  return {
+    _id: report._id,
+    couponId: coupon?._id || null,
+    sellerId: seller?._id || null,
+    sellerName: seller?.name || "Unknown Seller",
+    sellerEmail: seller?.email || "",
+    title: coupon?.title || input.title || "Failed coupon upload",
+    platformName: coupon?.platformName || input.platformName || extractedData.platformName || "Unknown Platform",
+    platformBrandKey: coupon?.platformBrandKey || extractedData.platformBrandKey || "",
+    categories: coupon?.categories?.length ? coupon.categories : normalizeReportCategories(input.categories),
+    code: input.couponCode || extractedData.couponCode || "",
+    reportType: report.type,
+    failureReason: failureReasons[0] || report.description || "Coupon failed AI verification",
+    screenshotTamperRisk: aiData.screenshotTamperRisk || report.riskLevel || "medium",
+    aiMatchScore: Number(aiData.matchScore || 0),
+    createdAt: report.createdAt,
+    status: report.riskLevel === "critical" ? "auto_removed" : "needs_review"
+  };
 };
 
 const getDashboard = asyncHandler(async (req, res) => {
@@ -301,6 +395,40 @@ const unbanUser = asyncHandler(async (req, res) => {
   return sendResponse(res, 200, "User unbanned", { user });
 });
 
+const resetUserAccount = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.params.id);
+  if (!user) {
+    return sendResponse(res, 404, "User not found");
+  }
+
+  const oldScore = Number(user.trustScore || 0);
+  const oldStatus = user.accountStatus || "active";
+
+  user.trustScore = 100;
+  user.accountStatus = "active";
+  user.bannedAt = null;
+  await user.save();
+
+  await TrustHistory.create({
+    userId: user._id,
+    oldScore,
+    newScore: user.trustScore,
+    change: user.trustScore - oldScore,
+    reason: `Admin account reset from ${oldStatus} to active`
+  });
+
+  await createNotification({
+    userId: user._id,
+    type: "account_restored",
+    title: "Account restored by admin",
+    message: "Your account has been unbanned and your trust score has been reset to 100.",
+    link: "/trust-score",
+    metadata: { oldScore, newScore: user.trustScore }
+  });
+
+  return sendResponse(res, 200, "User account reset", { user });
+});
+
 const deleteUser = asyncHandler(async (req, res) => {
   const user = await User.findById(req.params.id);
   if (!user) {
@@ -343,7 +471,16 @@ const deleteCoupon = asyncHandler(async (req, res) => {
 });
 
 const getFailedCoupons = asyncHandler(async (req, res) => {
-  const coupons = await Coupon.find({ status: "ai_failed" }).populate("sellerId", "name email").sort({ createdAt: -1 });
+  const reports = await FraudReport.find({
+    type: {
+      $in: ["ai_mismatch", "manipulated_screenshot", "expired_coupon", "duplicate_coupon", "suspicious_value"]
+    }
+  })
+    .populate("userId", "name email")
+    .populate("couponId", "title platformName platformBrandKey categories")
+    .sort({ createdAt: -1 });
+
+  const coupons = reports.map(buildAiFailedReport);
   return sendResponse(res, 200, "AI failed coupons fetched", { coupons });
 });
 
@@ -590,9 +727,14 @@ const getRevenue = asyncHandler(async (req, res) => {
   return sendResponse(res, 200, "Revenue fetched", { revenue });
 });
 
+const getAdminSettings = asyncHandler(async (req, res) => {
+  const settings = await getSettings();
+  return sendResponse(res, 200, "Settings fetched", { settings });
+});
+
 const updateSettings = asyncHandler(async (req, res) => {
   const settings = await getSettings();
-  ["commissionPercent", "minimumTrustScore", "aiMatchThreshold", "maxFreeListings", "withdrawalFee"].forEach((field) => {
+  settingsFields.forEach((field) => {
     if (req.body[field] !== undefined) {
       settings[field] = req.body[field];
     }
@@ -607,6 +749,7 @@ module.exports = {
   createUser,
   banUser,
   unbanUser,
+  resetUserAccount,
   deleteUser,
   getCoupons,
   deleteCoupon,
@@ -629,5 +772,18 @@ module.exports = {
   updateContactIssue,
   deleteContactIssue,
   getRevenue,
+  getAdminSettings,
   updateSettings
 };
+
+
+
+
+
+
+
+
+
+
+
+

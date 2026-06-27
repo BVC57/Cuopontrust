@@ -98,6 +98,8 @@ export default function CouponCard({ coupon }) {
   const expiryLabel = safeCoupon.expiryDate ? formatDate(safeCoupon.expiryDate) : "Limited time";
   const totalSavings = Math.max(0, Number(safeCoupon.couponAmount || 0) - Number(safeCoupon.sellingPrice || 0));
   const coverImageUrl = !coverImageFailed ? resolveUploadUrl(safeCoupon.coverImagePath) : "";
+  const sellerName = safeCoupon?.sellerId?.name || "Unknown Seller";
+  const sellerProfileHref = safeCoupon?.sellerId?._id ? `/sellers/${safeCoupon.sellerId._id}` : "/sellers";
 
   return (
     <div className={`group flex h-full min-h-[352px] flex-col rounded-[24px] border p-4 shadow-[0_18px_34px_rgba(15,23,42,0.05)] transition hover:-translate-y-1 hover:shadow-[0_24px_44px_rgba(15,23,42,0.10)] ${theme.shell}`}>
@@ -188,11 +190,17 @@ export default function CouponCard({ coupon }) {
           )}
         </div>
 
-        <div className="mt-auto flex items-center justify-between pt-5 text-xs font-semibold text-slate-500">
+        <div className="mt-auto flex items-center justify-between gap-3 pt-5 text-xs font-semibold text-slate-500">
           <span>Valid Till {expiryLabel}</span>
-          <span>Verified deal</span>
+          <Link href={sellerProfileHref} className="truncate text-emerald-700 hover:text-emerald-800">
+            Sold by {sellerName}
+          </Link>
         </div>
       </div>
     </div>
   );
 }
+
+
+
+
