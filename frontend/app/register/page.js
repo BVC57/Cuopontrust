@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { ArrowRight, Mail, ShieldCheck, User, Users } from "lucide-react";
 import toast from "react-hot-toast";
@@ -25,7 +25,7 @@ const CouponXLogo = () => (
   </div>
 );
 
-export default function RegisterPage() {
+function RegisterPageContent() {
   const searchParams = useSearchParams();
   const [mounted, setMounted] = useState(false);
   const [email, setEmail] = useState("");
@@ -235,5 +235,13 @@ export default function RegisterPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-[#edf0f9] p-4 sm:p-6"><div className="text-[#16a34a] font-bold">Loading...</div></div>}>
+      <RegisterPageContent />
+    </Suspense>
   );
 }
