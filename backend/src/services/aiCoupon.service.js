@@ -10,6 +10,10 @@ const compactText = (value = "") => normalizeText(value).replace(/\s+/g, " ").tr
 const collapseAlphaNumeric = (value = "") => String(value).toLowerCase().replace(/[^a-z0-9]/g, "");
 const buildSnippet = (value = "") => compactText(value).slice(0, OCR_TEXT_LIMIT);
 const normalizeLooseText = (value = "") => compactText(value).toLowerCase();
+const titleCaseBrandName = (value = "") =>
+  String(value || "")
+    .toLowerCase()
+    .replace(/\b[a-z]/g, (char) => char.toUpperCase());
 
 const OCR_EQUIVALENT_GROUPS = [
   ["0", "o", "q", "d"],
@@ -94,6 +98,129 @@ const CODE_ONLY_OFFER_PATTERNS = [
   "free offer"
 ];
 
+
+const BRAND_STOP_WORDS = new Set([
+  "coupon",
+  "coupons",
+  "code",
+  "offer",
+  "offers",
+  "discount",
+  "discounts",
+  "promo",
+  "voucher",
+  "valid",
+  "validity",
+  "expiry",
+  "expires",
+  "save",
+  "cashback",
+  "reward",
+  "rewards",
+  "terms",
+  "condition",
+  "conditions",
+  "apply",
+  "cart",
+  "checkout",
+  "payment",
+  "order",
+  "total",
+  "amount",
+  "price",
+  "free",
+  "flat",
+  "extra",
+  "minimum",
+  "maximum",
+  "get",
+  "off",
+  "upto",
+  "only",
+  "today",
+  "sale",
+  "deal",
+  "deals",
+  "shop",
+  "shopping",
+  "online"
+]);
+
+const sanitizeBrandCandidate = (value = "") =>
+  String(value || "")
+    .replace(/[|*_~`"'()[\]{}<>]+/g, " ")
+    .replace(/\s+/g, " ")
+    .replace(/^[^a-z0-9]+|[^a-z0-9]+$/gi, "")
+    .trim();
+
+const hasUsefulBrandToken = (value = "") => {
+  const tokens = normalizeLooseText(value).split(/\s+/).filter(Boolean);
+  return tokens.some((token) => token.length >= 3 && !BRAND_STOP_WORDS.has(token));
+};
+
+const scoreBrandCandidate = (candidate = "", index = 0) => {
+  const tokens = normalizeLooseText(candidate).split(/\s+/).filter(Boolean);
+  const alphaCount = (candidate.match(/[a-z]/gi) || []).length;
+  const digitCount = (candidate.match(/\d/g) || []).length;
+  const stopWordCount = tokens.filter((token) => BRAND_STOP_WORDS.has(token)).length;
+  const uppercaseCount = (candidate.match(/[A-Z]/g) || []).length;
+  const firstLineBonus = Math.max(0, 12 - index);
+
+  return alphaCount * 3 + uppercaseCount + firstLineBonus - digitCount * 4 - stopWordCount * 12 - Math.max(0, tokens.length - 4) * 8;
+};
+
+const inferBrandNameFromVisibleText = (ocrText = "", userInput = {}) => {
+  const expectedCode = collapseAlphaNumeric(normalizeCouponCode(userInput.couponCode));
+  const expectedAmountCandidates = buildAmountCandidates(userInput.couponAmount).map(collapseAlphaNumeric);
+  const detectedDates = detectDatesFromText(ocrText);
+  const seen = new Set();
+
+  const lines = String(ocrText || "")
+    .split(/\r?\n/)
+    .map(sanitizeBrandCandidate)
+    .filter(Boolean);
+
+  const candidates = lines
+    .map((line, index) => ({ line, index }))
+    .filter(({ line }) => {
+      const collapsed = collapseAlphaNumeric(line);
+      const normalized = normalizeLooseText(line);
+
+      if (line.length < 2 || line.length > 40 || !/[a-z]/i.test(line)) {
+        return false;
+      }
+      if (expectedCode && collapsed.includes(expectedCode)) {
+        return false;
+      }
+      if (expectedAmountCandidates.some((amount) => amount && collapsed.includes(amount))) {
+        return false;
+      }
+      if (detectedDates.some((date) => normalized.includes(normalizeLooseText(date)))) {
+        return false;
+      }
+      if (!hasUsefulBrandToken(line)) {
+        return false;
+      }
+      if (seen.has(normalized)) {
+        return false;
+      }
+
+      seen.add(normalized);
+      return true;
+    })
+    .map(({ line, index }) => ({
+      name: titleCaseBrandName(line),
+      score: scoreBrandCandidate(line, index)
+    }))
+    .sort((first, second) => second.score - first.score);
+
+  if (candidates[0]?.score > 0) {
+    return candidates[0].name;
+  }
+
+  const titleFallback = sanitizeBrandCandidate(userInput.platformName || userInput.title || userInput.customCategory);
+  return titleFallback ? titleCaseBrandName(titleFallback).slice(0, 40) : "Unknown Brand";
+};
 const isCodeOnlyOffer = (userInput = {}) => {
   const searchable = normalizeLooseText(
     [
@@ -253,6 +380,9 @@ const verifyCouponWithAI = async ({ imagePath, userInput }) => {
     collapsedVisibleText.includes(collapseAlphaNumeric(candidate))
   );
   const detectedBrand = detectBrandFromText(ocrResult.text);
+  const inferredBrandName = detectedBrand?.label || (ocrResult.readable ? inferBrandNameFromVisibleText(ocrResult.text, userInput) : "");
+  const brandAvailable = Boolean(inferredBrandName);
+  const brandFallbackUsed = !detectedBrand && brandAvailable;
   const verificationPolicy = buildVerificationPolicy(userInput, detectedExpiryDates, amountMatchedValue);
 
   let tamperRisk = computeTamperRisk(imagePath, userInput);
@@ -271,7 +401,7 @@ const verifyCouponWithAI = async ({ imagePath, userInput }) => {
   const ocrReadable = ocrResult.readable;
 
   const extractedData = {
-    platformName: detectedBrand?.label || "",
+    platformName: inferredBrandName,
     platformBrandKey: detectedBrand?.key || "",
     couponCode: couponCodeMatchedInImage ? userInput.couponCode : couponCodeCheck.extractedCode,
     couponAmount: amountMatchedInImage ? Number(userInput.couponAmount) : null,
@@ -288,9 +418,6 @@ const verifyCouponWithAI = async ({ imagePath, userInput }) => {
   if (!ocrReadable) {
     failureReasons.push("Screenshot text could not be read clearly. Upload a sharper image.");
   }
-  if (!detectedBrand) {
-    failureReasons.push("Brand name could not be detected from the screenshot. Upload a screenshot from a supported brand.");
-  }
   if (verificationPolicy.requiresCodeMatch && !couponCodeMatchedInImage) {
     failureReasons.push(`Coupon code is not clearly visible in the uploaded screenshot. Expected ${userInput.couponCode}.`);
   }
@@ -302,7 +429,7 @@ const verifyCouponWithAI = async ({ imagePath, userInput }) => {
   }
 
   const weightedChecks = [
-    { required: true, matched: Boolean(detectedBrand), weight: 10 },
+    { required: true, matched: brandAvailable, weight: 10 },
     { required: true, matched: ocrReadable, weight: 10 },
     { required: verificationPolicy.requiresCodeMatch, matched: couponCodeMatchedInImage, weight: 40 },
     { required: verificationPolicy.requiresExpiryMatch, matched: expiryDateMatchedInImage, weight: 20 },
@@ -317,7 +444,7 @@ const verifyCouponWithAI = async ({ imagePath, userInput }) => {
   const matchScore = possibleScore > 0 ? Math.round((earnedScore / possibleScore) * 100) : 0;
 
   const passed =
-    Boolean(detectedBrand) &&
+    brandAvailable &&
     ocrReadable &&
     couponCodeMatch &&
     expiryDateMatch &&
@@ -335,6 +462,8 @@ const verifyCouponWithAI = async ({ imagePath, userInput }) => {
       brandDetected: Boolean(detectedBrand),
       detectedBrandKey: detectedBrand?.key || "",
       detectedBrandName: detectedBrand?.label || "",
+      brandFallbackUsed,
+      inferredBrandName,
       ocrReadable,
       couponCodeMatch,
       couponCodeMatchedInImage,
@@ -356,3 +485,4 @@ const verifyCouponWithAI = async ({ imagePath, userInput }) => {
 };
 
 module.exports = { verifyCouponWithAI };
+

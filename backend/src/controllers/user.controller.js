@@ -5,6 +5,7 @@ const TrustHistory = require("../models/TrustHistory");
 const Wallet = require("../models/Wallet");
 const User = require("../models/User");
 const Coupon = require("../models/Coupon");
+const { ensureReferralCode, processRewardEvent } = require("../services/reward.service");
 
 const SELLER_PROFILE_SELECT =
   "name email avatar country trustScore accountStatus totalSales createdAt successfulCouponFeedbackCount";
@@ -66,6 +67,7 @@ const buildPublicSeller = async (userDoc, { includeCoupons = false } = {}) => {
 };
 
 const getProfile = asyncHandler(async (req, res) => {
+  await ensureReferralCode(req.user);
   return sendResponse(res, 200, "Profile fetched", { user: req.user });
 });
 
@@ -85,7 +87,28 @@ const updateProfile = asyncHandler(async (req, res) => {
   if (req.file) {
     req.user.avatar = `/uploads/profile/${req.file.filename}`;
   }
+  await ensureReferralCode(req.user);
   await req.user.save();
+
+  const profileComplete = Boolean(req.user.name && req.user.country && req.user.currency);
+  if (profileComplete) {
+    await processRewardEvent({
+      userId: req.user._id,
+      event: "PROFILE_COMPLETED",
+      referenceId: `${req.user._id}-profile-complete`,
+      description: "Profile completion reward"
+    });
+  }
+
+  if (req.file) {
+    await processRewardEvent({
+      userId: req.user._id,
+      event: "UPLOAD_PROFILE_PICTURE",
+      referenceId: `${req.user._id}-avatar`,
+      description: "Profile photo reward"
+    });
+  }
+
   return sendResponse(res, 200, "Profile updated", { user: req.user });
 });
 

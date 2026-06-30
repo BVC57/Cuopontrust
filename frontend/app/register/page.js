@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { ArrowRight, Mail, ShieldCheck, User } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { ArrowRight, Mail, ShieldCheck, User, Users } from "lucide-react";
 import toast from "react-hot-toast";
 import api, { extractError } from "../../lib/api";
 import { saveSession } from "../../lib/auth";
@@ -25,18 +26,28 @@ const CouponXLogo = () => (
 );
 
 export default function RegisterPage() {
+  const searchParams = useSearchParams();
   const [mounted, setMounted] = useState(false);
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
+  const [referralCode, setReferralCode] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [otpDigits, setOtpDigits] = useState(["", "", "", "", "", ""]);
   const [timer, setTimer] = useState(0);
   const [isSendingOtp, setIsSendingOtp] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
 
+  const queryReferralCode = useMemo(() => String(searchParams.get("ref") || searchParams.get("referralCode") || "").trim().toUpperCase(), [searchParams]);
+
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (queryReferralCode) {
+      setReferralCode(queryReferralCode);
+    }
+  }, [queryReferralCode]);
 
   useEffect(() => {
     let interval = null;
@@ -45,6 +56,8 @@ export default function RegisterPage() {
     }
     return () => window.clearInterval(interval);
   }, [timer]);
+
+  const normalizedReferralCode = referralCode.trim().toUpperCase();
 
   const handleSendOtp = async () => {
     if (!username.trim()) {
@@ -59,14 +72,14 @@ export default function RegisterPage() {
     setIsSendingOtp(true);
     try {
       const normalizedEmail = email.trim().toLowerCase();
-      const { data } = await api.post("/auth/send-otp", { email: normalizedEmail, intent: "register" });
+      const { data } = await api.post("/auth/send-otp", { email: normalizedEmail, intent: "register", referralCode: normalizedReferralCode });
       setEmail(normalizedEmail);
       setOtpSent(true);
       setOtpDigits(["", "", "", "", "", ""]);
       setTimer(59);
       toast.success(data?.message || "OTP sent to your email");
       if (data?.devOtp) {
-        toast(`Dev OTP: ${data.devOtp}`, { duration: 5000, icon: "🔐" });
+        toast(`Dev OTP: ${data.devOtp}`, { duration: 5000, icon: "OTP" });
       }
     } catch (error) {
       toast.error(extractError(error));
@@ -114,14 +127,13 @@ export default function RegisterPage() {
     setIsVerifying(true);
     try {
       const normalizedEmail = email.trim().toLowerCase();
-      const { data } = await api.post("/auth/verify-otp", { email: normalizedEmail, otp, intent: "register" });
+      const { data } = await api.post("/auth/verify-otp", { email: normalizedEmail, otp, intent: "register", referralCode: normalizedReferralCode });
       saveSession({ token: data.token, user: data.user });
 
       try {
         const profileResponse = await api.put("/users/profile", { name: username.trim() });
         saveSession({ token: data.token, user: profileResponse.data.user });
       } catch {
-        // keep verified session even if profile update fails
       }
 
       const meResponse = await api.get("/auth/me", {
@@ -155,17 +167,12 @@ export default function RegisterPage() {
             <CouponXLogo />
           </Link>
           <div className="text-xs font-semibold text-slate-500 sm:text-sm">
-            Already have an account?{" "}
-            <Link href="/login" className="ml-1 font-bold text-[#16a34a] hover:underline">
-              Login
-            </Link>
+            Already have an account? <Link href="/login" className="ml-1 font-bold text-[#16a34a] hover:underline">Login</Link>
           </div>
         </div>
 
         <div className="mt-6 text-center">
-          <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
-            <span className="text-[#16a34a]">Create</span> your account
-          </h2>
+          <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl"><span className="text-[#16a34a]">Create</span> your account</h2>
           <p className="mt-2 text-sm text-slate-500">Join millions of smart buyers and sellers.</p>
         </div>
 
@@ -175,16 +182,7 @@ export default function RegisterPage() {
               <span className="mb-2 block text-xs font-extrabold uppercase tracking-wider text-slate-600">Username</span>
               <div className="flex items-center gap-3 rounded-[16px] border border-slate-200 bg-white px-4 py-3.5 transition-all focus-within:border-[#16a34a] focus-within:ring-2 focus-within:ring-emerald-500/20">
                 <User className="h-5 w-5 flex-shrink-0 text-slate-400" />
-                <input
-                  suppressHydrationWarning
-                  type="text"
-                  value={username}
-                  onChange={(event) => setUsername(event.target.value)}
-                  placeholder="Choose a unique username"
-                  className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-slate-800 outline-none placeholder:text-slate-400"
-                  disabled={otpSent}
-                  required
-                />
+                <input suppressHydrationWarning type="text" value={username} onChange={(event) => setUsername(event.target.value)} placeholder="Choose a unique username" className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-slate-800 outline-none placeholder:text-slate-400" disabled={otpSent} required />
               </div>
             </label>
 
@@ -192,25 +190,20 @@ export default function RegisterPage() {
               <span className="mb-2 block text-xs font-extrabold uppercase tracking-wider text-slate-600">Email Address</span>
               <div className="flex items-center gap-3 rounded-[16px] border border-slate-200 bg-white px-4 py-2.5 transition-all focus-within:border-[#16a34a] focus-within:ring-2 focus-within:ring-emerald-500/20">
                 <Mail className="h-5 w-5 flex-shrink-0 text-slate-400" />
-                <input
-                  suppressHydrationWarning
-                  type="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  placeholder="Enter your email address"
-                  className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-slate-800 outline-none placeholder:text-slate-400"
-                  disabled={otpSent}
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={handleSendOtp}
-                  disabled={isSendingOtp || timer > 0}
-                  className="rounded-xl bg-[#16a34a]/10 px-4 py-2 text-xs font-bold text-[#16a34a] transition-all hover:bg-[#16a34a]/20 disabled:bg-slate-100 disabled:text-slate-400"
-                >
+                <input suppressHydrationWarning type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="Enter your email address" className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-slate-800 outline-none placeholder:text-slate-400" disabled={otpSent} required />
+                <button type="button" onClick={handleSendOtp} disabled={isSendingOtp || timer > 0} className="rounded-xl bg-[#16a34a]/10 px-4 py-2 text-xs font-bold text-[#16a34a] transition-all hover:bg-[#16a34a]/20 disabled:bg-slate-100 disabled:text-slate-400">
                   {isSendingOtp ? "Sending..." : timer > 0 ? `Resend (${timer}s)` : "Send OTP"}
                 </button>
               </div>
+            </label>
+
+            <label className="block">
+              <span className="mb-2 block text-xs font-extrabold uppercase tracking-wider text-slate-600">Referral Code</span>
+              <div className="flex items-center gap-3 rounded-[16px] border border-slate-200 bg-white px-4 py-3.5 transition-all focus-within:border-[#16a34a] focus-within:ring-2 focus-within:ring-emerald-500/20">
+                <Users className="h-5 w-5 flex-shrink-0 text-slate-400" />
+                <input suppressHydrationWarning type="text" value={referralCode} onChange={(event) => setReferralCode(event.target.value.toUpperCase())} placeholder="Enter referral code if you have one" className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-slate-800 outline-none placeholder:text-slate-400" disabled={otpSent && Boolean(queryReferralCode)} />
+              </div>
+              {queryReferralCode ? <p className="mt-2 text-xs font-bold text-emerald-700">Referral code auto-added from shared link.</p> : null}
             </label>
 
             <label className="block">
@@ -218,36 +211,15 @@ export default function RegisterPage() {
               <div className="rounded-[16px] border border-slate-200 bg-white px-4 py-3.5 transition-all focus-within:border-[#16a34a] focus-within:ring-2 focus-within:ring-emerald-500/20">
                 <div className="grid grid-cols-6 gap-2 sm:gap-3" onPaste={handleOtpPaste}>
                   {otpDigits.map((digit, index) => (
-                    <input
-                      key={index}
-                      id={`register-otp-${index}`}
-                      suppressHydrationWarning
-                      type="text"
-                      inputMode="numeric"
-                      maxLength={1}
-                      value={digit}
-                      onChange={(event) => handleOtpChange(index, event.target.value)}
-                      onKeyDown={(event) => handleOtpKeyDown(index, event)}
-                      disabled={!otpSent}
-                      className="h-12 rounded-xl border border-slate-200 bg-[#fafcfa] text-center text-lg font-black text-slate-900 outline-none transition focus:border-[#16a34a] focus:bg-white disabled:opacity-50"
-                    />
+                    <input key={index} id={`register-otp-${index}`} suppressHydrationWarning type="text" inputMode="numeric" maxLength={1} value={digit} onChange={(event) => handleOtpChange(index, event.target.value)} onKeyDown={(event) => handleOtpKeyDown(index, event)} disabled={!otpSent} className="h-12 rounded-xl border border-slate-200 bg-[#fafcfa] text-center text-lg font-black text-slate-900 outline-none transition focus:border-[#16a34a] focus:bg-white disabled:opacity-50" />
                   ))}
                 </div>
               </div>
             </label>
 
-            {otpSent ? (
-              <div className="flex items-center justify-between px-1 text-xs font-semibold text-slate-500">
-                <span>OTP sent to your email address</span>
-                <span className="font-bold text-[#16a34a]">{formatTimer(timer)}</span>
-              </div>
-            ) : null}
+            {otpSent ? <div className="flex items-center justify-between px-1 text-xs font-semibold text-slate-500"><span>OTP sent to your email address</span><span className="font-bold text-[#16a34a]">{formatTimer(timer)}</span></div> : null}
 
-            <button
-              type="submit"
-              disabled={isVerifying || !otpSent}
-              className="flex w-full items-center justify-center gap-2 rounded-[16px] bg-[#16a34a] py-4 text-base font-bold text-white shadow-[0_8px_20px_rgba(22,163,74,0.18)] transition-all hover:bg-[#15803d] disabled:bg-slate-300 disabled:text-slate-500"
-            >
+            <button type="submit" disabled={isVerifying || !otpSent} className="flex w-full items-center justify-center gap-2 rounded-[16px] bg-[#16a34a] py-4 text-base font-bold text-white shadow-[0_8px_20px_rgba(22,163,74,0.18)] transition-all hover:bg-[#15803d] disabled:bg-slate-300 disabled:text-slate-500">
               {isVerifying ? "Verifying..." : "Verify & Continue"}
               <ArrowRight className="h-4 w-4" />
             </button>

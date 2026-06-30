@@ -6,6 +6,7 @@ const asyncHandler = require("../utils/asyncHandler");
 const { sendResponse } = require("../utils/apiResponse");
 const { sendOtp, verifyOtp } = require("../services/otp.service");
 const { createAdminNotification } = require("../services/notification.service");
+const { ensureReferralCode, processRewardEvent } = require("../services/reward.service");
 
 const signToken = (user) =>
   jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "7d" });
@@ -22,8 +23,6 @@ const sendOtpController = asyncHandler(async (req, res) => {
   const email = req.body.email.toLowerCase();
   const intent = req.body.intent === "register" ? "register" : "login";
 
-  console.log("Send OTP request:", email);
-
   const existingUser = await User.findOne({ email });
   if (intent === "login" && !existingUser) {
     return sendResponse(res, 404, "User not registered. Please register first.");
@@ -36,24 +35,6 @@ const sendOtpController = asyncHandler(async (req, res) => {
     provider: result.provider,
     devOtp: process.env.NODE_ENV === "production" ? undefined : result.otp
   });
-
-  console.log("Send OTP result:", {
-    email,
-    emailSent: result.emailSent,
-    error: result.error || null
-  });
-
-  return sendResponse(
-    res,
-    200,
-    result.emailSent
-      ? "OTP sent successfully"
-      : "OTP generated. Email delivery failed, but you can continue.",
-    {
-      emailSent: result.emailSent,
-      devOtp: process.env.NODE_ENV === "production" ? undefined : result.otp
-    }
-  );
 });
 
 const verifyOtpController = asyncHandler(async (req, res) => {
@@ -83,11 +64,22 @@ const verifyOtpController = asyncHandler(async (req, res) => {
       isEmailVerified: true,
       lastLogin: new Date()
     });
+
+    const referralCode = String(req.body.referralCode || req.body.ref || "").trim().toUpperCase();
+    if (referralCode) {
+      const referrer = await User.findOne({ referralCode }).select("_id email");
+      if (referrer && String(referrer._id) !== String(user._id)) {
+        user.referredBy = referrer._id;
+        await user.save();
+      }
+    }
   } else {
     user.isEmailVerified = true;
     user.lastLogin = new Date();
     await user.save();
   }
+
+  await ensureReferralCode(user);
 
   if (isNewUser) {
     await createAdminNotification({
@@ -97,6 +89,11 @@ const verifyOtpController = asyncHandler(async (req, res) => {
       link: "/admin/users",
       metadata: { userId: user._id, email: user.email }
     });
+
+    await processRewardEvent({ userId: user._id, event: "USER_REGISTERED", referenceId: user._id, description: "Registration reward" });
+    await processRewardEvent({ userId: user._id, event: "EMAIL_VERIFIED", referenceId: `${user._id}-email`, description: "Email verification reward" });
+  } else {
+    await processRewardEvent({ userId: user._id, event: "DAILY_LOGIN", referenceId: `${user._id}-login`, description: "Daily login reward" });
   }
 
   return sendResponse(res, 200, "OTP verified successfully", {
@@ -106,6 +103,7 @@ const verifyOtpController = asyncHandler(async (req, res) => {
 });
 
 const meController = asyncHandler(async (req, res) => {
+  await ensureReferralCode(req.user);
   return sendResponse(res, 200, "Authenticated user", { user: req.user });
 });
 

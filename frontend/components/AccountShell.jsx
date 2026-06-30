@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Bell, CircleUserRound, CreditCard, Flame, HandCoins, ListChecks, Package, Settings } from "lucide-react";
+import { Bell, CircleUserRound, Coins, CreditCard, Flame, Gift, HandCoins, ListChecks, Package, Settings, Wallet } from "lucide-react";
 import useCurrentPath from "../hooks/useCurrentPath";
 
 const accountLinks = [
@@ -11,6 +11,10 @@ const accountLinks = [
   { href: "/payments", label: "Payments", icon: CreditCard },
   { href: "/notifications", label: "Notifications", icon: Bell },
   { href: "/withdraw", label: "Withdraw", icon: HandCoins },
+  { href: "/rewards", label: "Rewards", icon: Gift },
+  { href: "/wallet", label: "Coupon Wallet", icon: Wallet },
+  { href: "/missions", label: "Missions", icon: Coins },
+  { href: "/referrals", label: "Referrals", icon: Gift },
   { href: "/settings", label: "Settings", icon: Settings }
 ];
 
@@ -43,10 +47,10 @@ export default function AccountShell({ title, subtitle, children, aside }) {
                 <Link
                   key={href}
                   href={href}
-                  className={`inline-flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold transition ${
+                  className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-3 text-sm font-semibold transition ${
                     active
-                      ? "bg-gradient-to-r from-[#16a34a] to-[#22c55e] text-white shadow-[0_12px_24px_rgba(34,197,94,0.18)]"
-                      : "text-slate-600 hover:bg-emerald-50 hover:text-slate-900"
+                      ? "border-emerald-500 bg-gradient-to-r from-[#16a34a] to-[#22c55e] text-white shadow-[0_12px_24px_rgba(34,197,94,0.18)]"
+                      : "border-emerald-100 text-slate-600 hover:border-emerald-200 hover:bg-emerald-50 hover:text-slate-900"
                   }`}
                 >
                   <Icon className="h-4 w-4" />

@@ -10,6 +10,7 @@ const { createNotification, createAdminNotification } = require("../services/not
 const { applyTrustPenalty } = require("../services/trustScore.service");
 const { revealCouponCodeForTransaction } = require("./coupon.controller");
 const { sendEmail } = require("../services/email.service");
+const { debitRewardWallet, processRewardEvent, refundRewardWallet } = require("../services/reward.service");
 
 const getCommissionPercent = 10;
 const NON_WORKING_REPORT_THRESHOLD = 3;
@@ -51,7 +52,7 @@ const escapeHtml = (value) =>
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
+    .replace(/\"/g, "&quot;")
     .replace(/'/g, "&#39;");
 
 const buildCouponPurchaseEmailTemplate = ({ buyer, coupon, transaction }) => {
@@ -67,8 +68,7 @@ const buildCouponPurchaseEmailTemplate = ({ buyer, coupon, transaction }) => {
     expiryDate: formatEmailDate(coupon.expiryDate)
   };
 
-  const text = 
-`Hello ${values.buyerName},
+  const text = `Hello ${values.buyerName},
 
 Great news! Your coupon purchase has been completed successfully.
 
@@ -102,130 +102,28 @@ Thank you for shopping with CouponX.
 `;
 
   const safe = Object.fromEntries(Object.entries(values).map(([key, value]) => [key, escapeHtml(value)]));
-  const html = 
-`<!DOCTYPE html>
+  const html = `<!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Coupon Purchased Successfully</title>
-    <style>
-      body, table, td, p, a {
-        font-family: Arial, sans-serif;
-      }
-      @media only screen and (max-width: 640px) {
-        .email-shell {
-          padding: 14px !important;
-        }
-        .email-card {
-          border-radius: 18px !important;
-        }
-        .email-section {
-          padding: 20px 16px !important;
-        }
-        .email-title {
-          font-size: 22px !important;
-          line-height: 30px !important;
-        }
-        .detail-row {
-          display: block !important;
-          width: 100% !important;
-          padding: 0 0 14px !important;
-        }
-        .detail-label {
-          display: block !important;
-          width: 100% !important;
-          padding: 0 !important;
-          text-align: left !important;
-          font-size: 13px !important;
-        }
-        .detail-value {
-          display: block !important;
-          width: 100% !important;
-          padding: 4px 0 0 !important;
-          text-align: left !important;
-          font-size: 16px !important;
-          line-height: 24px !important;
-          word-break: break-word !important;
-        }
-        .coupon-wrap {
-          margin: 0 16px 18px !important;
-          padding: 18px 14px !important;
-        }
-        .coupon-code {
-          display: block !important;
-          width: 100% !important;
-          box-sizing: border-box !important;
-          padding: 14px 12px !important;
-          font-size: 18px !important;
-          line-height: 26px !important;
-          letter-spacing: 0.04em !important;
-          word-break: break-all !important;
-        }
-      }
-    </style>
-  </head>
-  <body style="margin:0;background:#f4f7fb;padding:0">
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f4f7fb">
-      <tr>
-        <td class="email-shell" style="padding:28px 12px">
-          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:680px;margin:0 auto">
-            <tr>
-              <td class="email-card" style="border:1px solid #dbe7ef;border-radius:24px;background:#ffffff;overflow:hidden;box-shadow:0 18px 44px rgba(15,23,42,0.08)">
-                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
-                  <tr>
-                    <td class="email-section" style="padding:28px 30px;border-bottom:1px solid #e5edf3;background:#f8fffb">
-                      <p style="margin:0 0 8px;color:#16a34a;font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase">CouponX</p>
-                      <p class="email-title" style="margin:0;font-size:26px;line-height:34px;font-weight:800;color:#020617">Coupon Purchased Successfully</p>
-                      <p style="margin:14px 0 0;font-size:15px;line-height:24px;color:#475569">Hello ${safe.buyerName}, your coupon purchase has been completed successfully.</p>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td class="email-section" style="padding:26px 30px">
-                      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="font-size:14px">
-                        <tr>
-                          <td class="detail-row detail-label" style="padding:0 0 14px;color:#64748b;vertical-align:top">Store</td>
-                          <td class="detail-row detail-value" style="padding:0 0 14px;text-align:right;font-weight:700;color:#0f172a">${safe.brandName}</td>
-                        </tr>
-                        <tr>
-                          <td class="detail-row detail-label" style="padding:0 0 14px;color:#64748b;vertical-align:top">Offer</td>
-                          <td class="detail-row detail-value" style="padding:0 0 14px;text-align:right;font-weight:700;color:#0f172a">${safe.offerTitle}</td>
-                        </tr>
-                        <tr>
-                          <td class="detail-row detail-label" style="padding:0 0 14px;color:#64748b;vertical-align:top">Coupon Value</td>
-                          <td class="detail-row detail-value" style="padding:0 0 14px;text-align:right;font-weight:700;color:#0f172a">Rs ${safe.couponValue}</td>
-                        </tr>
-                        <tr>
-                          <td class="detail-row detail-label" style="padding:0 0 14px;color:#64748b;vertical-align:top">Purchase Price</td>
-                          <td class="detail-row detail-value" style="padding:0 0 14px;text-align:right;font-weight:700;color:#0f172a">Rs ${safe.purchaseAmount}</td>
-                        </tr>
-                        <tr>
-                          <td class="detail-row detail-label" style="padding:0;color:#64748b;vertical-align:top">Order ID</td>
-                          <td class="detail-row detail-value" style="padding:0;text-align:right;font-weight:700;color:#0f172a;word-break:break-word">${safe.orderId}</td>
-                        </tr>
-                      </table>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
-                        <tr>
-                          <td class="coupon-wrap" style="margin:0 30px 24px;padding:22px;border:1px dashed #16a34a;border-radius:18px;background:#f0fdf4;text-align:center;display:block">
-                            <p style="margin:0 0 10px;font-size:13px;font-weight:800;color:#15803d;text-transform:uppercase;letter-spacing:.08em">Your Coupon Code</p>
-                            <div class="coupon-code" style="display:inline-block;max-width:100%;padding:12px 18px;border-radius:14px;background:#ffffff;color:#020617;font-size:24px;line-height:32px;font-weight:900;letter-spacing:.08em;word-break:break-all;box-sizing:border-box">${safe.couponCode}</div>
-                            <p style="margin:12px 0 0;color:#475569;font-size:14px;line-height:22px">Valid Until: <strong>${safe.expiryDate}</strong></p>
-                          </td>
-                        </tr>
-                      </table>
-                    </td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-    </table>
+  <body style="margin:0;background:#f4f7fb;padding:24px;font-family:Arial,sans-serif;">
+    <div style="max-width:680px;margin:0 auto;border:1px solid #dbe7ef;border-radius:24px;background:#ffffff;overflow:hidden;">
+      <div style="padding:28px 30px;border-bottom:1px solid #e5edf3;background:#f8fffb;">
+        <p style="margin:0 0 8px;color:#16a34a;font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase">CouponX</p>
+        <p style="margin:0;font-size:26px;line-height:34px;font-weight:800;color:#020617">Coupon Purchased Successfully</p>
+        <p style="margin:14px 0 0;font-size:15px;line-height:24px;color:#475569">Hello ${safe.buyerName}, your coupon purchase has been completed successfully.</p>
+      </div>
+      <div style="padding:26px 30px;">
+        <p><strong>Store:</strong> ${safe.brandName}</p>
+        <p><strong>Offer:</strong> ${safe.offerTitle}</p>
+        <p><strong>Coupon Value:</strong> Rs ${safe.couponValue}</p>
+        <p><strong>Purchase Price:</strong> Rs ${safe.purchaseAmount}</p>
+        <p><strong>Order ID:</strong> ${safe.orderId}</p>
+      </div>
+      <div style="margin:0 30px 24px;padding:22px;border:1px dashed #16a34a;border-radius:18px;background:#f0fdf4;text-align:center;">
+        <p style="margin:0 0 10px;font-size:13px;font-weight:800;color:#15803d;text-transform:uppercase;letter-spacing:.08em">Your Coupon Code</p>
+        <div style="display:inline-block;padding:12px 18px;border-radius:14px;background:#ffffff;color:#020617;font-size:24px;line-height:32px;font-weight:900;letter-spacing:.08em;word-break:break-all;box-sizing:border-box">${safe.couponCode}</div>
+        <p style="margin:12px 0 0;color:#475569;font-size:14px;line-height:22px">Valid Until: <strong>${safe.expiryDate}</strong></p>
+      </div>
+    </div>
   </body>
 </html>`;
 
@@ -249,6 +147,24 @@ const deliverCouponEmailIfNeeded = async ({ buyerId, coupon, transaction }) => {
   return transaction;
 };
 
+const refundWalletUsageIfNeeded = async (transaction) => {
+  if (!transaction?.walletUsedAmount || transaction.walletRefundedAt) {
+    return;
+  }
+
+  await refundRewardWallet({
+    userId: transaction.buyerId,
+    amount: transaction.walletUsedAmount,
+    source: "checkout_refund",
+    referenceId: transaction._id,
+    description: "Refunded CouponX wallet usage after payment failure",
+    metadata: { transactionId: transaction._id }
+  });
+
+  transaction.walletRefundedAt = new Date();
+  await transaction.save();
+};
+
 const createOrderController = asyncHandler(async (req, res) => {
   const coupon = await Coupon.findById(req.body.couponId).populate("sellerId");
   if (!coupon || coupon.status !== "available") {
@@ -259,11 +175,62 @@ const createOrderController = asyncHandler(async (req, res) => {
     return sendResponse(res, 400, "You cannot buy your own coupon");
   }
 
+  const walletRequested = req.body.useRewardWallet ? Number(req.body.walletAmount || coupon.sellingPrice) : 0;
+  const maxWalletUsable = Math.min(Number(req.user.rewardWalletBalance || 0), Number(coupon.sellingPrice || 0));
+  const walletUsedAmount = Math.max(0, Math.min(walletRequested, maxWalletUsable));
+  const onlinePaidAmount = Number((Number(coupon.sellingPrice || 0) - walletUsedAmount).toFixed(2));
   const platformFee = Number(((coupon.sellingPrice * getCommissionPercent) / 100).toFixed(2));
   const sellerAmount = Number((coupon.sellingPrice - platformFee).toFixed(2));
 
+  let walletTransaction = null;
+  if (walletUsedAmount > 0) {
+    const walletResult = await debitRewardWallet({
+      userId: req.user._id,
+      amount: walletUsedAmount,
+      source: "coupon_checkout",
+      referenceId: `${coupon._id}-${Date.now()}`,
+      description: `Applied CouponX wallet to ${coupon.title}`,
+      metadata: { couponId: coupon._id }
+    });
+    walletTransaction = walletResult.walletTransaction;
+  }
+
+  if (onlinePaidAmount <= 0) {
+    const transaction = await Transaction.create({
+      buyerId: req.user._id,
+      sellerId: coupon.sellerId._id,
+      couponId: coupon._id,
+      amount: coupon.sellingPrice,
+      platformFee,
+      sellerAmount,
+      currency: coupon.currency,
+      walletUsedAmount,
+      onlinePaidAmount: 0,
+      paymentGateway: "internal_wallet",
+      paymentStatus: "captured",
+      capturedAt: new Date(),
+      gatewayReference: `wallet_${Date.now()}`
+    });
+
+    appendPaymentEvent(transaction, {
+      type: "wallet_checkout_captured",
+      status: "captured",
+      message: "Coupon purchased fully with CouponX wallet.",
+      payload: { walletUsedAmount }
+    });
+    await transaction.save();
+    await creditPending(transaction.sellerId, transaction.sellerAmount, transaction.currency);
+
+    return sendResponse(res, 201, "Wallet-only checkout created", {
+      transaction,
+      paymentRequired: false,
+      walletUsedAmount,
+      walletTransaction
+    });
+  }
+
   const order = await createOrder({
-    amount: coupon.sellingPrice,
+    amount: onlinePaidAmount,
     currency: coupon.currency,
     receipt: buildRazorpayReceipt(coupon._id),
     notes: {
@@ -281,6 +248,8 @@ const createOrderController = asyncHandler(async (req, res) => {
     platformFee,
     sellerAmount,
     currency: coupon.currency,
+    walletUsedAmount,
+    onlinePaidAmount,
     gatewayOrderId: order.id,
     gatewayReference: order.receipt,
     gatewayPayload: { order }
@@ -290,13 +259,16 @@ const createOrderController = asyncHandler(async (req, res) => {
     type: "order_created",
     status: "created",
     message: "Checkout order created.",
-    payload: { orderId: order.id, receipt: order.receipt, amount: coupon.sellingPrice, currency: coupon.currency }
+    payload: { orderId: order.id, receipt: order.receipt, amount: onlinePaidAmount, currency: coupon.currency, walletUsedAmount }
   });
   await transaction.save();
 
   return sendResponse(res, 201, "Razorpay order created", {
     transaction,
     order,
+    paymentRequired: true,
+    walletUsedAmount,
+    walletTransaction,
     razorpayKey: process.env.RAZORPAY_KEY_ID || "rzp_test_coupontrust"
   });
 });
@@ -327,6 +299,7 @@ const verifyAuthorized = asyncHandler(async (req, res) => {
       payload: { razorpayOrderId, razorpayPaymentId }
     });
     await transaction.save();
+    await refundWalletUsageIfNeeded(transaction);
     await createNotification({
       userId: transaction.buyerId,
       type: "payment_failed",
@@ -425,9 +398,9 @@ const confirmWorked = asyncHandler(async (req, res) => {
     return sendResponse(res, 400, "This coupon has already been reported as not working", { transaction });
   }
 
-  if (transaction.paymentStatus !== "captured") {
+  if (transaction.paymentStatus !== "captured" && transaction.paymentGateway !== "internal_wallet") {
     try {
-      await capturePayment({ paymentId: transaction.gatewayPaymentId, amount: transaction.amount, currency: transaction.currency });
+      await capturePayment({ paymentId: transaction.gatewayPaymentId, amount: transaction.onlinePaidAmount || transaction.amount, currency: transaction.currency });
     } catch (error) {
       if (!isBenignCaptureError(error)) throw error;
     }
@@ -500,6 +473,8 @@ const confirmWorked = asyncHandler(async (req, res) => {
 
     await User.findByIdAndUpdate(transaction.buyerId, { $inc: { totalPurchases: transaction.amount } });
     await User.findByIdAndUpdate(transaction.sellerId, { $inc: { totalSales: transaction.sellerAmount, successfulCouponFeedbackCount: 1 } });
+    await processRewardEvent({ userId: transaction.buyerId, event: "COUPON_PURCHASED", referenceId: transaction._id, description: "Coupon purchase reward" });
+    await processRewardEvent({ userId: transaction.sellerId, event: "COUPON_SOLD", referenceId: transaction._id, description: "Coupon sold reward" });
   } else {
     await transaction.save();
   }
@@ -647,6 +622,7 @@ const webhookHandler = asyncHandler(async (req, res) => {
       link: "/admin/payments",
       metadata: { transactionId: transaction._id }
     });
+    await refundWalletUsageIfNeeded(transaction);
   }
 
   await transaction.save();

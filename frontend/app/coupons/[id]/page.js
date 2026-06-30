@@ -83,6 +83,7 @@ export default function CouponDetailsPage() {
   const [feedbackStatus, setFeedbackStatus] = useState("");
   const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
   const [heroImageFailed, setHeroImageFailed] = useState(false);
+  const [rewardSummary, setRewardSummary] = useState(null);
 
   useEffect(() => {
     const loadCoupon = async () => {
@@ -95,7 +96,8 @@ export default function CouponDetailsPage() {
         setCoupon(data.coupon);
 
         if (loggedInNow) {
-          const purchasedResponse = await api.get("/coupons/my/purchased");
+          const [purchasedResponse, rewardResponse] = await Promise.all([api.get("/coupons/my/purchased"), api.get("/rewards/summary").catch(() => null)]);
+          setRewardSummary(rewardResponse?.data || null);
           const purchasedCoupon = (purchasedResponse.data.coupons || []).find((item) => item._id === data.coupon._id);
 
           if (purchasedCoupon) {
@@ -144,7 +146,19 @@ export default function CouponDetailsPage() {
 
     try {
       setBuying(true);
-      const { data } = await api.post("/payments/create-order", { couponId: coupon._id });
+      const walletAmount = Number(rewardSummary?.user?.rewardWalletBalance || 0);
+      const { data } = await api.post("/payments/create-order", { couponId: coupon._id, useRewardWallet: walletAmount > 0, walletAmount });
+
+      if (!data.paymentRequired) {
+        const revealed = await api.post(`/payments/reveal-coupon/${data.transaction._id}`);
+        setOwnedCoupon(true);
+        setPurchaseTransactionId(revealed.data.transaction?._id || data.transaction._id);
+        setFeedbackStatus(revealed.data.transaction?.buyerFeedbackStatus || "pending");
+        setCoupon((current) => (current ? { ...current, status: "sold" } : current));
+        setRevealedCoupon(revealed.data.revealedCoupon);
+        toast.success("Coupon unlocked using your CouponX wallet.");
+        return;
+      }
 
       await openRazorpayCheckout({
         order: data.order,
@@ -356,6 +370,11 @@ export default function CouponDetailsPage() {
                 <p className="text-3xl font-bold text-slate-400 line-through sm:text-[40px]">
                   {formatMoney(coupon.couponAmount, coupon.currency)}
                 </p>
+                {rewardSummary?.user?.rewardWalletBalance ? (
+                  <span className="rounded-full border px-4 py-2 text-sm font-black" style={{ borderColor: brandTheme.accentBorder, backgroundColor: brandTheme.accentSoft, color: brandTheme.accentText }}>
+                    Wallet auto-apply: {formatMoney(Math.min(Number(rewardSummary.user.rewardWalletBalance || 0), Number(coupon.sellingPrice || 0)), coupon.currency)}
+                  </span>
+                ) : null}
                 {savingsPercent > 0 ? (
                   <span className="rounded-full border px-4 py-2 text-lg font-black" style={{ borderColor: brandTheme.accentBorder, backgroundColor: brandTheme.accentSoft, color: brandTheme.accentText }}>
                     {savingsPercent}% OFF
@@ -602,6 +621,8 @@ export default function CouponDetailsPage() {
     </div>
   );
 }
+
+
 
 
 

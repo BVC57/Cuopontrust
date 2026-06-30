@@ -1,11 +1,8 @@
 {
   "/marketplace/page": "app/marketplace/page.js",
-  "/admin/revenue/page": "app/admin/revenue/page.js",
-  "/admin/settings/page": "app/admin/settings/page.js",
-  "/admin/dashboard/page": "app/admin/dashboard/page.js",
-  "/categories/page": "app/categories/page.js",
-  "/_not-found/page": "app/_not-found/page.js",
+  "/sellers/page": "app/sellers/page.js",
   "/page": "app/page.js",
-  "/orders/page": "app/orders/page.js",
-  "/profile/page": "app/profile/page.js"
+  "/referrals/page": "app/referrals/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/rewards/page": "app/rewards/page.js"
 }

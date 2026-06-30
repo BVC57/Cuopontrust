@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import Image from "next/image";
@@ -9,17 +9,25 @@ import {
   BadgeCheck,
   Bolt,
   CheckCircle2,
+  ClipboardList,
   Coins,
   FilePlus2,
+  Flame,
+  Gift,
   Headphones,
   IndianRupee,
   Lock,
+  PartyPopper,
+  Send,
   Shield,
   ShieldCheck,
   ShoppingBag,
+  ShoppingCart,
   Star,
   Tag,
   TrendingUp,
+  Trophy,
+  UserPlus,
   Users,
   XCircle,
   Wallet
@@ -76,7 +84,7 @@ const smartHighlights = [
     title: "24/7 Support",
     text: "We're here to help whenever you need us",
     icon: Headphones,
-    tone: "text-[#8b5cf6] bg-violet-50"
+    tone: "text-[#8b5cf6] bg-emerald-50"
   },
   {
     title: "Trusted Community",
@@ -178,6 +186,32 @@ const heroFeatures = [
   { title: "Fast Payouts", subtitle: "For Sellers", icon: Wallet, tone: "bg-[#fff7ed] text-[#ea580c]" }
 ];
 
+
+const rewardsOverview = [
+  { label: "My Coins", value: "2,450", note: "= Rs 245.00", icon: Coins, tone: "from-amber-50 to-white text-amber-500" },
+  { label: "Wallet Balance", value: "Rs 245.00", note: "Withdraw", icon: Wallet, tone: "from-emerald-50 to-white text-emerald-600" },
+  { label: "Total Earned", value: "Rs 1,245.00", note: "View history", icon: Gift, tone: "from-emerald-50 to-white text-emerald-600" }
+];
+
+const rewardsMissions = [
+  ["Login Daily", "+ 10 Coins", "Claim", CheckCircle2, "text-emerald-600 bg-emerald-50"],
+  ["Apply a Coupon", "+ 20 Coins", "0/1", Tag, "text-rose-500 bg-rose-50"],
+  ["Buy a Coupon", "+ 40 Coins", "0/1", ShoppingCart, "text-amber-500 bg-amber-50"],
+  ["Share with Friends", "+ 20 Coins", "0/1", Send, "text-blue-500 bg-blue-50"]
+];
+
+const rewardsActivity = [
+  ["You earned 50 Coins", "New referral joined", "2h ago", "+50", UserPlus],
+  ["You earned 70 Coins", "Referral user bought a coupon", "5h ago", "+70", ShoppingCart],
+  ["You earned 20 Coins", "Daily spin reward", "1d ago", "+20", PartyPopper]
+];
+
+const rewardsEarnSteps = [
+  ["Invite Friends", "Earn 50 Coins for every referral", Users],
+  ["Referral Buys Coupon", "Earn 70 Coins when they buy", ShoppingCart],
+  ["Daily Spin", "Spin daily to win coupons and coins", PartyPopper],
+  ["Complete Missions", "Finish tasks and earn coins", ClipboardList]
+];
 const homePageStructuredData = {
   "@context": "https://schema.org",
   "@graph": [
@@ -305,7 +339,7 @@ export default function HomePage() {
 
             <div className="mx-auto max-w-4xl text-center">
               <div className="inline-flex items-center gap-2 rounded-full border border-emerald-100 bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-slate-700 shadow-[0_12px_24px_rgba(15,23,42,0.05)]">
-                <span className="text-orange-500">🔥</span>
+                <Bolt className="h-4 w-4 text-orange-500" />
                 India&apos;s 1st Coupon Buy &amp; Sell Platform
               </div>
 
@@ -425,7 +459,7 @@ export default function HomePage() {
             ["Verified Coupons", "100% authentic & verified", ShieldCheck, "text-[#22c55e] bg-emerald-50"],
             ["Instant Access", "Get codes immediately", Bolt, "text-[#60a5fa] bg-sky-50"],
             ["Secure Transactions", "Safe & encrypted payments", Lock, "text-[#60a5fa] bg-sky-50"],
-            ["24/7 Support", "Always here to help", Headphones, "text-[#818cf8] bg-violet-50"]
+            ["24/7 Support", "Always here to help", Headphones, "text-[#818cf8] bg-emerald-50"]
           ].map(([title, text, Icon, tone]) => (
             <div key={title} className="lux-card rounded-[24px] border border-emerald-50 bg-white px-5 py-5 shadow-[0_12px_30px_rgba(15,23,42,0.04)]">
               <div className={`inline-flex h-10 w-10 items-center justify-center rounded-full ${tone}`}>
@@ -545,7 +579,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="rounded-[34px] border border-violet-200/80 bg-[linear-gradient(180deg,#ffffff_0%,#fcfbff_100%)] p-5 shadow-[0_18px_40px_rgba(124,58,237,0.08)] sm:p-8">
+            <div className="rounded-[34px] border border-emerald-200/80 bg-[linear-gradient(180deg,#ffffff_0%,#fcfbff_100%)] p-5 shadow-[0_18px_40px_rgba(124,58,237,0.08)] sm:p-8">
               <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
                 <div className="flex h-32 w-32 items-center justify-center rounded-[32px] bg-[radial-gradient(circle_at_top_left,rgba(139,92,246,0.22),transparent_40%),linear-gradient(180deg,#faf5ff_0%,#ffffff_100%)] shadow-[0_18px_32px_rgba(124,58,237,0.12)]">
                   <div className="flex h-20 w-20 items-center justify-center rounded-[26px] bg-[linear-gradient(180deg,#8b5cf6_0%,#6d28d9_100%)] text-white shadow-[0_18px_28px_rgba(124,58,237,0.24)]">
@@ -594,7 +628,7 @@ export default function HomePage() {
                   <ul className="mt-6 space-y-4">
                     {sellerSolutions.map((item) => (
                       <li key={item} className="flex items-start gap-3 text-lg text-slate-700">
-                        <span className="mt-1 inline-flex h-6 w-6 flex-none items-center justify-center rounded-full bg-violet-50 text-[#7c3aed]">
+                        <span className="mt-1 inline-flex h-6 w-6 flex-none items-center justify-center rounded-full bg-emerald-50 text-[#7c3aed]">
                           <CheckCircle2 className="h-4 w-4" />
                         </span>
                         <span>{item}</span>
@@ -663,7 +697,235 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+      <section className="mx-auto mt-16 max-w-7xl px-4 sm:px-6">
+        <div className="overflow-hidden rounded-[32px] bg-[linear-gradient(135deg,#022c22_0%,#064e3b_55%,#022c22_100%)] p-4 shadow-[0_30px_80px_rgba(15,23,42,0.16)] sm:p-6">
+          <div className="grid gap-5 lg:grid-cols-[1fr_0.95fr] lg:items-center">
+            <div className="px-2 py-2 text-white sm:px-4">
+              <p className="text-sm font-semibold text-white/85">Welcome back</p>
+              <h2 className="mt-2 max-w-xl text-4xl font-black tracking-tight sm:text-5xl sm:leading-[1.04]">
+                Earn <span className="text-[#fde047]">Coins.</span> Get Rewards!
+              </h2>
+              <p className="mt-4 max-w-lg text-base leading-7 text-white/78">
+                Use coupons, invite friends, finish missions, and convert every reward into real wallet value.
+              </p>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Link href="/rewards" className="inline-flex items-center gap-2 rounded-2xl bg-[#22c55e] px-5 py-3 text-sm font-black text-white shadow-[0_16px_30px_rgba(34,197,94,0.25)] transition hover:-translate-y-0.5">
+                  <Gift className="h-4 w-4" />
+                  Open Rewards
+                </Link>
+                <Link href="/referrals" className="inline-flex items-center gap-2 rounded-2xl border border-white/18 bg-white/10 px-5 py-3 text-sm font-black text-white backdrop-blur transition hover:-translate-y-0.5 hover:bg-white/16">
+                  <UserPlus className="h-4 w-4" />
+                  Invite Friends
+                </Link>
+              </div>
+            </div>
 
+            <div className="grid gap-3 sm:grid-cols-3">
+              {rewardsOverview.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <div key={item.label} className={`rounded-[22px] border border-white/80 bg-gradient-to-br ${item.tone} p-4 shadow-[0_18px_36px_rgba(15,23,42,0.12)]`}>
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-[0_12px_24px_rgba(15,23,42,0.08)]">
+                        <Icon className="h-7 w-7" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-slate-600">{item.label}</p>
+                        <p className="mt-1 text-2xl font-black tracking-tight text-slate-950">{item.value}</p>
+                        <p className="mt-1 text-xs font-black text-emerald-600">{item.note}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-5 xl:grid-cols-[1fr_300px]">
+            <div className="overflow-hidden rounded-[26px] border border-emerald-400/45 bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.42),transparent_36%),linear-gradient(90deg,rgba(2,44,34,0.9)_0%,rgba(6,78,59,0.9)_100%)] p-5 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] sm:p-6">
+              <div className="grid gap-6 lg:grid-cols-[0.82fr_1fr_0.78fr] lg:items-center">
+                <div>
+                  <h3 className="text-2xl font-black">Collect Coins &amp; Get Real Money</h3>
+                  <div className="mt-5 space-y-3 text-sm font-bold text-white/90">
+                    <div className="flex items-center gap-3"><Coins className="h-8 w-8 rounded-full bg-amber-400 p-1.5 text-white" />Earn Coins</div>
+                    <div className="flex items-center gap-3"><Tag className="h-8 w-8 rounded-full bg-orange-500 p-1.5 text-white" />Use Coupons</div>
+                    <div className="flex items-center gap-3"><IndianRupee className="h-8 w-8 rounded-full bg-emerald-500 p-1.5 text-white" />Get Money</div>
+                  </div>
+                </div>
+
+                <div className="relative mx-auto h-[220px] w-full max-w-[420px]">
+                  <div className="absolute left-1/2 top-8 h-24 w-52 -translate-x-1/2 rotate-[-8deg] rounded-[26px] bg-[linear-gradient(180deg,#6ee7b7,#059669)] shadow-[0_22px_45px_rgba(0,0,0,0.28)]" />
+                  <div className="absolute left-1/2 top-20 h-28 w-64 -translate-x-1/2 rounded-b-[36px] rounded-t-[18px] bg-[linear-gradient(180deg,#34d399,#047857)] shadow-[0_28px_50px_rgba(0,0,0,0.34)]" />
+                  {[0, 1, 2, 3, 4, 5, 6].map((coin) => (
+                    <div key={coin} className="absolute h-12 w-12 rounded-full border-4 border-amber-200 bg-[radial-gradient(circle_at_35%_28%,#fde68a,#f59e0b_72%)] text-center text-xl font-black leading-10 text-white shadow-[0_10px_18px_rgba(245,158,11,0.28)]" style={{ left: `${88 + coin * 30}px`, top: `${74 + (coin % 3) * 18}px` }}>
+                      $
+                    </div>
+                  ))}
+                  <div className="absolute right-2 top-48 hidden rotate-[-8deg] rounded-[22px] bg-white px-8 py-5 text-center text-2xl font-black text-[#064e3b] shadow-[0_20px_36px_rgba(0,0,0,0.18)] sm:block">
+                    More Coins<br />More Rewards!
+                  </div>
+                </div>
+
+                <div className="rounded-[22px] border border-white/15 bg-white p-5 text-slate-950 shadow-[0_18px_34px_rgba(0,0,0,0.18)]">
+                  <p className="text-3xl font-black text-[#22c55e]">500 Coins = Rs 50</p>
+                  <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">Redeem your coins and transfer value to your wallet or bank.</p>
+                  <div className="mt-5 flex items-center justify-between text-emerald-500">
+                    <Coins className="h-14 w-14 rounded-full bg-amber-100 p-2 text-amber-500" />
+                    <TrendingUp className="h-10 w-10" />
+                    <IndianRupee className="h-14 w-14 rounded-2xl bg-emerald-100 p-3 text-emerald-600" />
+                  </div>
+                  <Link href="/wallet" className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#22c55e] px-4 py-3 text-sm font-black text-white shadow-[0_14px_28px_rgba(34,197,94,0.2)]">
+                    <Gift className="h-4 w-4" />
+                    Redeem Now
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-1">
+              <div className="rounded-[24px] border border-orange-100 bg-white p-5 shadow-[0_18px_36px_rgba(15,23,42,0.06)]">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <Flame className="h-9 w-9 rounded-full bg-orange-50 p-1.5 text-orange-500" />
+                    <div>
+                      <p className="text-lg font-black text-slate-950">Daily Streak</p>
+                      <p className="text-xs font-semibold text-slate-500">Keep it up!</p>
+                    </div>
+                  </div>
+                  <span className="text-sm font-black text-slate-700">7 Days</span>
+                </div>
+                <div className="mt-5 grid grid-cols-7 gap-2 text-center text-xs font-black text-slate-500">
+                  {["M", "T", "W", "T", "F", "S", "S"].map((day, index) => (
+                    <div key={`${day}-${index}`}>
+                      <p>{day}</p>
+                      <div className={`mt-2 flex h-7 w-7 items-center justify-center rounded-full text-white ${index === 6 ? "bg-amber-400" : "bg-orange-400"}`}>
+                        {index === 6 ? <Star className="h-4 w-4 fill-white" /> : <CheckCircle2 className="h-4 w-4" />}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="relative overflow-hidden rounded-[24px] bg-[linear-gradient(135deg,#065f46,#10b981)] p-5 text-white shadow-[0_18px_36px_rgba(6,95,70,0.22)]">
+                <div className="absolute right-4 top-5 text-amber-300 opacity-90"><Trophy className="h-24 w-24" /></div>
+                <p className="max-w-[190px] text-xl font-black leading-tight">Complete missions, Earn more coins!</p>
+                <Link href="/missions" className="mt-6 inline-flex rounded-xl bg-white px-4 py-2.5 text-sm font-black text-[#047857]">Explore Missions</Link>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-5 lg:grid-cols-[1.05fr_0.95fr_0.95fr]">
+            <div className="rounded-[26px] border border-emerald-100 bg-white p-5 shadow-[0_18px_36px_rgba(15,23,42,0.06)]">
+              <div className="flex items-center gap-4">
+                <Users className="h-12 w-12 rounded-2xl bg-emerald-100 p-2.5 text-emerald-600" />
+                <div>
+                  <p className="text-xl font-black text-slate-950">Referral Rewards</p>
+                  <p className="text-sm text-slate-500">Invite friends and earn coins</p>
+                </div>
+              </div>
+              <div className="mt-5 space-y-3">
+                <div className="flex items-center justify-between rounded-[18px] border border-slate-100 bg-slate-50 p-4">
+                  <div className="flex items-center gap-3"><UserPlus className="h-10 w-10 rounded-full bg-emerald-100 p-2 text-emerald-600" /><div><p className="font-black text-slate-950">Every Referral</p><p className="text-xs text-slate-500">Earn</p></div></div>
+                  <p className="font-black text-emerald-600">50 Coins</p>
+                </div>
+                <div className="flex items-center justify-between rounded-[18px] border border-slate-100 bg-slate-50 p-4">
+                  <div className="flex items-center gap-3"><ShoppingCart className="h-10 w-10 rounded-full bg-emerald-100 p-2 text-emerald-600" /><div><p className="font-black text-slate-950">Referral User Buys Coupon</p><p className="text-xs text-slate-500">Earn</p></div></div>
+                  <p className="font-black text-emerald-600">70 Coins</p>
+                </div>
+              </div>
+              <Link href="/referrals" className="mt-5 inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-black text-white">
+                <Send className="h-4 w-4" />
+                Invite Friends
+              </Link>
+            </div>
+
+            <div className="rounded-[26px] border border-blue-100 bg-white p-5 shadow-[0_18px_36px_rgba(15,23,42,0.06)]">
+              <div className="flex items-center gap-4">
+                <PartyPopper className="h-12 w-12 rounded-2xl bg-blue-100 p-2.5 text-blue-600" />
+                <div>
+                  <p className="text-xl font-black text-slate-950">Daily Spin</p>
+                  <p className="text-sm text-slate-500">Spin daily and win coupons</p>
+                </div>
+              </div>
+              <div className="relative mx-auto mt-5 h-64 w-64 rounded-full border-[10px] border-amber-200 bg-[conic-gradient(from_-90deg,#7c3aed_0deg_60deg,#22c55e_60deg_120deg,#f59e0b_120deg_180deg,#0ea5e9_180deg_240deg,#ef4444_240deg_300deg,#14b8a6_300deg_360deg)] shadow-[0_18px_34px_rgba(15,23,42,0.12)]">
+                <div className="absolute left-1/2 top-1/2 flex h-24 w-24 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-4 border-amber-200 bg-amber-400 text-xl font-black text-white shadow-[0_12px_24px_rgba(245,158,11,0.28)]">SPIN</div>
+                <div className="absolute left-1/2 top-3 -translate-x-1/2 rounded-full bg-white px-3 py-1 text-xs font-black text-emerald-700">Coupon</div>
+                <div className="absolute right-5 top-1/2 rounded-full bg-white px-3 py-1 text-xs font-black text-emerald-700">100</div>
+                <div className="absolute bottom-5 left-9 rounded-full bg-white px-3 py-1 text-xs font-black text-rose-600">Bonus</div>
+              </div>
+              <Link href="/rewards" className="mt-5 inline-flex w-full justify-center rounded-xl bg-blue-600 px-4 py-3 text-sm font-black text-white">Spin Now</Link>
+            </div>
+
+            <div className="rounded-[26px] border border-emerald-100 bg-white p-5 shadow-[0_18px_36px_rgba(15,23,42,0.06)]">
+              <div className="flex items-center gap-4">
+                <ClipboardList className="h-12 w-12 rounded-2xl bg-emerald-100 p-2.5 text-emerald-600" />
+                <div>
+                  <p className="text-xl font-black text-slate-950">Missions</p>
+                  <p className="text-sm text-slate-500">Complete missions and earn coins</p>
+                </div>
+              </div>
+              <div className="mt-5 divide-y divide-slate-100 rounded-[18px] border border-slate-100">
+                {rewardsMissions.map(([title, coins, status, Icon, tone]) => (
+                  <div key={title} className="flex items-center justify-between gap-3 p-3">
+                    <div className="flex items-center gap-3">
+                      <Icon className={`h-9 w-9 rounded-full p-2 ${tone}`} />
+                      <div><p className="text-sm font-black text-slate-950">{title}</p><p className="text-xs font-black text-emerald-600">{coins}</p></div>
+                    </div>
+                    <span className={`rounded-lg px-3 py-1 text-xs font-black ${status === "Claim" ? "bg-emerald-600 text-white" : "bg-slate-100 text-slate-600"}`}>{status}</span>
+                  </div>
+                ))}
+              </div>
+              <Link href="/missions" className="mt-5 inline-flex w-full justify-center rounded-xl bg-emerald-600 px-4 py-3 text-sm font-black text-white">View All Missions</Link>
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-5 lg:grid-cols-[1.2fr_0.9fr]">
+            <div className="rounded-[26px] border border-slate-100 bg-white p-5 shadow-[0_18px_36px_rgba(15,23,42,0.06)]">
+              <p className="text-xl font-black text-slate-950">How to Earn More Coins</p>
+              <div className="mt-5 grid gap-4 sm:grid-cols-4">
+                {rewardsEarnSteps.map(([title, text, Icon]) => (
+                  <div key={title} className="text-center">
+                    <Icon className="mx-auto h-14 w-14 rounded-full bg-emerald-100 p-3 text-emerald-600" />
+                    <p className="mt-3 text-sm font-black text-slate-950">{title}</p>
+                    <p className="mt-1 text-xs leading-5 text-slate-500">{text}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-[26px] border border-slate-100 bg-white p-5 shadow-[0_18px_36px_rgba(15,23,42,0.06)]">
+              <p className="text-xl font-black text-slate-950">Recent Activity</p>
+              <div className="mt-4 divide-y divide-slate-100">
+                {rewardsActivity.map(([title, text, time, coins, Icon]) => (
+                  <div key={title} className="flex items-center justify-between gap-3 py-3">
+                    <div className="flex items-center gap-3">
+                      <Icon className="h-10 w-10 rounded-full bg-emerald-100 p-2 text-emerald-600" />
+                      <div><p className="text-sm font-black text-slate-950">{title}</p><p className="text-xs text-slate-500">{text}</p></div>
+                    </div>
+                    <div className="text-right"><p className="text-xs text-slate-500">{time}</p><p className="font-black text-emerald-600">{coins}</p></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-4 rounded-[22px] border border-white/80 bg-white/95 p-4 shadow-[0_18px_36px_rgba(15,23,42,0.06)] md:grid-cols-[1fr_auto_auto_auto] md:items-center">
+            <div className="flex items-center gap-4">
+              <Gift className="h-12 w-12 rounded-2xl bg-emerald-100 p-2.5 text-emerald-600" />
+              <div>
+                <p className="text-lg font-black text-emerald-600">The more you earn, the more you save!</p>
+                <p className="text-sm text-slate-500">Keep earning coins and enjoy amazing rewards.</p>
+              </div>
+            </div>
+            <div className="rounded-xl border border-slate-100 px-6 py-3 text-sm font-black text-slate-950">2,450 Coins</div>
+            <div className="rounded-xl border border-emerald-100 px-6 py-3 text-sm font-black text-emerald-600">Rs 245.00 Value</div>
+            <Link href="/wallet" className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-6 py-3 text-sm font-black text-white">
+              <Gift className="h-4 w-4" />
+              Redeem Now
+            </Link>
+          </div>
+        </div>
+      </section>
       <section className="mx-auto mt-16 max-w-7xl px-4 sm:px-6">
         <div className="flex flex-col items-center gap-4">
           <SectionHeading title="Most Popular Categories" subtitle="Browse the categories people explore most on CouponX." />
