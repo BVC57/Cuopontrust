@@ -1,0 +1,2056 @@
+This is a complete, advanced documentation portal for the CouponTrust project. It delivers a professional, single-page website with a dark theme, interactive sidebar navigation, and extensive sections covering architecture, API design, database schemas, security, deployment, and business strategy.
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CouponTrust – Advanced Documentation</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,100..900&display=swap" rel="stylesheet" />
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js">
+    </script>
+    <style>
+        /* ============================================================
+           RESET & BASE
+        ============================================================ */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        :root {
+            --primary: #0b2b4a;
+            --primary-light: #1a4b6d;
+            --primary-dark: #061a2c;
+            --accent: #4F46E5;
+            --accent-light: #818CF8;
+            --secondary: #7C3AED;
+            --gold: #F59E0B;
+            --gold-light: #FCD34D;
+            --success: #10B981;
+            --danger: #EF4444;
+            --warning: #F59E0B;
+            --bg: #f5f7fa;
+            --card-bg: #ffffff;
+            --text: #1a2a3a;
+            --text-light: #4a5a6a;
+            --text-muted: #7a8a9a;
+            --border: #dce3ed;
+            --shadow: 0 4px 24px rgba(11, 43, 74, 0.08);
+            --shadow-hover: 0 8px 40px rgba(11, 43, 74, 0.14);
+            --radius: 12px;
+            --sidebar-width: 300px;
+            --header-height: 64px;
+            --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        html {
+            scroll-behavior: smooth;
+            font-size: 16px;
+        }
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+        a:hover {
+            color: var(--primary-light);
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 8px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+
+        /* ============================================================
+           HEADER
+        ============================================================ */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: var(--header-height);
+            background: var(--primary);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            z-index: 1000;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+        }
+        .header .logo {
+            font-weight: 700;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .header .logo .brand-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            background: linear-gradient(135deg, var(--accent), var(--secondary));
+            border-radius: 8px;
+            font-size: 1rem;
+            color: #fff;
+        }
+        .header .logo span {
+            color: var(--gold);
+        }
+        .header .logo small {
+            font-weight: 400;
+            font-size: 0.65rem;
+            opacity: 0.7;
+            margin-left: 6px;
+        }
+        .header .hamburger {
+            display: none;
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 4px 10px;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+        .header .hamburger:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .header .badge {
+            font-size: 0.7rem;
+            background: var(--gold);
+            color: var(--primary);
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        /* ============================================================
+           SIDEBAR
+        ============================================================ */
+        .sidebar {
+            position: fixed;
+            top: var(--header-height);
+            left: 0;
+            bottom: 0;
+            width: var(--sidebar-width);
+            background: var(--card-bg);
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 12px 0 24px;
+            z-index: 999;
+            transition: transform 0.3s ease;
+        }
+        .sidebar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .sidebar .nav-section {
+            padding: 0 8px;
+            margin-bottom: 4px;
+        }
+        .sidebar .nav-section .section-title {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            font-weight: 600;
+            padding: 8px 12px 4px;
+        }
+        .sidebar a {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 14px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 450;
+            color: var(--text-light);
+            transition: all 0.15s ease;
+            border-left: 3px solid transparent;
+        }
+        .sidebar a:hover {
+            background: var(--bg);
+            color: var(--primary);
+            border-left-color: var(--accent);
+        }
+        .sidebar a.active {
+            background: rgba(79, 70, 229, 0.08);
+            color: var(--primary);
+            border-left-color: var(--accent);
+            font-weight: 500;
+        }
+        .sidebar a .chapter-num {
+            font-size: 0.6rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            min-width: 26px;
+        }
+
+        /* ============================================================
+           MAIN
+        ============================================================ */
+        .main {
+            margin-left: var(--sidebar-width);
+            margin-top: var(--header-height);
+            padding: 32px 48px 80px;
+            flex: 1;
+            max-width: 1300px;
+        }
+
+        /* ============================================================
+           TYPOGRAPHY
+        ============================================================ */
+        h1 {
+            font-size: 2.8rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--primary);
+            margin-bottom: 0.4rem;
+            line-height: 1.1;
+        }
+        h1 .highlight {
+            color: var(--gold);
+        }
+        h2 {
+            font-size: 1.9rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            color: var(--primary);
+            margin-top: 3rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.4rem;
+            border-bottom: 3px solid rgba(79, 70, 229, 0.3);
+        }
+        h3 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--primary-light);
+            margin-top: 2rem;
+            margin-bottom: 0.75rem;
+        }
+        h4 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-top: 1.6rem;
+            margin-bottom: 0.5rem;
+        }
+        p {
+            margin-bottom: 1rem;
+            color: var(--text);
+        }
+        .subtitle {
+            font-size: 1.15rem;
+            color: var(--text-light);
+            margin-bottom: 2rem;
+            font-weight: 400;
+        }
+        .text-muted {
+            color: var(--text-muted);
+        }
+        .section-anchor {
+            scroll-margin-top: calc(var(--header-height) + 16px);
+        }
+
+        /* ============================================================
+           CARDS
+        ============================================================ */
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 24px 28px;
+            margin-bottom: 24px;
+            border: 1px solid var(--border);
+            transition: box-shadow 0.2s;
+        }
+        .card:hover {
+            box-shadow: var(--shadow-hover);
+        }
+        .card-header {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--primary);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .badge-p0 {
+            background: #dc3545;
+            color: #fff;
+            font-size: 0.6rem;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+        .badge-p1 {
+            background: #fd7e14;
+            color: #fff;
+            font-size: 0.6rem;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+        .badge-p2 {
+            background: #ffc107;
+            color: #212529;
+            font-size: 0.6rem;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+        .badge-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .badge-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .badge-danger {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .badge-primary {
+            background: rgba(79, 70, 229, 0.15);
+            color: var(--accent);
+        }
+        .badge-gold {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--gold-dark);
+        }
+
+        /* ============================================================
+           TABLES
+        ============================================================ */
+        .table-wrap {
+            overflow-x: auto;
+            margin: 16px 0 24px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+            min-width: 600px;
+        }
+        table thead {
+            background: var(--primary);
+            color: #fff;
+        }
+        table th {
+            padding: 10px 14px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        table td {
+            padding: 8px 14px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: top;
+        }
+        table tbody tr:hover {
+            background: rgba(79, 70, 229, 0.04);
+        }
+
+        /* ============================================================
+           GRID
+        ============================================================ */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+        @media (max-width: 992px) {
+            .grid-2,
+            .grid-3,
+            .grid-4 {
+                grid-template-columns: 1fr;
+            }
+        }
+        @media (max-width: 768px) {
+            .grid-2,
+            .grid-3,
+            .grid-4 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ============================================================
+           USP BOX
+        ============================================================ */
+        .usp-box {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: #fff;
+            border-radius: var(--radius);
+            padding: 32px 40px;
+            margin: 28px 0;
+            box-shadow: var(--shadow-hover);
+        }
+        .usp-box p {
+            color: #e8edf2;
+            font-size: 1.15rem;
+            margin-bottom: 0.5rem;
+        }
+        .usp-box strong {
+            color: var(--gold);
+        }
+
+        /* ============================================================
+           RESPONSIVE
+        ============================================================ */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: var(--header-height);
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 998;
+        }
+        @media (max-width: 992px) {
+            .sidebar {
+                transform: translateX(-100%);
+                width: 290px;
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            .sidebar-overlay.open {
+                display: block;
+            }
+            .header .hamburger {
+                display: block;
+            }
+            .main {
+                margin-left: 0;
+                padding: 24px 16px 60px;
+            }
+            h1 {
+                font-size: 2rem;
+            }
+            h2 {
+                font-size: 1.5rem;
+            }
+            .usp-box {
+                padding: 24px 20px;
+            }
+        }
+        @media (max-width: 480px) {
+            .main {
+                padding: 16px 10px 48px;
+            }
+            .card {
+                padding: 16px;
+            }
+            .header .badge {
+                display: none;
+            }
+            h1 {
+                font-size: 1.6rem;
+            }
+        }
+
+        /* ============================================================
+           PRINT
+        ============================================================ */
+        @media print {
+            .sidebar,
+            .header {
+                display: none !important;
+            }
+            .main {
+                margin-left: 0 !important;
+                margin-top: 0 !important;
+                padding: 20px !important;
+                max-width: 100% !important;
+            }
+            .card {
+                box-shadow: none !important;
+                border: 1px solid #ddd !important;
+            }
+        }
+
+        /* ============================================================
+           MISC
+        ============================================================ */
+        .tag {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            background: var(--bg);
+            color: var(--text-light);
+            margin-right: 4px;
+        }
+        .tag-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .tag-primary {
+            background: rgba(79, 70, 229, 0.12);
+            color: var(--accent);
+        }
+        code {
+            background: #f0f4f9;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            color: var(--primary);
+        }
+        .highlight-box {
+            background: #fef9f0;
+            border-left: 4px solid var(--gold);
+            padding: 16px 20px;
+            border-radius: 8px;
+            margin: 16px 0;
+        }
+        .tree {
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            background: #f0f4f9;
+            padding: 16px 20px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            overflow-x: auto;
+            line-height: 1.8;
+            white-space: pre;
+            color: var(--text);
+        }
+        .tree .folder {
+            color: var(--primary);
+            font-weight: 600;
+        }
+        .tree .file {
+            color: var(--text-light);
+        }
+        .btn-gold {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+            color: #fff;
+            font-weight: 600;
+            font-size: 0.9rem;
+            padding: 10px 24px;
+            border-radius: 100px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+        .btn-gold:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(245, 158, 11, 0.3);
+        }
+        .coin-bg {
+            background: rgba(245, 158, 11, 0.08);
+            border: 1px solid rgba(245, 158, 11, 0.15);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ============================================================
+    HEADER
+    ============================================================ -->
+    <header class="header">
+        <div class="logo">
+            <span class="brand-icon"><i class="fas fa-ticket-alt"></i></span>
+            Coupon<span>Trust</span>
+            <small>Advanced Documentation v3.0</small>
+        </div>
+        <button class="hamburger" id="hamburgerBtn" aria-label="Toggle navigation">☰</button>
+        <div class="badge">Production Ready</div>
+    </header>
+
+    <!-- ============================================================
+    SIDEBAR OVERLAY
+    ============================================================ -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- ============================================================
+    SIDEBAR
+    ============================================================ -->
+    <nav class="sidebar" id="sidebar">
+        <div class="nav-section">
+            <div class="section-title">Overview</div>
+            <a href="#ch1" class="active"><span class="chapter-num">1</span>Introduction</a>
+            <a href="#ch2"><span class="chapter-num">2</span>Vision &amp; Mission</a>
+            <a href="#ch3"><span class="chapter-num">3</span>Business Overview</a>
+            <a href="#ch4"><span class="chapter-num">4</span>Problem Statement</a>
+            <a href="#ch5"><span class="chapter-num">5</span>Objectives &amp; KPIs</a>
+            <a href="#ch6"><span class="chapter-num">6</span>Project Scope</a>
+            <a href="#ch7"><span class="chapter-num">7</span>Stakeholders</a>
+            <a href="#ch8"><span class="chapter-num">8</span>USP</a>
+        </div>
+        <div class="nav-section">
+            <div class="section-title">Architecture</div>
+            <a href="#ch9"><span class="chapter-num">9</span>Tech Stack</a>
+            <a href="#ch10"><span class="chapter-num">10</span>System Architecture</a>
+            <a href="#ch11"><span class="chapter-num">11</span>Database Design</a>
+            <a href="#ch12"><span class="chapter-num">12</span>API Design</a>
+        </div>
+        <div class="nav-section">
+            <div class="section-title">Core Systems</div>
+            <a href="#ch13"><span class="chapter-num">13</span>Authentication</a>
+            <a href="#ch14"><span class="chapter-num">14</span>AI Verification</a>
+            <a href="#ch15"><span class="chapter-num">15</span>Payment Escrow</a>
+            <a href="#ch16"><span class="chapter-num">16</span>Trust Score</a>
+            <a href="#ch17"><span class="chapter-num">17</span>Rewards &amp; Referral</a>
+        </div>
+        <div class="nav-section">
+            <div class="section-title">User Flows</div>
+            <a href="#ch18"><span class="chapter-num">18</span>Sell Coupon</a>
+            <a href="#ch19"><span class="chapter-num">19</span>Buy Coupon</a>
+            <a href="#ch20"><span class="chapter-num">20</span>Dispute Flow</a>
+        </div>
+        <div class="nav-section">
+            <div class="section-title">Security &amp; Ops</div>
+            <a href="#ch21"><span class="chapter-num">21</span>Security</a>
+            <a href="#ch22"><span class="chapter-num">22</span>Deployment</a>
+            <a href="#ch23"><span class="chapter-num">23</span>Testing</a>
+            <a href="#ch24"><span class="chapter-num">24</span>Disaster Recovery</a>
+        </div>
+        <div class="nav-section">
+            <div class="section-title">Strategy</div>
+            <a href="#ch25"><span class="chapter-num">25</span>Market Analysis</a>
+            <a href="#ch26"><span class="chapter-num">26</span>Competitor Analysis</a>
+            <a href="#ch27"><span class="chapter-num">27</span>Go‑to‑Market</a>
+            <a href="#ch28"><span class="chapter-num">28</span>Revenue Model</a>
+            <a href="#ch29"><span class="chapter-num">29</span>Roadmap</a>
+            <a href="#ch30"><span class="chapter-num">30</span>Success Criteria</a>
+        </div>
+        <div style="padding:16px 20px;font-size:0.7rem;color:var(--text-muted);border-top:1px solid var(--border);margin-top:8px;">
+            Confidential &bull; CouponTrust Inc.
+        </div>
+    </nav>
+
+    <!-- ============================================================
+    MAIN CONTENT
+    ============================================================ -->
+    <main class="main" id="mainContent">
+
+        <!-- ==========================================================
+        CHAPTER 1: INTRODUCTION
+        ========================================================== -->
+        <section id="ch1" class="section-anchor">
+            <h1>Coupon<span class="highlight">Trust</span></h1>
+            <p class="subtitle">Advanced Software Requirements Specification &bull; Version 3.0 &bull; Production-Ready Documentation</p>
+
+            <div class="card">
+                <div class="card-header">📄 Document Information</div>
+                <div class="grid-2" style="font-size:0.9rem;">
+                    <div><strong>Title:</strong> CouponTrust Platform — Complete SRS</div>
+                    <div><strong>Version:</strong> v3.0 (Advanced)</div>
+                    <div><strong>Status:</strong> Production Ready</div>
+                    <div><strong>Classification:</strong> Confidential</div>
+                    <div><strong>Last Updated:</strong> July 10, 2026</div>
+                    <div><strong>Target Audience:</strong> Developers, Architects, PMs, QA, Investors</div>
+                    <div><strong>Total Chapters:</strong> 30</div>
+                    <div><strong>Total Tables:</strong> 50+</div>
+                </div>
+            </div>
+
+            <h2>1.1 Purpose</h2>
+            <p>This document serves as the comprehensive technical and business reference for the CouponTrust platform. It provides:</p>
+            <ul style="padding-left:24px;margin-bottom:16px;">
+                <li><strong>Complete System Blueprint:</strong> Full architectural design, database schemas, and API specifications</li>
+                <li><strong>Implementation Guide:</strong> Detailed technical requirements for development teams</li>
+                <li><strong>Business Strategy:</strong> Market analysis, revenue model, and go‑to‑market plan</li>
+                <li><strong>Operational Framework:</strong> Security, deployment, testing, and disaster recovery</li>
+                <li><strong>Investment Reference:</strong> Comprehensive documentation for stakeholders and investors</li>
+            </ul>
+
+            <h2>1.2 Scope</h2>
+            <p>This document covers the complete CouponTrust ecosystem:</p>
+            <ul style="padding-left:24px;margin-bottom:16px;">
+                <li><strong>Core Modules:</strong> Authentication, Coupon Management, AI Verification, Payment Escrow, Trust Score, Wallet, Disputes, Notifications, Admin Panel</li>
+                <li><strong>User Roles:</strong> Buyers, Sellers, Support Admin, Super Admin</li>
+                <li><strong>Platforms:</strong> Web (React + Vite), Mobile (React Native), Admin Dashboard</li>
+                <li><strong>Geographic Coverage:</strong> Global with support for 50+ countries</li>
+            </ul>
+        </section>
+
+        <!-- ==========================================================
+        CHAPTER 2: VISION & MISSION
+        ========================================================== -->
+        <section id="ch2" class="section-anchor">
+            <h2>2. Vision &amp; Mission</h2>
+
+            <div class="usp-box">
+                <p style="font-size:1.6rem;font-weight:700;margin-bottom:6px;">🎯 Vision</p>
+                <p style="font-size:1.2rem;">To become the world's most trusted AI-powered coupon marketplace, connecting millions of buyers and sellers globally with zero fraud.</p>
+                <p style="font-size:1rem;opacity:0.85;margin-top:12px;"><strong>Mission:</strong> Democratize coupon trading by making it safe, simple, and accessible to everyone through AI verification, escrow protection, and a transparent trust score system.</p>
+            </div>
+
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-header">💡 Core Values</div>
+                    <ul style="padding-left:18px;">
+                        <li><strong>Trust:</strong> Every transaction must be safe and transparent</li>
+                        <li><strong>Innovation:</strong> AI-first approach to verification</li>
+                        <li><strong>Security:</strong> Escrow protection for every payment</li>
+                        <li><strong>Community:</strong> Building a trusted marketplace ecosystem</li>
+                        <li><strong>Transparency:</strong> Clear trust scores and dispute resolution</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-header">🌍 Global Impact</div>
+                    <ul style="padding-left:18px;">
+                        <li>Enable users to monetize unused coupons</li>
+                        <li>Help buyers save money with verified coupons</li>
+                        <li>Reduce coupon fraud globally</li>
+                        <li>Create a trusted P2P coupon economy</li>
+                        <li>Support 50+ countries with local currencies</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================================
+        CHAPTER 3: BUSINESS OVERVIEW
+        ========================================================== -->
+        <section id="ch3" class="section-anchor">
+            <h2>3. Business Overview</h2>
+
+            <div class="card">
+                <div class="card-header">🏢 Company Overview</div>
+                <p><strong>CouponTrust</strong> is a technology company dedicated to building the world's most trusted coupon marketplace. Our platform uses AI to verify coupons, escrow to protect payments, and a trust score system to build reputation.</p>
+                <div class="grid-3" style="margin-top:16px;">
+                    <div><strong>Founded:</strong> 2026</div>
+                    <div><strong>Headquarters:</strong> Bangalore, India</div>
+                    <div><strong>Team Size:</strong> 25+ members</div>
+                </div>
+            </div>
+
+            <h3>3.1 Business Model</h3>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Revenue Stream</th><th>Description</th><th>Status</th><th>Expected Revenue</th></tr></thead>
+                    <tbody>
+                        <tr><td>Platform Commission</td><td>10% per successful sale</td><td>Phase 1</td><td>$500K Year 1</td></tr>
+                        <tr><td>Seller Subscriptions</td><td>Free / Pro ($29) / Unlimited ($99)</td><td>Phase 1</td><td>$300K Year 1</td></tr>
+                        <tr><td>Featured Listings</td><td>Pay to promote coupons</td><td>Phase 1</td><td>$100K Year 1</td></tr>
+                        <tr><td>Brand Partnerships</td><td>Official coupon campaigns</td><td>Phase 2</td><td>$1M Year 3</td></tr>
+                        <tr><td>Data Insights</td><td>Anonymized analytics for brands</td><td>Phase 3</td><td>$2M Year 5</td></tr>
+                        <tr><td>White-label Solutions</td><td>Enterprise platform licensing</td><td>Phase 4</td><td>$5M Year 5</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ==========================================================
+        CHAPTER 4: PROBLEM STATEMENT
+        ========================================================== -->
+        <section id="ch4" class="section-anchor">
+            <h2>4. Problem Statement</h2>
+
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-header">📉 Seller Problems</div>
+                    <ul style="padding-left:18px;">
+                        <li><strong>Unused Coupons:</strong> Millions of coupons go unused every year</li>
+                        <li><strong>No Safe Marketplace:</strong> No trusted platform to sell coupons</li>
+                        <li><strong>Fear of Fraud:</strong> No protection when selling to strangers</li>
+                        <li><strong>No Trust Mechanism:</strong> No way to build reputation as a seller</li>
+                        <li><strong>No Escrow:</strong> No protection against chargebacks or disputes</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-header">🔍 Buyer Problems</div>
+                    <ul style="padding-left:18px;">
+                        <li><strong>No Verification:</strong> Cannot verify if a coupon is real</li>
+                        <li><strong>Fake Coupons:</strong> High risk of buying fake or expired coupons</li>
+                        <li><strong>No Escrow:</strong> Money lost if coupon doesn't work</li>
+                        <li><strong>No Dispute Resolution:</strong> No way to get refunds</li>
+                        <li><strong>No Trust Score:</strong> Cannot evaluate seller reliability</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="highlight-box">
+                <strong>The Core Problem:</strong> There is no trusted, AI-powered platform for buying and selling coupons with escrow protection and reputation management. CouponTrust solves ALL of these problems with a comprehensive ecosystem.
+            </div>
+        </section>
+
+        <!-- ==========================================================
+        CHAPTER 5: OBJECTIVES & KPIs
+        ========================================================== -->
+        <section id="ch5" class="section-anchor">
+            <h2>5. Business Objectives &amp; KPIs</h2>
+
+            <div class="card">
+                <div class="card-header">🎯 Strategic Objectives</div>
+                <div class="grid-2" style="font-size:0.9rem;">
+                    <div><strong>AI-Powered Trust:</strong> Verify every coupon with AI/OCR</div>
+                    <div><strong>Escrow Protection:</strong> Secure every transaction</div>
+                    <div><strong>Reputation Economy:</strong> Trust score system</div>
+                    <div><strong>Global Scale:</strong> Support 50+ countries</div>
+                    <div><strong>Mobile-First:</strong> Native app experience</div>
+                    <div><strong>Zero Fraud:</strong> AI fraud detection</div>
+                    <div><strong>Fast Resolution:</strong> Disputes resolved in &lt; 24h</div>
+                    <div><strong>Revenue Growth:</strong> 100% YoY growth</div>
+                </div>
+            </div>
+
+            <h3>5.1 Key Performance Indicators</h3>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>KPI</th><th>Year 1</th><th>Year 3</th><th>Year 5</th></tr></thead>
+                    <tbody>
+                        <tr><td>User Registrations</td><td>100,000</td><td>1,000,000</td><td>5,000,000</td></tr>
+                        <tr><td>Monthly Active Users</td><td>30,000</td><td>300,000</td><td>1,500,000</td></tr>
+                        <tr><td>Coupons Listed</td><td>50,000</td><td>500,000</td><td>5,000,000</td></tr>
+                        <tr><td>Successful Transactions</td><td>25,000</td><td>250,000</td><td>2,500,000</td></tr>
+                        <tr><td>AI Verification Rate</td><td>85%</td><td>90%</td><td>95%</td></tr>
+                        <tr><td>Platform Uptime</td><td>99.9%</td><td>99.95%</td><td>99.99%</td></tr>
+                        <tr><td>User Retention</td><td>45%</td><td>65%</td><td>75%</td></tr>
+                        <tr><td>Revenue</td><td>$500,000</td><td>$5,000,000</td><td>$25,000,000</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ==========================================================
+        CHAPTER 6: PROJECT SCOPE
+        ========================================================== -->
+        <section id="ch6" class="section-anchor">
+            <h2>6. Project Scope</h2>
+
+            <h3>6.1 In Scope – Phase 1 (MVP)</h3>
+            <div class="grid-3">
+                <div class="card">
+                    <div class="card-header">🔐 Authentication</div>
+                    <ul style="padding-left:18px;font-size:0.85rem;">
+                        <li>Mobile OTP (Twilio Verify)</li>
+                        <li>JWT authentication</li>
+                        <li>Session management</li>
+                        <li>User profile</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-header">🏷️ Coupon Management</div>
+                    <ul style="padding-left:18px;font-size:0.85rem;">
+                        <li>Sell coupon form</li>
+                        <li>Screenshot upload (Multer)</li>
+                        <li>AI verification (OCR)</li>
+                        <li>Instant listing / rejection</li>
+                        <li>Coupon encryption (AES)</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-header">🛒 Marketplace</div>
+                    <ul style="padding-left:18px;font-size:0.85rem;">
+                        <li>Infinite scroll feed</li>
+                        <li>Filters (platform, country, price)</li>
+                        <li>Coupon details</li>
+                        <li>Buy Now flow</li>
+                        <li>Coupon reveal</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-header">💳 Payments</div>
+                    <ul style="padding-left:18px;font-size:0.85rem;">
+                        <li>Stripe PaymentIntent</li>
+                        <li>Manual capture (escrow)</li>
+                        <li>Payment capture</li>
+                        <li>Refund processing</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-header">⭐ Trust &amp; Wallet</div>
+                    <ul style="padding-left:18px;font-size:0.85rem;">
+                        <li>Trust score system</li>
+                        <li>Wallet balance</li>
+                        <li>Transaction history</li>
+                        <li>Withdrawal requests</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-header">📱 Admin Panel</div>
+                    <ul style="padding-left:18px;font-size:0.85rem;">
+                        <li>Dashboard</li>
+                        <li>User management</li>
+                        <li>Coupon review</li>
+                        <li>Dispute management</li>
+                        <li>Payout management</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>6.2 In Scope – Phase 2 (Growth)</h3>
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-header">🎁 Rewards &amp; Referral</div>
+                    <ul style="padding-left:18px;font-size:0.85rem;">
+                        <li>Coin earning system</li>
+                        <li>Daily missions</li>
+                        <li>Referral program</li>
+                        <li>Coin redemption</li>
+                        <li>Activity feed</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-header">🔔 Notifications</div>
+                    <ul style="padding-left:18px;font-size:0.85rem;">
+                        <li>SMS (Twilio)</li>
+                        <li>Push notifications</li>
+                        <li>Email notifications</li>
+                        <li>In-app notifications</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-header">📊 Analytics</div>
+                    <ul style="padding-left:18px;font-size:0.85rem;">
+                        <li>User analytics</li>
+                        <li>Coupon analytics</li>
+                        <li>Transaction analytics</li>
+                        <li>Trust score analytics</li>
+                        <li>Fraud detection</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-header">🌐 Internationalization</div>
+                    <ul style="padding-left:18px;font-size:0.85rem;">
+                        <li>Multi-language</li>
+                        <li>Multi-currency</li>
+                        <li>Country-specific filters</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>6.3 Out of Scope</h3>
+            <div class="card" style="background:#fef9f0;border-color:#f5d68a;">
+                <ul style="padding-left:18px;display:flex;flex-wrap:wrap;gap:6px 24px;">
+                    <li>✗ Physical goods delivery</li>
+                    <li>✗ Offline payments</li>
+                    <li>✗ Crypto payments</li>
+                    <li>✗ Advanced AI training (Phase 3+)</li>
+                    <li>✗ Voice search</li>
+                    <li>✗ AR/VR features</li>
+                    <li>✗ Blockchain integration</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- ==========================================================
+        CHAPTER 7: STAKEHOLDERS
+        ========================================================== -->
+        <section id="ch7" class="section-anchor">
+            <h2>7. Stakeholder Analysis</h2>
+
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Stakeholder</th><th>Role</th><th>Decision Authority</th><th>KPIs</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>CEO / Founder</strong></td><td>Strategy &amp; Vision</td><td>✅ Budget, Partnerships, Product</td><td>Revenue, User Growth</td></tr>
+                        <tr><td><strong>CTO</strong></td><td>Technology</td><td>✅ Architecture, Team, Infrastructure</td><td>Uptime, Performance, Security</td></tr>
+                        <tr><td><strong>Product Manager</strong></td><td>Product</td><td>✅ Features, Roadmap, UX</td><td>User Adoption, Retention</td></tr>
+                        <tr><td><strong>Lead Developer</strong></td><td>Engineering</td><td>✅ Code Quality, Architecture</td><td>Velocity, Coverage, Bugs</td></tr>
+                        <tr><td><strong>QA Lead</strong></td><td>Quality</td><td>✅ Testing Strategy</td><td>Coverage, Defect Rate</td></tr>
+                        <tr><td><strong>DevOps Engineer</strong></td><td>Infrastructure</td><td>✅ Deployment, Monitoring</td><td>Uptime, MTTR</td></tr>
+                        <tr><td><strong>Support Admin</strong></td><td>Support</td><td>✅ Ticket Resolution</td><td>CSAT, Resolution Time</td></tr>
+                        <tr><td><strong>Marketing Lead</strong></td><td>Marketing</td><td>✅ Campaigns, Growth</td><td>User Acquisition, CAC</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ==========================================================
+        CHAPTER 8: USP
+        ========================================================== -->
+        <section id="ch8" class="section-anchor">
+            <h2>8. Unique Selling Proposition</h2>
+
+            <div class="usp-box">
+                <p style="font-size:1.5rem;font-weight:700;">Not just a coupon marketplace.</p>
+                <p style="font-size:1.2rem;">It is an <strong>AI-Powered Trust Ecosystem</strong> that verifies every coupon, protects every transaction with escrow, and builds trust through a dynamic reputation system.</p>
+            </div>
+
+            <div class="grid-3">
+                <div class="card">
+                    <div class="card-header">🤖 AI Verification</div>
+                    <ul style="padding-left:18px;">
+                        <li>OCR extracts coupon data from screenshots</li>
+                        <li>Match scoring (Platform + Code + Value + Expiry + Terms)</li>
+                        <li>Pass ≥ 85% → instant listing</li>
+                        <li>Fail &lt; 85% → automatic rejection</li>
+                        <li>No manual approval required</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-header">🔒 Escrow Protection</div>
+                    <ul style="padding-left:18px;">
+                        <li>Stripe PaymentIntent with manual capture</li>
+                        <li>Funds held until buyer confirms</li>
+                        <li>Dispute resolution by admin</li>
+                        <li>Refund buyer or release seller</li>
+                        <li>Zero‑risk transactions</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-header">⭐ Trust Score System</div>
+                    <ul style="padding-left:18px;">
+                        <li>Every user starts at 100</li>
+                        <li>AI mismatches: -10 (3 in 30 days)</li>
+                        <li>Fake coupon: -20</li>
+                        <li>Below 60 → banned</li>
+                        <li>Gamified reputation economy</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>8.1 Competitive Advantage</h3>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Feature</th><th>CouponTrust</th><th>Groupon</th><th>CouponBirds</th><th>RetailMeNot</th><th>Honey</th></tr></thead>
+                    <tbody>
+                        <tr><td>AI Verification</td><td>✅✅</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr>
+                        <tr><td>Escrow Payments</td><td>✅✅</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr>
+                        <tr><td>Trust Score</td><td>✅✅</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr>
+                        <tr><td>P2P Selling</td><td>✅✅</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr>
+                        <tr><td>Instant Listing</td><td>✅✅</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr>
+                        <tr><td>Dispute Resolution</td><td>✅✅</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ==========================================================
+        CHAPTER 9: TECH STACK
+        ========================================================== -->
+        <section id="ch9" class="section-anchor">
+            <h2>9. Technology Stack</h2>
+
+            <div class="grid-3">
+                <div class="card">
+                    <div class="card-header">⚙️ Backend</div>
+                    <ul style="padding-left:18px;font-size:0.85rem;">
+                        <li><strong>Runtime:</strong> Node.js 20 LTS</li>
+                        <li><strong>Framework:</strong> Express.js 4.x</li>
+                        <li><strong>ODM:</strong> Mongoose 8.x</li>
+                        <li><strong>Database:</strong> MongoDB 6.x (Atlas)</li>
+                        <li><strong>Auth:</strong> JWT (jsonwebtoken)</li>
+                        <li><strong>File Upload:</strong> Multer (local storage)</li>
+                        <li><strong>Payments:</strong> Stripe SDK</li>
+                        <li><strong>SMS/OTP:</strong> Twilio Verify API</li>
+                        <li><strong>Encryption:</strong> AES (crypto-js)</li>
+                        <li><strong>Validation:</strong> Joi / Zod</li>
+                        <li><strong>Logging:</strong> Winston / Morgan</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-header">🖥️ Frontend</div>
+                    <ul style="padding-left:18px;font-size:0.85rem;">
+                        <li><strong>Framework:</strong> React.js + Vite</li>
+                        <li><strong>Styling:</strong> Tailwind CSS 3.x</li>
+                        <li><strong>State:</strong> Redux Toolkit</li>
+                        <li><strong>Routing:</strong> React Router 6.x</li>
+                        <li><strong>API Client:</strong> Axios</li>
+                        <li><strong>Notifications:</strong> React Toastify</li>
+                        <li><strong>Forms:</strong> React Hook Form</li>
+                        <li><strong>Validation:</strong> Zod</li>
+                        <li><strong>Payments:</strong> Stripe React SDK</li>
+                        <li><strong>Charts:</strong> Recharts</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-header">📱 Mobile</div>
+                    <ul style="padding-left:18px;font-size:0.85rem;">
+                        <li><strong>Framework:</strong> React Native 0.72</li>
+                        <li><strong>Language:</strong> TypeScript 5.x</li>
+                        <li><strong>Navigation:</strong> React Navigation 6.x</li>
+                        <li><strong>State:</strong> Zustand / Redux Toolkit</li>
+                        <li><strong>API Client:</strong> Axios</li>
+                        <li><strong>Push:</strong> Firebase FCM / Apple APNS</li>
+                        <li><strong>Camera:</strong> React Native Camera</li>
+                        <li><strong>Maps:</strong> React Native Maps</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>9.1 DevOps &amp; Infrastructure</h3>
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-header">☁️ Infrastructure</div>
+                    <ul style="padding-left:18px;font-size:0.85rem;">
+                        <li><strong>Compute:</strong> AWS ECS / EC2</li>
+                        <li><strong>Database:</strong> MongoDB Atlas</li>
+                        <li><strong>Cache:</strong> Redis (ElastiCache)</li>
+                        <li><strong>Storage:</strong> AWS S3 (future)</li>
+                        <li><strong>CDN:</strong> CloudFront</li>
+                        <li><strong>Load Balancer:</strong> Application Load Balancer</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-header">🔧 DevOps Tools</div>
+                    <ul style="padding-left:18px;font-size:0.85rem;">
+                        <li><strong>CI/CD:</strong> GitHub Actions</li>
+                        <li><strong>Container:</strong> Docker</li>
+                        <li><strong>Orchestration:</strong> ECS / Kubernetes (future)</li>
+                        <li><strong>Monitoring:</strong> DataDog / Sentry</li>
+                        <li><strong>Logging:</strong> CloudWatch + ELK</li>
+                        <li><strong>Secrets:</strong> AWS Secrets Manager</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================================
+        CHAPTER 10: SYSTEM ARCHITECTURE
+        ========================================================== -->
+        <section id="ch10" class="section-anchor">
+            <h2>10. System Architecture</h2>
+
+            <div class="diagram-container" style="background:var(--card-bg);border-radius:var(--radius);border:1px solid var(--border);padding:24px 20px;margin:24px 0;overflow-x:auto;text-align:center;">
+                <svg viewBox="0 0 760 380" xmlns="http://www.w3.org/2000/svg" style="max-width:100%;height:auto;">
+                    <rect x="10" y="10" width="740" height="360" rx="14" fill="#f5f8fc" stroke="#dce3ed" stroke-width="1.5"/>
+                    <text x="380" y="40" text-anchor="middle" font-family="Inter, sans-serif" font-weight="700" font-size="16" fill="#0b2b4a">COUPONTRUST SYSTEM ARCHITECTURE</text>
+                    <rect x="30" y="56" width="700" height="52" rx="8" fill="#e8f0fe" stroke="#4F46E5" stroke-width="1.5"/>
+                    <text x="380" y="74" text-anchor="middle" font-family="Inter, sans-serif" font-weight="600" font-size="13" fill="#0b2b4a">CLIENT LAYER</text>
+                    <text x="380" y="96" text-anchor="middle" font-family="Inter, sans-serif" font-size="10" fill="#4a5a6a">Web App (React + Vite) · Mobile App (React Native) · Admin Panel</text>
+                    <line x1="380" y1="108" x2="380" y2="128" stroke="#4F46E5" stroke-width="2" marker-end="url(#arrow3)"/>
+                    <rect x="200" y="132" width="360" height="40" rx="8" fill="#ffffff" stroke="#1a4b6d" stroke-width="2"/>
+                    <text x="380" y="157" text-anchor="middle" font-family="Inter, sans-serif" font-weight="600" font-size="14" fill="#0b2b4a">API GATEWAY (Express.js)</text>
+                    <line x1="380" y1="172" x2="380" y2="192" stroke="#4F46E5" stroke-width="2" marker-end="url(#arrow3)"/>
+                    <rect x="30" y="196" width="700" height="50" rx="8" fill="#e8f0fe" stroke="#4F46E5" stroke-width="1.5"/>
+                    <text x="380" y="214" text-anchor="middle" font-family="Inter, sans-serif" font-weight="600" font-size="13" fill="#0b2b4a">APPLICATION LAYER (Microservices)</text>
+                    <text x="380" y="236" text-anchor="middle" font-family="Inter, sans-serif" font-size="10" fill="#4a5a6a">Auth · Coupon · AI Verification · Payment · Trust Score · Wallet · Dispute · Notification</text>
+                    <line x1="380" y1="246" x2="380" y2="266" stroke="#4F46E5" stroke-width="2" marker-end="url(#arrow3)"/>
+                    <rect x="30" y="270" width="700" height="44" rx="8" fill="#ffffff" stroke="#1a4b6d" stroke-width="1.5"/>
+                    <text x="380" y="290" text-anchor="middle" font-family="Inter, sans-serif" font-weight="600" font-size="13" fill="#0b2b4a">DATA LAYER</text>
+                    <text x="380" y="306" text-anchor="middle" font-family="Inter, sans-serif" font-size="10" fill="#4a5a6a">MongoDB Atlas · Redis · Local Storage · Stripe · Twilio</text>
+                    <rect x="30" y="320" width="700" height="36" rx="8" fill="#f0f4f9" stroke="#dce3ed" stroke-width="1.5"/>
+                    <text x="380" y="340" text-anchor="middle" font-family="Inter, sans-serif" font-weight="500" font-size="11" fill="#4a5a6a">INFRASTRUCTURE: AWS (ECS · MongoDB Atlas · Redis · CloudFront)</text>
+                    <defs>
+                        <marker id="arrow3" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+                            <path d="M0,0 L10,5 L0,10 Z" fill="#4F46E5"/>
+                        </marker>
+                    </defs>
+                </svg>
+            </div>
+        </section>
+
+        <!-- ==========================================================
+        CHAPTER 11: DATABASE DESIGN
+        ========================================================== -->
+        <section id="ch11" class="section-anchor">
+            <h2>11. Database Design</h2>
+
+            <h3>11.1 User Collection</h3>
+            <div class="table-wrap table-scroll">
+                <table>
+                    <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+                    <tbody>
+                        <tr><td>_id</td><td>ObjectId</td><td>Primary Key</td></tr>
+                        <tr><td>name</td><td>String</td><td>Full name</td></tr>
+                        <tr><td>mobile</td><td>String (unique)</td><td>Mobile number (E.164)</td></tr>
+                        <tr><td>email</td><td>String</td><td>Email address (optional)</td></tr>
+                        <tr><td>role</td><td>Enum</td><td>user / admin</td></tr>
+                        <tr><td>avatar</td><td>String</td><td>Profile image URL</td></tr>
+                        <tr><td>country</td><td>String</td><td>Country code</td></tr>
+                        <tr><td>currency</td><td>String</td><td>Preferred currency</td></tr>
+                        <tr><td>trustScore</td><td>Number</td><td>Starts at 100</td></tr>
+                        <tr><td>accountStatus</td><td>Enum</td><td>active / warning / banned</td></tr>
+                        <tr><td>suspiciousUploadCount</td><td>Number</td><td>AI mismatch count</td></tr>
+                        <tr><td>fakeCouponCount</td><td>Number</td><td>Fake coupon submissions</td></tr>
+                        <tr><td>disputeCount</td><td>Number</td><td>Disputes involved</td></tr>
+                        <tr><td>walletBalance</td><td>Number</td><td>Available balance</td></tr>
+                        <tr><td>pendingBalance</td><td>Number</td><td>Pending escrow</td></tr>
+                        <tr><td>totalSales</td><td>Number</td><td>Total sales</td></tr>
+                        <tr><td>totalPurchases</td><td>Number</td><td>Total purchases</td></tr>
+                        <tr><td>referralCode</td><td>String</td><td>Unique referral code</td></tr>
+                        <tr><td>referredBy</td><td>ObjectId</td><td>Referrer</td></tr>
+                        <tr><td>coinBalance</td><td>Number</td><td>Reward coins</td></tr>
+                        <tr><td>createdAt</td><td>Date</td><td>Creation timestamp</td></tr>
+                        <tr><td>updatedAt</td><td>Date</td><td>Last update</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>11.2 Coupon Collection</h3>
+            <div class="table-wrap table-scroll">
+                <table>
+                    <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+                    <tbody>
+                        <tr><td>_id</td><td>ObjectId</td><td>Primary Key</td></tr>
+                        <tr><td>sellerId</td><td>ObjectId</td><td>User reference</td></tr>
+                        <tr><td>buyerId</td><td>ObjectId</td><td>User reference (optional)</td></tr>
+                        <tr><td>platform</td><td>String</td><td>Platform name</td></tr>
+                        <tr><td>title</td><td>String</td><td>Coupon title</td></tr>
+                        <tr><td>couponCodeEncrypted</td><td>String</td><td>AES-encrypted</td></tr>
+                        <tr><td>originalValue</td><td>Number</td><td>Original value</td></tr>
+                        <tr><td>sellingPrice</td><td>Number</td><td>Selling price</td></tr>
+                        <tr><td>discountPercent</td><td>Number</td><td>Discount %</td></tr>
+                        <tr><td>currency</td><td>String</td><td>Currency code</td></tr>
+                        <tr><td>country</td><td>String</td><td>Country code</td></tr>
+                        <tr><td>expiryDate</td><td>Date</td><td>Expiry date</td></tr>
+                        <tr><td>terms</td><td>String</td><td>Terms &amp; conditions</td></tr>
+                        <tr><td>proofImagePath</td><td>String</td><td>Screenshot path</td></tr>
+                        <tr><td>aiExtractedData</td><td>Object</td><td>AI extracted fields</td></tr>
+                        <tr><td>aiMatchScore</td><td>Number</td><td>0-100 match score</td></tr>
+                        <tr><td>aiVerificationStatus</td><td>Enum</td><td>pending / matched / mismatch</td></tr>
+                        <tr><td>status</td><td>Enum</td><td>available / sold / rejected</td></tr>
+                        <tr><td>views</td><td>Number</td><td>View count</td></tr>
+                        <tr><td>createdAt</td><td>Date</td><td>Creation timestamp</td></tr>
+                        <tr><td>updatedAt</td><td>Date</td><td>Last update</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>11.3 Transaction Collection</h3>
+            <div class="table-wrap table-scroll">
+                <table>
+                    <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+                    <tbody>
+                        <tr><td>_id</td><td>ObjectId</td><td>Primary Key</td></tr>
+                        <tr><td>buyerId</td><td>ObjectId</td><td>Buyer reference</td></tr>
+                        <tr><td>sellerId</td><td>ObjectId</td><td>Seller reference</td></tr>
+                        <tr><td>couponId</td><td>ObjectId</td><td>Coupon reference</td></tr>
+                        <tr><td>amount</td><td>Number</td><td>Transaction amount</td></tr>
+                        <tr><td>platformFee</td><td>Number</td><td>Commission (10%)</td></tr>
+                        <tr><td>sellerAmount</td><td>Number</td><td>After commission</td></tr>
+                        <tr><td>currency</td><td>String</td><td>Currency code</td></tr>
+                        <tr><td>stripePaymentIntentId</td><td>String</td><td>Stripe ID</td></tr>
+                        <tr><td>paymentStatus</td><td>Enum</td><td>created / authorized / captured / refunded</td></tr>
+                        <tr><td>escrowStatus</td><td>Enum</td><td>holding / released / refunded / disputed</td></tr>
+                        <tr><td>transactionStatus</td><td>Enum</td><td>created / coupon_revealed / completed / disputed</td></tr>
+                        <tr><td>coinsEarned</td><td>Number</td><td>Coins from transaction</td></tr>
+                        <tr><td>createdAt</td><td>Date</td><td>Creation timestamp</td></tr>
+                        <tr><td>updatedAt</td><td>Date</td><td>Last update</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>11.4 Other Collections</h3>
+            <div class="grid-3">
+                <div class="card">
+                    <div class="card-header">⚖️ Dispute</div>
+                    <ul style="padding-left:18px;font-size:0.8rem;">
+                        <li>transactionId, buyerId, sellerId</li>
+                        <li>reason, proofImagePath</li>
+                        <li>status: open / resolved</li>
+                        <li>resolution: refund_buyer / release_seller</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-header">🔔 Notification</div>
+                    <ul style="padding-left:18px;font-size:0.8rem;">
+                        <li>userId, type, title, message</li>
+                        <li>isRead, smsSent</li>
+                        <li>createdAt</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-header">⚙️ AdminSetting</div>
+                    <ul style="padding-left:18px;font-size:0.8rem;">
+                        <li>commissionPercent (10)</li>
+                        <li>minimumTrustScore (60)</li>
+                        <li>aiMatchThreshold (85)</li>
+                        <li>maxFreeListings (10)</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================================
+        CHAPTER 12: API DESIGN
+        ========================================================== -->
+        <section id="ch12" class="section-anchor">
+            <h2>12. API Design</h2>
+
+            <div class="card">
+                <div class="card-header">🌐 API Overview</div>
+                <p><strong>Base URL:</strong> <code>https://api.coupontrust.com/v1</code></p>
+                <p><strong>Authentication:</strong> Bearer JWT <code>Authorization: Bearer &lt;token&gt;</code></p>
+                <p><strong>Response Format:</strong> <code>{ success, data, message, meta }</code></p>
+                <p><strong>Error Format:</strong> <code>{ success: false, message, errors, code }</code></p>
+            </div>
+
+            <h3>12.1 Authentication APIs</h3>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr></thead>
+                    <tbody>
+                        <tr><td>POST</td><td><code>/auth/send-otp</code></td><td>Send OTP via Twilio</td></tr>
+                        <tr><td>POST</td><td><code>/auth/verify-otp</code></td><td>Verify OTP and login</td></tr>
+                        <tr><td>GET</td><td><code>/auth/me</code></td><td>Get current user</td></tr>
+                        <tr><td>POST</td><td><code>/auth/logout</code></td><td>Logout</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>12.2 Coupon APIs</h3>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr></thead>
+                    <tbody>
+                        <tr><td>POST</td><td><code>/coupons/sell</code></td><td>Sell coupon (AI verification)</td></tr>
+                        <tr><td>GET</td><td><code>/coupons</code></td><td>Marketplace feed</td></tr>
+                        <tr><td>GET</td><td><code>/coupons/:id</code></td><td>Coupon details</td></tr>
+                        <tr><td>GET</td><td><code>/coupons/my/listings</code></td><td>User's listings</td></tr>
+                        <tr><td>GET</td><td><code>/coupons/my/purchases</code></td><td>User's purchases</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>12.3 Payment APIs</h3>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr></thead>
+                    <tbody>
+                        <tr><td>POST</td><td><code>/payments/create-intent</code></td><td>Create PaymentIntent</td></tr>
+                        <tr><td>POST</td><td><code>/payments/reveal-coupon/:id</code></td><td>Reveal coupon code</td></tr>
+                        <tr><td>POST</td><td><code>/payments/confirm-worked/:id</code></td><td>Confirm coupon worked</td></tr>
+                        <tr><td>POST</td><td><code>/payments/report-not-working/:id</code></td><td>Report not working</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>12.4 Admin APIs</h3>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr></thead>
+                    <tbody>
+                        <tr><td>GET</td><td><code>/admin/dashboard</code></td><td>Dashboard</td></tr>
+                        <tr><td>GET</td><td><code>/admin/users</code></td><td>User management</td></tr>
+                        <tr><td>GET</td><td><code>/admin/coupons/pending</code></td><td>Pending coupons</td></tr>
+                        <tr><td>PUT</td><td><code>/admin/coupons/:id/approve</code></td><td>Approve coupon</td></tr>
+                        <tr><td>GET</td><td><code>/admin/disputes</code></td><td>Dispute management</td></tr>
+                        <tr><td>PUT</td><td><code>/admin/disputes/:id/resolve</code></td><td>Resolve dispute</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ==========================================================
+        CHAPTER 13: AUTHENTICATION
+        ========================================================== -->
+        <section id="ch13" class="section-anchor">
+            <h2>13. Authentication System</h2>
+
+            <div class="card">
+                <div class="card-header">📱 OTP Login Flow</div>
+                <div style="display:flex;flex-direction:column;gap:10px;padding:8px 0;">
+                    <div style="display:flex;align-items:center;gap:12px;padding:8px 16px;background:#fff;border-radius:6px;border:1px solid var(--border);">
+                        <span style="font-weight:600;color:var(--primary);">1.</span> User enters mobile number
+                    </div>
+                    <div style="display:flex;align-items:center;gap:12px;padding:8px 16px;background:#fff;border-radius:6px;border:1px solid var(--border);">
+                        <span style="font-weight:600;color:var(--primary);">2.</span> Backend sends OTP via Twilio Verify
+                    </div>
+                    <div style="display:flex;align-items:center;gap:12px;padding:8px 16px;background:#fff;border-radius:6px;border:1px solid var(--border);">
+                        <span style="font-weight:600;color:var(--primary);">3.</span> User enters OTP
+                    </div>
+                    <div style="display:flex;align-items:center;gap:12px;padding:8px 16px;background:#d4edda;border-radius:6px;border:1px solid #c3e6cb;">
+                        <span style="font-weight:600;color:#155724;">✅</span> Backend verifies OTP → JWT generated → Login success
+                    </div>
+                </div>
+            </div>
+
+            <h3>13.1 JWT Token Management</h3>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Token Type</th><th>Expiry</th><th>Storage</th></tr></thead>
+                    <tbody>
+                        <tr><td>Access Token</td><td>1 hour</td><td>Memory / HttpOnly Cookie</td></tr>
+                        <tr><td>Refresh Token</td><td>7 days</td><td>HttpOnly Cookie</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ==========================================================
+        CHAPTER 14: AI VERIFICATION
+        ========================================================== -->
+        <section id="ch14" class="section-anchor">
+            <h2>14. AI Verification System</h2>
+
+            <div class="card">
+                <div class="card-header">🤖 AI Coupon Verification</div>
+                <p><strong>Function:</strong> <code>verifyCouponWithAI({ imagePath, userInput })</code></p>
+                <p><strong>Returns:</strong> <code>{ extractedData, matchScore, status }</code></p>
+            </div>
+
+            <h3>14.1 Scoring Logic</h3>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Field</th><th>Points</th><th>Description</th></tr></thead>
+                    <tbody>
+                        <tr><td>Platform Match</td><td>20</td><td>OCR extracted platform matches</td></tr>
+                        <tr><td>Coupon Code Match</td><td>35</td><td>OCR extracted code matches</td></tr>
+                        <tr><td>Value Match</td><td>20</td><td>OCR extracted value matches</td></tr>
+                        <tr><td>Expiry Date Match</td><td>20</td><td>OCR extracted expiry matches</td></tr>
+                        <tr><td>Terms Partial Match</td><td>5</td><td>Partial match of terms</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="highlight-box">
+                <strong>Pass Threshold:</strong> ≥ 85% → Coupon listed instantly.<br>
+                <strong>Fail Threshold:</strong> &lt; 85% → Coupon rejected, suspicious count++.
+            </div>
+
+            <h3>14.2 Fraud Detection</h3>
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-header">🔍 Detection Capabilities</div>
+                    <ul style="padding-left:18px;font-size:0.85rem;">
+                        <li>Duplicate coupon uploads</li>
+                        <li>Manipulated screenshots</li>
+                        <li>Expired coupons</li>
+                        <li>Repeated mismatches</li>
+                        <li>High-risk users</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-header">📊 Risk Levels</div>
+                    <ul style="padding-left:18px;font-size:0.85rem;">
+                        <li><span style="color:var(--success);">🟢 Low</span> — Normal activity</li>
+                        <li><span style="color:var(--warning);">🟡 Medium</span> — Watchlist</li>
+                        <li><span style="color:var(--danger);">🟠 High</span> — Flagged for review</li>
+                        <li><span style="color:var(--danger);">🔴 Critical</span> — Auto-ban</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================================
+        CHAPTER 15: PAYMENT ESCROW
+        ========================================================== -->
+        <section id="ch15" class="section-anchor">
+            <h2>15. Payment Escrow System</h2>
+
+            <div class="card">
+                <div class="card-header">💳 Stripe PaymentIntent Manual Capture</div>
+                <div style="display:flex;flex-direction:column;gap:10px;padding:8px 0;">
+                    <div style="display:flex;align-items:center;gap:12px;padding:8px 16px;background:#fff;border-radius:6px;border:1px solid var(--border);">
+                        <span style="font-weight:600;color:var(--primary);">1.</span> Create PaymentIntent with <code>capture_method: 'manual'</code>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:12px;padding:8px 16px;background:#fff;border-radius:6px;border:1px solid var(--border);">
+                        <span style="font-weight:600;color:var(--primary);">2.</span> Frontend confirms payment → Payment authorized
+                    </div>
+                    <div style="display:flex;align-items:center;gap:12px;padding:8px 16px;background:#fff;border-radius:6px;border:1px solid var(--border);">
+                        <span style="font-weight:600;color:var(--primary);">3.</span> Coupon code revealed to buyer
+                    </div>
+                    <div style="display:flex;align-items:center;gap:12px;padding:8px 16px;background:#d4edda;border-radius:6px;border:1px solid #c3e6cb;">
+                        <span style="font-weight:600;color:#155724;">✅ Coupon Worked</span> → Capture payment → Deduct commission → Credit seller
+                    </div>
+                    <div style="display:flex;align-items:center;gap:12px;padding:8px 16px;background:#fff3cd;border-radius:6px;border:1px solid #ffeaa7;">
+                        <span style="font-weight:600;color:#856404;">⚠️ Not Working</span> → Dispute created → Payment held → Admin decision
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================================
+        CHAPTER 16: TRUST SCORE
+        ========================================================== -->
+        <section id="ch16" class="section-anchor">
+            <h2>16. Trust Score System</h2>
+
+            <div class="grid-3">
+                <div class="card" style="text-align:center;border-left:4px solid var(--success);">
+                    <div style="font-size:2.4rem;font-weight:700;color:var(--success);">100–80</div>
+                    <div style="font-weight:600;">Excellent</div>
+                    <p style="font-size:0.85rem;color:var(--text-muted);">Verified trusted seller</p>
+                </div>
+                <div class="card" style="text-align:center;border-left:4px solid var(--warning);">
+                    <div style="font-size:2.4rem;font-weight:700;color:var(--warning);">79–60</div>
+                    <div style="font-weight:600;">Warning</div>
+                    <p style="font-size:0.85rem;color:var(--text-muted);">Moderate risk</p>
+                </div>
+                <div class="card" style="text-align:center;border-left:4px solid var(--danger);">
+                    <div style="font-size:2.4rem;font-weight:700;color:var(--danger);">&lt; 60</div>
+                    <div style="font-weight:600;">Banned</div>
+                    <p style="font-size:0.85rem;color:var(--text-muted);">Account suspended</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h4 style="margin-top:0;">Penalty Rules</h4>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 32px;">
+                    <div>3 AI mismatches in 30 days <span style="color:var(--danger);float:right;">-10</span></div>
+                    <div>Fake coupon confirmed <span style="color:var(--danger);float:right;">-20</span></div>
+                    <div>Duplicate coupon <span style="color:var(--danger);float:right;">-15</span></div>
+                    <div>Expired coupon uploaded <span style="color:var(--danger);float:right;">-10</span></div>
+                    <div>Refund due to seller fault <span style="color:var(--danger);float:right;">-20</span></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================================
+        CHAPTER 17: REWARDS & REFERRAL
+        ========================================================== -->
+        <section id="ch17" class="section-anchor">
+            <h2>17. Rewards &amp; Referral System</h2>
+
+            <div class="card coin-bg">
+                <div class="card-header">🪙 Coin Economy</div>
+                <div class="grid-2">
+                    <div>
+                        <h4>Earn Coins</h4>
+                        <ul style="padding-left:18px;font-size:0.85rem;">
+                            <li>Login Daily: +30 Coins</li>
+                            <li>Apply Group: +20 Coins</li>
+                            <li>Buy Group: +10 Coins</li>
+                            <li>Share with Friends: +20 Coins</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4>Redeem Coins</h4>
+                        <ul style="padding-left:18px;font-size:0.85rem;">
+                            <li><strong>500 Coins = ₹50</strong></li>
+                            <li>Transfer to wallet</li>
+                            <li>Transfer to bank</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">👥 Referral Program</div>
+                <ul style="padding-left:18px;font-size:0.85rem;">
+                    <li>Invite Friends: Earn 50% of their earnings</li>
+                    <li>Redeem Buy a Group: Earn 70% of their earnings</li>
+                    <li>Unique referral code per user</li>
+                    <li>Full referral analytics</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- ==========================================================
+        CHAPTER 18-20: USER FLOWS
+        ========================================================== -->
+        <section id="ch18" class="section-anchor">
+            <h2>18. Sell Coupon Flow</h2>
+            <div class="card">
+                <div style="display:flex;flex-direction:column;gap:10px;padding:8px 0;">
+                    <div style="display:flex;align-items:center;gap:12px;padding:8px 16px;background:#fff;border-radius:6px;border:1px solid var(--border);">
+                        <span style="font-weight:600;color:var(--primary);">1.</span> User clicks "Sell Coupon"
+                    </div>
+                    <div style="display:flex;align-items:center;gap:12px;padding:8px 16px;background:#fff;border-radius:6px;border:1px solid var(--border);">
+                        <span style="font-weight:600;color:var(--primary);">2.</span> Safety popup — accept rules
+                    </div>
+                    <div style="display:flex;align-items:center;gap:12px;padding:8px 16px;background:#fff;border-radius:6px;border:1px solid var(--border);">
+                        <span style="font-weight:600;color:var(--primary);">3.</span> Fill coupon form
+                    </div>
+                    <div style="display:flex;align-items:center;gap:12px;padding:8px 16px;background:#fff;border-radius:6px;border:1px solid var(--border);">
+                        <span style="font-weight:600;color:var(--primary);">4.</span> Upload screenshot (Multer)
+                    </div>
+                    <div style="display:flex;align-items:center;gap:12px;padding:8px 16px;background:#fff;border-radius:6px;border:1px solid var(--border);">
+                        <span style="font-weight:600;color:var(--primary);">5.</span> AI/OCR extracts data
+                    </div>
+                    <div style="display:flex;align-items:center;gap:12px;padding:8px 16px;background:#d4edda;border-radius:6px;border:1px solid #c3e6cb;">
+                        <span style="font-weight:600;color:#155724;">✅ Pass ≥ 85%</span> → Coupon listed instantly
+                    </div>
+                    <div style="display:flex;align-items:center;gap:12px;padding:8px 16px;background:#f8d7da;border-radius:6px;border:1px solid #f5c6cb;">
+                        <span style="font-weight:600;color:#721c24;">❌ Fail &lt; 85%</span> → Coupon rejected, suspicious count++
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="ch19" class="section-anchor">
+            <h2>19. Buy Coupon Flow</h2>
+            <div class="card">
+                <div style="display:flex;flex-direction:column;gap:10px;padding:8px 0;">
+                    <div style="display:flex;align-items:center;gap:12px;padding:8px 16px;background:#fff;border-radius:6px;border:1px solid var(--border);">
+                        <span style="font-weight:600;color:var(--primary);">1.</span> Browse marketplace feed
+                    </div>
+                    <div style="display:flex;align-items:center;gap:12px;padding:8px 16px;background:#fff;border-radius:6px;border:1px solid var(--border);">
+                        <span style="font-weight:600;color:var(--primary);">2.</span> Filter by platform, country, price
+                    </div>
+                    <div style="display:flex;align-items:center;gap:12px;padding:8px 16px;background:#fff;border-radius:6px;border:1px solid var(--border);">
+                        <span style="font-weight:600;color:var(--primary);">3.</span> Open coupon details
+                    </div>
+                    <div style="display:flex;align-items:center;gap:12px;padding:8px 16px;background:#fff;border-radius:6px;border:1px solid var(--border);">
+                        <span style="font-weight:600;color:var(--primary);">4.</span> Click "Buy Now"
+                    </div>
+                    <div style="display:flex;align-items:center;gap:12px;padding:8px 16px;background:#fff;border-radius:6px;border:1px solid var(--border);">
+                        <span style="font-weight:600;color:var(--primary);">5.</span> Create PaymentIntent (manual capture)
+                    </div>
+                    <div style="display:flex;align-items:center;gap:12px;padding:8px 16px;background:#fff;border-radius:6px;border:1px solid var(--border);">
+                        <span style="font-weight:600;color:var(--primary);">6.</span> Complete Stripe payment
+                    </div>
+                    <div style="display:flex;align-items:center;gap:12px;padding:8px 16px;background:#fff;border-radius:6px;border:1px solid var(--border);">
+                        <span style="font-weight:600;color:var(--primary);">7.</span> Coupon code revealed
+                    </div>
+                    <div style="display:flex;align-items:center;gap:12px;padding:8px 16px;background:#d4edda;border-radius:6px;border:1px solid #c3e6cb;">
+                        <span style="font-weight:600;color:#155724;">✅ Coupon Worked</span> → Capture → Commission → Seller credited
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="ch20" class="section-anchor">
+            <h2>20. Dispute Flow</h2>
+            <div class="card">
+                <div style="display:flex;flex-direction:column;gap:10px;padding:8px 0;">
+                    <div style="display:flex;align-items:center;gap:12px;padding:8px 16px;background:#fff;border-radius:6px;border:1px solid var(--border);">
+                        <span style="font-weight:600;color:var(--primary);">1.</span> Buyer clicks "Coupon Not Working"
+                    </div>
+                    <div style="display:flex;align-items:center;gap:12px;padding:8px 16px;background:#fff;border-radius:6px;border:1px solid var(--border);">
+                        <span style="font-weight:600;color:var(--primary);">2.</span> Add reason and proof screenshot
+                    </div>
+                    <div style="display:flex;align-items:center;gap:12px;padding:8px 16px;background:#fff;border-radius:6px;border:1px solid var(--border);">
+                        <span style="font-weight:600;color:var(--primary);">3.</span> Transaction → disputed, payment held
+                    </div>
+                    <div style="display:flex;align-items:center;gap:12px;padding:8px 16px;background:#fff;border-radius:6px;border:1px solid var(--border);">
+                        <span style="font-weight:600;color:var(--primary);">4.</span> Admin reviews all evidence
+                    </div>
+                    <div style="display:flex;align-items:center;gap:12px;padding:8px 16px;background:#d4edda;border-radius:6px;border:1px solid #c3e6cb;">
+                        <span style="font-weight:600;color:#155724;">✅ Refund Buyer</span> → Cancel payment, deduct seller trust
+                    </div>
+                    <div style="display:flex;align-items:center;gap:12px;padding:8px 16px;background:#d4edda;border-radius:6px;border:1px solid #c3e6cb;">
+                        <span style="font-weight:600;color:#155724;">✅ Release Seller</span> → Capture payment, credit seller
+                    </div>
+                    <div style="display:flex;align-items:center;gap:12px;padding:8px 16px;background:#f8d7da;border-radius:6px;border:1px solid #f5c6cb;">
+                        <span style="font-weight:600;color:#721c24;">⚠️ Fake Coupon</span> → -20 trust score, if below 60 → banned
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================================
+        CHAPTER 21: SECURITY
+        ========================================================== -->
+        <section id="ch21" class="section-anchor">
+            <h2>21. Security Implementation</h2>
+
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-header">🔒 Security Measures</div>
+                    <ul style="padding-left:18px;font-size:0.85rem;">
+                        <li><strong>JWT:</strong> Access (1h) + Refresh (7d)</li>
+                        <li><strong>AES:</strong> Coupon code encryption</li>
+                        <li><strong>Rate Limiting:</strong> 100 req/min</li>
+                        <li><strong>Helmet:</strong> Security headers</li>
+                        <li><strong>CORS:</strong> Whitelisted origins</li>
+                        <li><strong>Validation:</strong> Joi/Zod</li>
+                        <li><strong>File Validation:</strong> Images only, max 5MB</li>
+                        <li><strong>Sanitization:</strong> Input sanitization</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-header">🛡️ Middleware</div>
+                    <ul style="padding-left:18px;font-size:0.85rem;">
+                        <li><strong>auth.middleware:</strong> JWT verification</li>
+                        <li><strong>admin.middleware:</strong> RBAC</li>
+                        <li><strong>banned.middleware:</strong> Block banned users</li>
+                        <li><strong>upload.middleware:</strong> Multer handling</li>
+                        <li><strong>error.middleware:</strong> Global error handler</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================================
+        CHAPTER 22: DEPLOYMENT
+        ========================================================== -->
+        <section id="ch22" class="section-anchor">
+            <h2>22. Deployment Strategy</h2>
+
+            <h3>22.1 Environments</h3>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Environment</th><th>Purpose</th><th>URL</th></tr></thead>
+                    <tbody>
+                        <tr><td>Development</td><td>Local development</td><td><code>localhost:5173</code></td></tr>
+                        <tr><td>Staging</td><td>Testing &amp; QA</td><td><code>staging.coupontrust.com</code></td></tr>
+                        <tr><td>Production</td><td>Live platform</td><td><code>coupontrust.com</code></td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>22.2 CI/CD Pipeline</h3>
+            <div class="card">
+                <ul style="padding-left:20px;font-size:0.9rem;">
+                    <li><strong>Code Push:</strong> GitHub → GitHub Actions</li>
+                    <li><strong>Build:</strong> Lint → Test → Build → Docker</li>
+                    <li><strong>Deploy:</strong> ECS / EC2 → Load Balancer</li>
+                    <li><strong>Monitoring:</strong> DataDog / Sentry</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- ==========================================================
+        CHAPTER 23: TESTING
+        ========================================================== -->
+        <section id="ch23" class="section-anchor">
+            <h2>23. Testing Strategy</h2>
+
+            <div class="grid-3">
+                <div class="card">
+                    <div class="card-header">🧪 Unit Testing</div>
+                    <p><strong>Framework:</strong> Jest / Vitest</p>
+                    <p><strong>Coverage:</strong> 80%</p>
+                </div>
+                <div class="card">
+                    <div class="card-header">🔗 Integration</div>
+                    <p><strong>Framework:</strong> Supertest / Jest</p>
+                    <p><strong>Coverage:</strong> 90%</p>
+                </div>
+                <div class="card">
+                    <div class="card-header">🔄 E2E Testing</div>
+                    <p><strong>Framework:</strong> Cypress / Playwright</p>
+                    <p><strong>Coverage:</strong> Critical flows</p>
+                </div>
+                <div class="card">
+                    <div class="card-header">⚡ Performance</div>
+                    <p><strong>Framework:</strong> K6 / JMeter</p>
+                    <p><strong>Frequency:</strong> Weekly</p>
+                </div>
+                <div class="card">
+                    <div class="card-header">🔒 Security</div>
+                    <p><strong>Type:</strong> SAST, DAST, Penetration</p>
+                    <p><strong>Frequency:</strong> Quarterly</p>
+                </div>
+                <div class="card">
+                    <div class="card-header">👤 UAT</div>
+                    <p><strong>Audience:</strong> Real users / Stakeholders</p>
+                    <p><strong>Frequency:</strong> Before each release</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================================
+        CHAPTER 24: DISASTER RECOVERY
+        ========================================================== -->
+        <section id="ch24" class="section-anchor">
+            <h2>24. Disaster Recovery</h2>
+
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Scenario</th><th>Recovery Plan</th><th>RTO</th><th>RPO</th></tr></thead>
+                    <tbody>
+                        <tr><td>Database Failure</td><td>Restore from Atlas backup</td><td>&lt; 1 hour</td><td>&lt; 15 min</td></tr>
+                        <tr><td>Application Failure</td><td>Restart services, rollback</td><td>&lt; 30 min</td><td>&lt; 5 min</td></tr>
+                        <tr><td>Infrastructure Failure</td><td>Failover to secondary AZ</td><td>&lt; 1 hour</td><td>&lt; 15 min</td></tr>
+                        <tr><td>Network Attack</td><td>WAF mitigation, block IPs</td><td>&lt; 1 hour</td><td>N/A</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ==========================================================
+        CHAPTER 25: MARKET ANALYSIS
+        ========================================================== -->
+        <section id="ch25" class="section-anchor">
+            <h2>25. Market Analysis</h2>
+
+            <div class="card">
+                <div class="card-header">📊 Market Opportunity</div>
+                <div class="grid-2">
+                    <div>
+                        <h4>Global Coupon Market</h4>
+                        <ul style="padding-left:18px;font-size:0.9rem;">
+                            <li>Market Size: $100B+</li>
+                            <li>Digital Coupon Growth: 15% YoY</li>
+                            <li>Unused Coupons: 30-40% of all issued</li>
+                            <li>P2P Coupon Trading: Emerging market</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4>Consumer Behavior</h4>
+                        <ul style="padding-left:18px;font-size:0.9rem;">
+                            <li>90%+ consumers use coupons</li>
+                            <li>65%+ prefer digital coupons</li>
+                            <li>80%+ trust peer recommendations</li>
+                            <li>50%+ have unused coupons</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================================
+        CHAPTER 26: COMPETITOR ANALYSIS
+        ========================================================== -->
+        <section id="ch26" class="section-anchor">
+            <h2>26. Competitor Analysis</h2>
+
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Competitor</th><th>Strength</th><th>Weakness</th><th>Advantage</th></tr></thead>
+                    <tbody>
+                        <tr><td>Groupon</td><td>Large user base</td><td>No P2P, no AI</td><td>AI + Escrow + P2P</td></tr>
+                        <tr><td>CouponBirds</td><td>Aggregation</td><td>No P2P, no AI</td><td>Trust + Escrow</td></tr>
+                        <tr><td>RetailMeNot</td><td>Established</td><td>No P2P selling</td><td>P2P + AI</td></tr>
+                        <tr><td>Honey</td><td>Trusted brand</td><td>No P2P</td><td>P2P + AI + Escrow</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ==========================================================
+        CHAPTER 27: GO-TO-MARKET
+        ========================================================== -->
+        <section id="ch27" class="section-anchor">
+            <h2>27. Go‑to‑Market Strategy</h2>
+
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-header">📌 Phase 1: Launch</div>
+                    <ul style="padding-left:18px;font-size:0.85rem;">
+                        <li>Focus: India (Tier-1 and Tier-2 cities)</li>
+                        <li>Target: 100K users, 50K coupons</li>
+                        <li>Strategy: Free tier + referral program</li>
+                        <li>Channels: Social media, influencers</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-header">📌 Phase 2: Growth</div>
+                    <ul style="padding-left:18px;font-size:0.85rem;">
+                        <li>Focus: US, UK, EU expansion</li>
+                        <li>Target: 1M users, 500K coupons</li>
+                        <li>Strategy: Paid subscriptions + partnerships</li>
+                        <li>Channels: Digital marketing</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-header">📌 Phase 3: Scale</div>
+                    <ul style="padding-left:18px;font-size:0.85rem;">
+                        <li>Focus: Global domination</li>
+                        <li>Target: 5M users, 5M coupons</li>
+                        <li>Strategy: Full feature set</li>
+                        <li>Channels: Multi‑channel</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-header">📌 Phase 4: Enterprise</div>
+                    <ul style="padding-left:18px;font-size:0.85rem;">
+                        <li>Focus: Brand partnerships</li>
+                        <li>Target: 10M+ users</li>
+                        <li>Strategy: Enterprise solutions</li>
+                        <li>Channels: B2B sales</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================================
+        CHAPTER 28: REVENUE MODEL
+        ========================================================== -->
+        <section id="ch28" class="section-anchor">
+            <h2>28. Revenue Model</h2>
+
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Plan</th><th>Price</th><th>Key Features</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Free</strong></td><td>$0 / month</td><td>10 listings, basic analytics</td></tr>
+                        <tr><td><strong>Pro</strong></td><td>$29 / month</td><td>Unlimited, featured boost, 7% commission</td></tr>
+                        <tr><td><strong>Unlimited</strong></td><td>$99 / month</td><td>Unlimited, 5% commission, API, bulk upload</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>28.1 Future Revenue Streams</h3>
+            <div class="grid-2">
+                <div class="card">
+                    <ul style="padding-left:18px;font-size:0.9rem;">
+                        <li>Platform Commission: 10% per sale (Phase 1)</li>
+                        <li>Featured Listings: Pay to promote (Phase 1)</li>
+                        <li>Seller Subscriptions: Free/Pro/Unlimited (Phase 1)</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <ul style="padding-left:18px;font-size:0.9rem;">
+                        <li>Brand Partnerships: Official campaigns (Phase 2)</li>
+                        <li>Data Insights: Analytics for brands (Phase 3)</li>
+                        <li>White-label: Enterprise licensing (Phase 4)</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================================
+        CHAPTER 29: ROADMAP
+        ========================================================== -->
+        <section id="ch29" class="section-anchor">
+            <h2>29. Future Roadmap</h2>
+
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-header">🚀 Phase 2 – Q4 2026</div>
+                    <ul style="padding-left:18px;font-size:0.85rem;">
+                        <li>Rewards &amp; Referral System</li>
+                        <li>Advanced Notifications</li>
+                        <li>Analytics Dashboard</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-header">🚀 Phase 3 – Q1 2027</div>
+                    <ul style="padding-left:18px;font-size:0.85rem;">
+                        <li>Internationalization</li>
+                        <li>Native Mobile Apps</li>
+                        <li>Advanced Search (Elasticsearch)</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-header">🚀 Phase 4 – Q2 2027</div>
+                    <ul style="padding-left:18px;font-size:0.85rem;">
+                        <li>Advanced AI (fraud detection)</li>
+                        <li>Predictive Analytics</li>
+                        <li>Brand Partnerships</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-header">🚀 Phase 5 – Q3 2027</div>
+                    <ul style="padding-left:18px;font-size:0.85rem;">
+                        <li>API Ecosystem</li>
+                        <li>Enterprise Solutions</li>
+                        <li>Global Expansion (50+ countries)</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================================
+        CHAPTER 30: SUCCESS CRITERIA
+        ========================================================== -->
+        <section id="ch30" class="section-anchor">
+            <h2>30. Success Criteria</h2>
+
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Criterion</th><th>Target</th><th>Measurement</th></tr></thead>
+                    <tbody>
+                        <tr><td>User Registrations</td><td>100,000+</td><td>Database count</td></tr>
+                        <tr><td>Coupons Listed</td><td>50,000+</td><td>Database count</td></tr>
+                        <tr><td>Transactions</td><td>25,000+</td><td>Database count</td></tr>
+                        <tr><td>Platform Uptime</td><td>99.9%</td><td>Monitoring</td></tr>
+                        <tr><td>AI Verification Rate</td><td>85%</td><td>Analytics</td></tr>
+                        <tr><td>API Response</td><td>&lt; 500 ms</td><td>DataDog</td></tr>
+                        <tr><td>CSAT</td><td>4.5/5</td><td>Survey</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card" style="text-align:center;background:#fef9f0;border-color:#f5d68a;">
+                <h4 style="margin-top:0;">🎯 Final Goal</h4>
+                <p style="font-size:1.1rem;">Build the world's most trusted AI-powered coupon marketplace.</p>
+                <p style="color:var(--text-muted);">Connecting millions of buyers and sellers globally with trust, security, and transparency.</p>
+            </div>
+        </section>
+
+        <!-- ==========================================================
+        FOOTER
+        ========================================================== -->
+        <div style="margin-top:60px;padding-top:24px;border-top:2px solid var(--border);text-align:center;font-size:0.8rem;color:var(--text-muted);">
+            <p>CouponTrust Confidential &amp; Proprietary — Copyright © 2026 CouponTrust Inc. All rights reserved.</p>
+            <p style="margin-top:4px;">Document Version 3.0 (Advanced) &bull; 30 Chapters &bull; 50+ Tables &bull; 150+ Requirements</p>
+        </div>
+
+    </main>
+
+    <!-- ============================================================
+    SCRIPTS
+    ============================================================ -->
+    <script>
+        // ===== SIDEBAR TOGGLE =====
+        const hamburger = document.getElementById('hamburgerBtn');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+
+        function toggleSidebar() {
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('open');
+        }
+        hamburger.addEventListener('click', toggleSidebar);
+        overlay.addEventListener('click', toggleSidebar);
+
+        document.querySelectorAll('.sidebar a').forEach(link => {
+            link.addEventListener('click', () => {
+                if (window.innerWidth <= 992) {
+                    sidebar.classList.remove('open');
+                    overlay.classList.remove('open');
+                }
+                document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+                link.classList.add('active');
+            });
+        });
+
+        // ===== SMOOTH SCROLL =====
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                const targetId = this.getAttribute('href');
+                if (targetId === '#') return;
+                const targetEl = document.querySelector(targetId);
+                if (targetEl) {
+                    e.preventDefault();
+                    const headerOffset = 80;
+                    const elementPosition = targetEl.getBoundingClientRect().top;
+                    const offsetPosition = elementPosition + window.scrollY - headerOffset;
+                    window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+                }
+            });
+        });
+
+        // ===== ACTIVE SIDEBAR ON SCROLL =====
+        const sections = document.querySelectorAll('.section-anchor');
+        const navLinks = document.querySelectorAll('.sidebar a');
+        window.addEventListener('scroll', () => {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop - 100;
+                if (window.scrollY >= sectionTop) {
+                    current = section.getAttribute('id');
+                }
+            });
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + current) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>
+```

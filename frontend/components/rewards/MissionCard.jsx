@@ -18,7 +18,7 @@ export function MissionCard({ mission, onClaim, claiming }) {
       <div className="mt-5 rounded-2xl bg-slate-50 p-4">
         <div className="flex items-center justify-between text-sm font-semibold text-slate-600">
           <span>Progress</span>
-          <span>{progress} / {target}</span>
+          <span>{completed ? (claimed ? "Completed" : "Ready to claim!") : `${Math.max(0, target - progress)} remaining`}</span>
         </div>
         <div className="mt-3 h-3 overflow-hidden rounded-full bg-slate-200">
           <div className="h-full rounded-full bg-gradient-to-r from-[#16a34a] to-[#22c55e]" style={{ width: `${Math.min(100, Math.round((progress / target) * 100))}%` }} />

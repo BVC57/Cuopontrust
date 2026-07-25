@@ -35,11 +35,9 @@ const rewardSettingSchema = new mongoose.Schema(
       default: [
         { label: "5 Coins", coins: 5, probability: 30 },
         { label: "10 Coins", coins: 10, probability: 25 },
+        { label: "15 Coins", coins: 15, probability: 20 },
         { label: "20 Coins", coins: 20, probability: 15 },
-        { label: "50 Coins", coins: 50, probability: 10 },
-        { label: "75 Coins", coins: 75, probability: 5 },
-        { label: "100 Coins", coins: 100, probability: 2 },
-        { label: "Better Luck Tomorrow", coins: 0, probability: 13, isNoReward: true }
+        { label: "25 Coins", coins: 25, probability: 10 }
       ]
     },
     walletRules: {

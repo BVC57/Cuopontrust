@@ -1105,10 +1105,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="mx-auto mt-16 max-w-7xl overflow-hidden rounded-[28px] bg-gradient-to-r from-[#14b85f] via-[#11b981] to-[#1f9ed4] px-6 py-8 text-white shadow-[0_18px_42px_rgba(20,184,95,0.2)]">
-        <div className="text-center">
-          <p className="text-4xl font-black tracking-tight sm:text-5xl">{marketingContent.footerTagline}</p>
-          <p className="mt-3 max-w-3xl text-sm text-emerald-50">{marketingContent.mission}</p>
+      <section className="mx-auto mt-16 mb-8 max-w-7xl overflow-hidden rounded-[28px] bg-gradient-to-r from-[#14b85f] via-[#11b981] to-[#1f9ed4] px-8 py-16 text-white shadow-[0_18px_42px_rgba(20,184,95,0.2)]">
+        <div className="text-center flex flex-col items-center">
+          <p className="text-4xl font-black tracking-tight sm:text-5xl max-w-4xl">{marketingContent.footerTagline}</p>
+          <p className="mt-6 max-w-3xl text-base leading-relaxed text-emerald-50 opacity-90 mx-auto">{marketingContent.mission}</p>
           <a
             href="https://expo.dev/accounts/bvc57/projects/couponx-mobile/builds/baeb8787-f15b-45f9-a1e3-d6d7e5768615"
             target="_blank"

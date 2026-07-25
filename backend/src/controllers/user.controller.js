@@ -85,7 +85,13 @@ const updateProfile = asyncHandler(async (req, res) => {
     };
   }
   if (req.file) {
-    req.user.avatar = `/uploads/profile/${req.file.filename}`;
+    const fs = require("fs");
+    const fileBase64 = fs.readFileSync(req.file.path, { encoding: "base64" });
+    const mimeType = req.file.mimetype || "image/jpeg";
+    req.user.avatar = `data:${mimeType};base64,${fileBase64}`;
+    try {
+      fs.unlinkSync(req.file.path);
+    } catch (e) {}
   }
   await ensureReferralCode(req.user);
   await req.user.save();
